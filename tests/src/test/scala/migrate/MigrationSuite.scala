@@ -4,6 +4,7 @@ import org.scalatest.funsuite.AnyFunSuiteLike
 import utils.FileUtils._
 import domain._
 import buildinfo._
+import utils.FileUtils
 
 class MigrationSuite extends AnyFunSuiteLike {
 
@@ -14,10 +15,16 @@ class MigrationSuite extends AnyFunSuiteLike {
     val relativePaths = listFiles(input).map(_.relativize(input).get)
     relativePaths.foreach{ relative =>
       test(s"${relative.getName}"){
-        val file = input.child(relative)
-        assert(Main.compileInScala213(file).isSuccess)
-        assert(Main.compileInDotty(file).isSuccess)
-        assert(Main.runScalafix(file).isSuccess)
+        val inputFile = input.child(relative)
+        assert(Main.compileInScala213(inputFile).isSuccess)
+
+        val outputFile = output.child(relative)
+        val result = Main.runScalafix(inputFile)
+        assert(result.isSuccess)
+        val outputContent = FileUtils.read(outputFile)
+        assert(outputContent == result.get)
+
+        assert(Main.compileInDotty(outputFile).isSuccess)
 
       }
     }
