@@ -1,4 +1,4 @@
-package utils
+package domain
 
 import java.io.File
 import java.nio.file.{Path, Paths}

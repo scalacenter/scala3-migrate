@@ -1,4 +1,4 @@
-package utils
+package domain
 
 import java.io.File
 import java.nio.file.{Path, Paths}
@@ -23,5 +23,5 @@ case class AbsolutePath private(value: String) {
 object AbsolutePath {
   def from(value: String): Try[AbsolutePath] = Try(AbsolutePath(value))
   def from(path: Path): Try[AbsolutePath] = Try(AbsolutePath(path.toString))
-  def from(file: File): Try[AbsolutePath] = Try(AbsolutePath(file.toString))
+  def from(file: File): AbsolutePath = AbsolutePath(file.toString)
 }

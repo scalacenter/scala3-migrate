@@ -1,6 +1,6 @@
 object HelloWorld {
 
- def toto() {
+ def toto() = {
   println("Hello World")
  }
 }
