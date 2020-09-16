@@ -1,6 +1,8 @@
 package utils
 
 import java.io.File
+import java.nio.charset.{Charset, StandardCharsets}
+import java.nio.file.Files
 
 import domain.AbsolutePath
 
@@ -18,4 +20,7 @@ object FileUtils {
         .filter(_ => recursive)
         .flatMap(listFiles(_, recursive))
   }
+
+  def read(path: AbsolutePath, charset: Charset = StandardCharsets.UTF_8): String =
+    new String(Files.readAllBytes(path.toPath), charset)
 }
