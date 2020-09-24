@@ -11,7 +11,9 @@ class MigrationSuite extends AnyFunSuiteLike {
   val input =  AbsolutePath.from(BuildInfo.input)
   val output = AbsolutePath.from(BuildInfo.output)
 
-  def test(input: AbsolutePath, output: AbsolutePath): Unit = {
+  runTests()
+
+  private def runTests(): Unit = {
     val relativePaths = listFiles(input).map(_.relativize(input).get)
     relativePaths.foreach{ relative =>
       test(s"${relative.getName}"){
@@ -30,7 +32,4 @@ class MigrationSuite extends AnyFunSuiteLike {
     }
 
   }
-
-  test(input, output)
-
 }
