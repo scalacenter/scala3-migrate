@@ -9,6 +9,7 @@ import interfaces.DottyCompiler
 import scalafix.interfaces.Scalafix
 import utils.CoursierApi
 
+import scala.collection.convert.ImplicitConversions._
 import scala.jdk.CollectionConverters._
 import scala.reflect.io.VirtualDirectory
 import scala.tools.nsc.{Global, Settings}
