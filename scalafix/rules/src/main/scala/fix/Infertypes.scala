@@ -66,6 +66,9 @@ class Infertypes(global: ScalafixGlobal) extends SemanticRule("Infertypes") {
         None // don't annotate ConstantTypes
       case f if f.toString().contains("#") && f.toString().contains(".type") =>
         None // don't annotate types that look like fix.WidenSingleType#strings.type
+      //Todo: add a specical case for structural type: remove implicit and replace lazy val by a def
+      //Todo : deal with the root prefix to avoid cyclical types
+      //Todo: remove super types: we don't infer them
       case f => Some(f)
     }
   }
