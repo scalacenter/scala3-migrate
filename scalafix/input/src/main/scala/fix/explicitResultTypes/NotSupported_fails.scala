@@ -45,6 +45,10 @@ object NotSupported_fails {
     val superType3 = ??? : Types.super[TypesBase].x.type
   }
 
+  class H[M[_]]
+
+  val universalType1 = ??? : H[({ type L[U] = List[U] })#L]
+
   implicit val implicit_x: Int = 42
   implicit val crazy1 = implicitly[Int]
 }

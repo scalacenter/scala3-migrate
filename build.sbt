@@ -31,7 +31,7 @@ val input = project.in(file("input"))
 
 val output = project.in(file("output"))
   .settings(
-    scalaVersion := Versions.scala213
+    scalaVersion := Versions.dotty
   )
 
 val tests = project.in(file("tests"))
