@@ -48,6 +48,8 @@ class Infertypes(global: ScalafixGlobal) extends SemanticRule("Infertypes") {
       (replace, spaces) <- getReplaceAndSpaces(defn, body)
       explicitType <- getTypeAsSeenFromGlobal(name)
       filteredType <- filterType(explicitType)
+      _ = println(s"filteredType.prefixString = ${filteredType.prefix}")
+
     } yield Patch.addRight(replace, s"$spaces: ${filteredType.finalResultType}")
   }
 

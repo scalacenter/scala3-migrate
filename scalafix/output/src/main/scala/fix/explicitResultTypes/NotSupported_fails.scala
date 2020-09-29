@@ -41,8 +41,10 @@ object NotSupported_fails {
   implicit val implicit_x: Int = 42
   implicit val crazy1: Int = implicitly[Int](implicit_x)
 
-  // val universalType1 = ??? : H[({ type L[U] = List[U] })#L]
+  class H[M[_]]
+
+  val universalType1 = ??? : H[({ type L[U] = List[U] })#L]
 
   // FIXME: https://github.com/twitter/rsc/issues/144
-  // val repeatedType = ??? : ((Any*) => Any)
+//   val repeatedType = ??? : ((Any*) => Any)
 }

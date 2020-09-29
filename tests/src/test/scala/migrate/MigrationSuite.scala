@@ -15,7 +15,7 @@ class MigrationSuite extends AnyFunSuiteLike {
 
   private def runTests(): Unit = {
     val relativePaths = listFiles(input).map(_.relativize(input).get)
-    relativePaths.foreach{ relative =>
+    relativePaths.foreach { relative =>
       test(s"${relative.getName}"){
         val inputFile = input.child(relative)
         assert(Main.compileInScala213(inputFile).isSuccess)
