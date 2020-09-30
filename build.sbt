@@ -37,7 +37,8 @@ val output = project.in(file("output"))
 val tests = project.in(file("tests"))
   .settings(
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % V.scalatest
+      "org.scalatest" %% "scalatest" % V.scalatest,
+      "ch.epfl.scala" % "scalafix-testkit" % V.scalafixVersion % Test cross CrossVersion.full,
     ),
     buildInfoKeys := Seq[BuildInfoKey](
       "input" -> sourceDirectory.in(input, Compile).value,
