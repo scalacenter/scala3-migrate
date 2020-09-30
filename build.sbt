@@ -1,13 +1,13 @@
 inThisBuild(
   List(
-    scalaVersion := Versions.scala213
+    scalaVersion := V.scala213,
   )
 )
 
 val interfaces = project.in(file("interfaces"))
   .settings(
     libraryDependencies ++= Seq(
-      "ch.epfl.lamp" % "dotty-compiler_0.27" % Versions.dotty,
+      "ch.epfl.lamp" % "dotty-compiler_0.27" % V.dotty,
     ),
     crossPaths := false,
     autoScalaLibrary := false
@@ -17,33 +17,40 @@ val migrate = project.in(file("migrate"))
   .settings(
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "ch.epfl.scala" % "scalafix-interfaces" % Versions.scalafix,
-      "io.get-coursier" %% "coursier" % Versions.coursier,
-      "com.outr" %% "scribe" % Versions.scribe
+      "ch.epfl.scala" % "scalafix-interfaces" % V.scalafix,
+      "io.get-coursier" %% "coursier" % V.coursier,
+      "com.outr" %% "scribe" % V.scribe
     )
   )
   .dependsOn(interfaces, `scalafix-rules`)
 
 val input = project.in(file("input"))
   .settings(
-    scalaVersion := Versions.scala213
+    semanticdbEnabled := true
   )
 
 val output = project.in(file("output"))
   .settings(
-    scalaVersion := Versions.dotty
+    scalaVersion := V.dotty
   )
 
 val tests = project.in(file("tests"))
   .settings(
-    scalaVersion := Versions.scala213,
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % Versions.scalatest
+      "org.scalatest" %% "scalatest" % V.scalatest
     ),
     buildInfoKeys := Seq[BuildInfoKey](
       "input" -> sourceDirectory.in(input, Compile).value,
       "output" -> sourceDirectory.in(output, Compile).value,
-    )
+    ),
+    Compile / resourceGenerators += Def.task {
+      val props = new java.util.Properties()
+      props.put("migrateClasspath", fullClasspath.in(`scalafix-rules`, Compile)
+        .value.map(_.data).mkString(java.io.File.pathSeparator))
+      val out = managedResourceDirectories.in(Compile).value.head / "migrate.properties"
+      IO.write(props, "Input data for migrate tests", out)
+      List(out)
+    }
   )
   .dependsOn(migrate)
   .enablePlugins(BuildInfoPlugin)
@@ -52,8 +59,8 @@ lazy val `scalafix-rules` = project.in(file("scalafix/rules"))
   .settings(
   moduleName := "scalafix",
   libraryDependencies ++= Seq(
-    "ch.epfl.scala" %% "scalafix-core" % Versions.scalafixVersion,
-    "ch.epfl.scala" %% "scalafix-rules" % Versions.scalafixVersion,
+    "ch.epfl.scala" %% "scalafix-core" % V.scalafixVersion,
+    "ch.epfl.scala" %% "scalafix-rules" % V.scalafixVersion,
   )
 )
 
@@ -81,7 +88,7 @@ lazy val `scalafix-tests` = project.in(file("scalafix/tests"))
     libraryDependencies +=
       "ch.epfl.scala" %
         "scalafix-testkit" %
-        Versions.scalafixVersion %
+        V.scalafixVersion %
         Test cross CrossVersion.full,
     scalafixTestkitOutputSourceDirectories :=
       sourceDirectories.in(`scalafix-output`, Compile).value,
@@ -97,7 +104,7 @@ lazy val `scalafix-tests` = project.in(file("scalafix/tests"))
   .dependsOn(`scalafix-input`, `scalafix-rules`)
   .enablePlugins(ScalafixTestkitPlugin)
 
-lazy val Versions = new {
+lazy val V = new {
   val scala213 = "2.13.3"
   val scalatest = "3.2.0"
   val dotty = "0.27.0-RC1"

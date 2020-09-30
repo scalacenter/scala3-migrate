@@ -22,5 +22,5 @@ object FileUtils {
   }
 
   def read(path: AbsolutePath, charset: Charset = StandardCharsets.UTF_8): String =
-    new String(Files.readAllBytes(path.toPath), charset)
+    new String(Files.readAllBytes(path.toNio), charset)
 }
