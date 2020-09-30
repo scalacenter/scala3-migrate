@@ -4,10 +4,11 @@ import org.scalatest.funsuite.AnyFunSuiteLike
 import utils.FileUtils._
 import domain._
 import buildinfo._
+import scalafix.testkit.DiffAssertions
 import utils.FileUtils
 
 
-class MigrationSuite extends AnyFunSuiteLike {
+class MigrationSuite extends AnyFunSuiteLike with DiffAssertions {
 
   val input = AbsolutePath.from(BuildInfo.input)
   val output = AbsolutePath.from(BuildInfo.output)
@@ -25,10 +26,11 @@ class MigrationSuite extends AnyFunSuiteLike {
 
         val outputFile = output.child(relative)
         val result = Main.runScalafix(inputFile, input, migrateClasspath)
-        assert(result.isSuccess, s"${result.get}")
+        assert(result.isSuccess, result.get)
         val outputContent = FileUtils.read(outputFile)
-        assert(outputContent == result.get.previewPatches().get)
-        assert(Main.compileInDotty(outputFile).isSuccess)
+        assertNoDiff(outputContent, result.get.previewPatches().get)
+        val compileInDotty = Main.compileInDotty(outputFile)
+        assert(compileInDotty.isSuccess, compileInDotty.get)
       }
     }
 
