@@ -9,17 +9,12 @@ import scala.util.{Failure, Success, Try}
 object ScalaExtensions {
   implicit class TraversableOnceTryExtension[A, M[X] <: IterableOnce[X]](val in: M[Try[A]]) extends AnyVal {
     def sequence(implicit bf: BuildFrom[M[Try[A]], A, M[A]]): Try[M[A]] = {
-      val init = Try(bf(in) -> Seq.empty[Throwable])
+      val init = Try(bf(in))
       in.iterator.foldLeft(init) { (acc, cur) =>
-        acc.flatMap { case (results, errors) =>
-          cur.map { result => (results += result, errors) }
-            .recover { case NonFatal(error) => (results, error +: errors) }
+        acc.flatMap { case builder =>
+          cur.map { result => builder += result }
         }
-      }.flatMap {case (results, errors) =>
-        val errorsLength = errors.length
-        if (errorsLength >= 1) Failure(errors.head)
-        else Success(results.result())
-      }
+      }.map(_.result)
     }
   }
 

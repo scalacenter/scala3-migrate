@@ -1,11 +1,10 @@
 package migrate
 
-import org.scalatest.funsuite.AnyFunSuiteLike
-import utils.FileUtils._
-import domain._
 import buildinfo._
+import domain._
+import org.scalatest.funsuite.AnyFunSuiteLike
 import scalafix.testkit.DiffAssertions
-import utils.FileUtils
+import utils.FileUtils._
 
 
 class MigrationSuite extends AnyFunSuiteLike with DiffAssertions {
@@ -27,7 +26,7 @@ class MigrationSuite extends AnyFunSuiteLike with DiffAssertions {
         val outputFile = output.child(relative)
         val result = Main.runScalafix(inputFile, input, migrateClasspath)
         assert(result.isSuccess, result.get)
-        val outputContent = FileUtils.read(outputFile)
+        val outputContent = read(outputFile)
         assertNoDiff(outputContent, result.get.previewPatches().get)
         val compileInDotty = Main.compileInDotty(outputFile)
         assert(compileInDotty.isSuccess, compileInDotty.get)
