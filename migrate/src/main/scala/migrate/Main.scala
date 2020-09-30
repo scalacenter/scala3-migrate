@@ -6,10 +6,10 @@ import java.nio.file.Files
 import coursier._
 import domain.{AbsolutePath, Classpath}
 import interfaces.DottyCompiler
-import scalafix.interfaces.Scalafix
+import scalafix.interfaces.{Scalafix, ScalafixFileEvaluation}
 import utils.CoursierApi
+import utils.ScalaExtensions.OptionalExtension
 
-import scala.collection.convert.ImplicitConversions._
 import scala.jdk.CollectionConverters._
 import scala.reflect.io.VirtualDirectory
 import scala.tools.nsc.{Global, Settings}
@@ -42,20 +42,25 @@ object Main {
       .recover { case NonFatal(e) => scribe.info(s"compile with dotty failed with ${e.getMessage}") }
   }
 
-  def runScalafix(file: AbsolutePath): Try[String] = {
+  def runScalafix(file: AbsolutePath, sourceRoot: AbsolutePath, classpath: Classpath): Try[ScalafixFileEvaluation] = {
     val api = Scalafix.fetchAndClassloadInstance("2.13")
-    val eval = api.newArguments()
-      .withRules(List("ProcedureSyntax").asJava)
-      .withPaths(List(file.toPath).asJava)
+    val evals = api.newArguments()
+      .withScalaVersion("2.13.3")
+      .withClasspath(classpath.paths.map(_.toNio).asJava)
+      .withToolClasspath(classpath.toUrlClassLoader(api.getClass.getClassLoader))
+      .withSourceroot(sourceRoot.toNio)
+      .withPaths(List(file.toNio).asJava)
+      .withRules(List("Infertypes").asJava)
       .evaluate()
 
-    eval.getFileEvaluations.headOption match {
-      case Some(fileEval) => Success(fileEval.previewPatches().get)
-      case None => Failure(new Exception(s"Scalafix failed with error ${eval.getErrors.toList}"))
+    evals.getFileEvaluations.headOption match {
+      case Some(eval) => Success(eval)
+      case None => Failure(new Exception(
+        s"""|scalafix failed evaluating $file with error:
+            |${evals.getMessageError.asScala.getOrElse("")}.
+            |Code error:  ${evals.getErrors.toList}""".stripMargin))
     }
-
   }
-
 
 }
 

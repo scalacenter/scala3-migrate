@@ -1,6 +1,5 @@
 object HelloWorld {
-
- def toto(): Unit = {
-  println("Hello World")
- }
+  def toto(): Unit = {
+    val s = "Hello World"
+  }
 }
