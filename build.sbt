@@ -52,7 +52,7 @@ val tests = project.in(file("tests"))
       List(out)
     }
   )
-  .dependsOn(migrate)
+  .dependsOn(migrate, input)
   .enablePlugins(BuildInfoPlugin)
 
 lazy val `scalafix-rules` = project.in(file("scalafix/rules"))
