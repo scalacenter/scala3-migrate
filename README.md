@@ -3,7 +3,8 @@ This project is a work-in progress tool to help migrating projects to Scala 3.
 The goal is to provide a tool that will find the minimum set of types required explicitly to make dotty compiling a project without changing its meaning.
 
 ## Technical solution
-The solution consists of 3 independent steps that will be packaged in a long-running script The compile inputs that are needed to compile both with scala 2 and dotty, will be provided by a sbt-plugin that we will need to develop. 
+The solution consists of 3 independent steps that will be packaged in a long-running script.
+The compile inputs that are needed to compile both with scala 2 and dotty, will be provided by a sbt-plugin that we will need to develop. 
 
 **First step**: Make sure that all methods/functions of the public API have an explicit result type. If not, we require to run `Explicit ResultType` rule, which will type explicitly public and protected methods. Those types will be kept even after scala 3 migration. This is a good practice anyway, even in the context of a single Scala version, so that the APIs do not change based on the whims of the compiler's type inference. It will ensure that the following steps do not alter the public API.
 
