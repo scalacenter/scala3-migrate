@@ -1,10 +1,8 @@
-inThisBuild(
-  List(
-    scalaVersion := V.scala213,
-  )
-)
+import BuildInfoExtension._
 
-val interfaces = project.in(file("interfaces"))
+ThisBuild / scalaVersion := V.scala213
+
+lazy val interfaces = project.in(file("interfaces"))
   .settings(
     libraryDependencies ++= Seq(
       "ch.epfl.lamp" % "dotty-compiler_0.27" % V.dotty,
@@ -13,73 +11,70 @@ val interfaces = project.in(file("interfaces"))
     autoScalaLibrary := false
   )
 
-val migrate = project.in(file("migrate"))
+lazy val migrate = project.in(file("migrate"))
+  .settings(addBuildInfoToConfig(Test))
   .settings(
+    scalacOptions ++= Seq(
+      "-deprecation"
+    ),
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "ch.epfl.scala" % "scalafix-interfaces" % V.scalafix,
-      "io.get-coursier" %% "coursier" % V.coursier,
-      "com.outr" %% "scribe" % V.scribe
-    )
+      "com.outr" %% "scribe" % V.scribe,
+      "org.scalatest" %% "scalatest" % V.scalatest,
+      "ch.epfl.scala" % "scalafix-testkit" % V.scalafix % Test cross CrossVersion.full,
+    ),
+    Test / buildInfoPackage := "migrate.test",
+    Test / buildInfoKeys := Seq(
+      "input" -> (input / Compile / sourceDirectory).value,
+      "output" -> (output / Compile / sourceDirectory).value,
+      "sourceRoot" -> (input / sourceDirectory).value,
+      fromClasspath("scala2Classpath", input / Compile / fullClasspath),
+      fromScalacOptions("scala2CompilerOptions", input / Compile / scalacOptions),
+      fromClasspath("toolClasspath", `scalafix-rules` / Compile / fullClasspath),
+      fromClasspath("scala3Classpath", output / Compile / fullClasspath),
+      fromScalacOptions("scala3CompilerOptions", output / Compile / scalacOptions),
+      "scala3ClassDirectory" -> (output / Compile / compile / classDirectory).value,
+    ),
+    Compile / buildInfoKeys := Seq()
   )
-  .dependsOn(interfaces, `scalafix-rules`)
+  .enablePlugins(BuildInfoPlugin)
+  .dependsOn(interfaces)
 
-val input = project.in(file("input"))
+lazy val input = project.in(file("input"))
   .settings(
     semanticdbEnabled := true
   )
 
-val output = project.in(file("output"))
+lazy val output = project.in(file("output"))
   .settings(
-    scalaVersion := V.dotty
+    scalaVersion := V.dotty,
   )
-
-val tests = project.in(file("tests"))
-  .settings(
-    libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % V.scalatest,
-      "ch.epfl.scala" % "scalafix-testkit" % V.scalafixVersion % Test cross CrossVersion.full,
-    ),
-    buildInfoKeys := Seq[BuildInfoKey](
-      "input" -> sourceDirectory.in(input, Compile).value,
-      "output" -> sourceDirectory.in(output, Compile).value,
-    ),
-    Compile / resourceGenerators += Def.task {
-      val props = new java.util.Properties()
-      props.put("migrateClasspath", fullClasspath.in(`scalafix-rules`, Compile)
-        .value.map(_.data).mkString(java.io.File.pathSeparator))
-      val out = managedResourceDirectories.in(Compile).value.head / "migrate.properties"
-      IO.write(props, "Input data for migrate tests", out)
-      List(out)
-    }
-  )
-  .dependsOn(migrate, input)
-  .enablePlugins(BuildInfoPlugin)
 
 lazy val `scalafix-rules` = project.in(file("scalafix/rules"))
   .settings(
-  moduleName := "scalafix",
-  libraryDependencies ++= Seq(
-    "ch.epfl.scala" %% "scalafix-core" % V.scalafixVersion,
-    "ch.epfl.scala" %% "scalafix-rules" % V.scalafixVersion,
+    moduleName := "scalafix",
+    libraryDependencies ++= Seq(
+      "ch.epfl.scala" %% "scalafix-core" % V.scalafix,
+      "ch.epfl.scala" %% "scalafix-rules" % V.scalafix,
+    )
   )
-)
 
 lazy val `scalafix-input` = project.in(file("scalafix/input"))
   .settings(
-  skip in publish := true,
-  libraryDependencies ++= Seq(
-    "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-    "com.twitter" %% "bijection-core" % "0.9.7"
+    skip in publish := true,
+    libraryDependencies ++= Seq(
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+      "com.twitter" %% "bijection-core" % "0.9.7"
+    )
   )
-)
 
 lazy val `scalafix-output` = project.in(file("scalafix/output"))
   .settings(
-  skip in publish := true,
-  libraryDependencies ++= Seq(
-    "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-    "com.twitter" %% "bijection-core" % "0.9.7"
+    skip in publish := true,
+    libraryDependencies ++= Seq(
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+      "com.twitter" %% "bijection-core" % "0.9.7"
   )
 )
 
@@ -89,7 +84,7 @@ lazy val `scalafix-tests` = project.in(file("scalafix/tests"))
     libraryDependencies +=
       "ch.epfl.scala" %
         "scalafix-testkit" %
-        V.scalafixVersion %
+        V.scalafix %
         Test cross CrossVersion.full,
     scalafixTestkitOutputSourceDirectories :=
       sourceDirectories.in(`scalafix-output`, Compile).value,
@@ -112,5 +107,4 @@ lazy val V = new {
   val scalafix = "0.9.20"
   val coursier = "2.0.0-RC6-25"
   val scribe = "2.7.12"
-  val scalafixVersion = "0.9.20"
 }
