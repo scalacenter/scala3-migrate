@@ -19,6 +19,6 @@ At this point, we have a codebase that a) compiles with Dotty and b) preserves t
 
 **Third step**: Compare synthetics and more precisely implicit parameters and implicit conversions inferred in scala 2 and dotty, and produce a report. 
 
-#Acknowledgments
+# Acknowledgments
 
 <img src="https://scala.epfl.ch/resources/img/scala-center-swirl.png" width="40px" /> This tool is develloped by [Scala Center](https://scala.epfl.ch)
