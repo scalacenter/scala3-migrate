@@ -1,5 +1,6 @@
-object HelloWorld {
+object HelloWorld extends App {
   def toto(): Unit = {
-    val s = "Hello World"
+    val msg = "Hello, World!"
+    println(msg)
   }
 }

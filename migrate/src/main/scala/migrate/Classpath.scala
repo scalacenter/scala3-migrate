@@ -1,4 +1,4 @@
-package domain
+package migrate
 
 import java.io.File
 import java.net.URLClassLoader
@@ -6,7 +6,6 @@ import java.net.URLClassLoader
 import utils.ScalaExtensions._
 
 import scala.util.Try
-
 
 case class Classpath(paths: AbsolutePath*) {
   val value: String = paths.mkString(File.pathSeparator)
