@@ -17,11 +17,10 @@ abstract class WidenSingleTypeUsage {
   def widen: WidenSingleType
   def widenString = widen.strings // left un-annotated
   def meaningful = widen.Meaningful
-  def message: String = identity(meaningful.message)
+  def message: String = identity[String](meaningful.message)
 }
 object WidenSingleType {
-  def list(a: WidenSingleType, b: WidenSingleType) =
-    Seq(a.param, b.param)
-  def strings(a: WidenSingleType): a.strings.type = identity(a.strings)
-  def k: Int = list(???, ???).head.foo
+//  def list(a: WidenSingleType, b: WidenSingleType) =
+//    Seq(a.param, b.param)
+  def strings(a: WidenSingleType): a.strings.type = identity[a.strings.type](a.strings)
 }

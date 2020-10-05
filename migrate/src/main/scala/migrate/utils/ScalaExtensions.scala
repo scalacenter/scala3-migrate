@@ -3,7 +3,6 @@ package migrate.utils
 import java.util.Optional
 
 import scala.collection.BuildFrom
-import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
 private[migrate] object ScalaExtensions {

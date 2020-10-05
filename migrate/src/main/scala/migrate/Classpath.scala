@@ -3,7 +3,7 @@ package migrate
 import java.io.File
 import java.net.URLClassLoader
 
-import utils.ScalaExtensions._
+import migrate.utils.ScalaExtensions._
 
 import scala.util.Try
 

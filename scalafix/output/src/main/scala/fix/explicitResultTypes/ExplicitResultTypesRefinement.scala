@@ -5,24 +5,24 @@ import scala.language.reflectiveCalls
 
 object ExplicitResultTypesRefinement {
   val field: java.io.Serializable{val results: List[Int]} = new Serializable {
-    val results: List[Int] = List(1)
+    val results: List[Int] = List.apply[Int](1)
   }
   val conflict: java.io.Serializable{val results: List[Int]} = new Serializable {
-    val results: List[Int] = List(1)
+    val results: List[Int] = List.apply[Int](1)
   }
   class conflict
   class conflict1
   def method(param: Int): java.io.Serializable{val results: List[Int]} = new Serializable {
-    val results: List[Int] = List(param)
+    val results: List[Int] = List.apply[Int](param)
   }
   def method(param: String): java.io.Serializable{val results: List[String]} = new Serializable {
-    val results: List[String] = List(param)
+    val results: List[String] = List.apply[String](param)
   }
   def curried(param: Int)(param2: Int, param3: String): java.io.Serializable{val results: List[Int]} = new Serializable {
-    val results: List[Int] = List(param2, param3.length(), param)
+    val results: List[Int] = List.apply[Int](param2, param3.length(), param)
   }
   def tparam[T <: CharSequence](e: T): java.io.Serializable{val results: List[Int]} = new Serializable {
-    val results: List[Int] = List(e.length())
+    val results: List[Int] = List.apply[Int](e.length())
   }
   val access: java.io.Serializable = new Serializable {
     private val results: List[Int] = List.empty

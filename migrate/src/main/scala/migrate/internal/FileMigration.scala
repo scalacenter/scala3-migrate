@@ -1,11 +1,12 @@
 package migrate.internal
 
-import scalafix.interfaces.ScalafixPatch
 import interfaces.Scala3Compiler
-import scala.util.{Try, Success, Failure}
-import scala.util.control.NonFatal
-import scala.annotation.tailrec
 import migrate.utils.Timer._
+import scalafix.interfaces.ScalafixPatch
+
+import scala.annotation.tailrec
+import scala.util.control.NonFatal
+import scala.util.{Failure, Success, Try}
 
 /**
  * Given a [[FileMigrationState]] and a [[Scala3Compiler]], the [[FileMigration]] class

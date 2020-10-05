@@ -8,5 +8,5 @@ object ImmutableSeq {
   def foo: scala.collection.Seq[Int] = seq()
   def scalaFoo: Seq[Int] = scalaSeq()
 
-  def foo(a: Int*): scala.collection.immutable.List[Int] = identity(a.toList)
+  def foo(a: Int*): scala.collection.immutable.List[Int] = identity[List[Int]](a.toList)
 }

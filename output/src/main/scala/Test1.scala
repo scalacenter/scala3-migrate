@@ -6,4 +6,7 @@ object Test1 {
     val result: Array[A] = new Array(size)
     result
   }
+
+  implicit val number: Int = 5
+  implicit val crazy1: Int = implicitly[Int](number)
 }

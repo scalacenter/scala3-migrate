@@ -10,7 +10,7 @@ class MigrationSuite extends AnyFunSuiteLike with DiffAssertions {
 
   val input = AbsolutePath.from(BuildInfo.input)
   val output = AbsolutePath.from(BuildInfo.output)
-  val sourceRoot = AbsolutePath.from(BuildInfo.sourceRoot)
+  val workspace = AbsolutePath.from(BuildInfo.workspace)
   val scala2Classpath = Classpath.from(BuildInfo.scala2Classpath).get
   val scala2CompilerOptions = BuildInfo.scala2CompilerOptions.toSeq
   val toolClasspath = Classpath.from(BuildInfo.toolClasspath).get
@@ -22,7 +22,7 @@ class MigrationSuite extends AnyFunSuiteLike with DiffAssertions {
     test(s"${inputFile.getName}") {
 
       val preview = Main.previewMigration(
-        sourceRoot,
+        workspace,
         inputFile,
         scala2Classpath,
         scala2CompilerOptions,

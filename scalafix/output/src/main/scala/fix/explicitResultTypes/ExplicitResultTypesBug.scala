@@ -7,7 +7,7 @@ object ExplicitResultTypesBug {
 
   class MyMirror(owner: ClassMirror) {
     val symbol: reflect.runtime.universe.MethodSymbol =
-      owner.symbol.info.decl(TermName("")).asMethod
+      owner.symbol.info.decl(TermName.apply("")).asMethod
   }
 
   val map: scala.collection.mutable.Map[Int,Int] = mut.Map.empty[Int, Int]

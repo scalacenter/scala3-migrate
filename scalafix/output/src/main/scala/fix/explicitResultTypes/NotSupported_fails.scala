@@ -38,13 +38,11 @@ object NotSupported_fails {
     val superType3 = ??? : Types.super[TypesBase].x.type
   }
 
-  implicit val implicit_x: Int = 42
-  implicit val crazy1: Int = implicitly[Int](implicit_x)
-
   class H[M[_]]
 
   val universalType1 = ??? : H[({ type L[U] = List[U] })#L]
 
   // FIXME: https://github.com/twitter/rsc/issues/144
 //   val repeatedType = ??? : ((Any*) => Any)
+
 }

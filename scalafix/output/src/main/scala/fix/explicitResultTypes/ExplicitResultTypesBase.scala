@@ -16,12 +16,12 @@ object ExplicitResultTypesBase {
   private var i: Int = 22
   private implicit var j: Int = 1
   val k: (Int, String) = (1, "msg")
-  implicit val L: List[Int] = List(1)
-  implicit val M: Map[Int,String] = Map(1 -> "STRING")
+  implicit val L: List[Int] = List.apply[Int](1)
+  implicit val M: Map[Int,String] = Map.apply[Int,String](1 -> "STRING")
   implicit def D: Int = 2
   implicit def tparam[T](e: T): T = e
-  implicit def tparam2[T](e: T): List[T] = List(e)
-  implicit def tparam3[T](e: T): Map[T,T] = Map(e -> e)
+  implicit def tparam2[T](e: T): List[T] = List.apply[T](e)
+  implicit def tparam3[T](e: T): Map[T,T] = Map.apply[T,T](e -> e)
   class implicitlytrick {
     implicit val s: _root_.java.lang.String = "string"
 //    implicit val x = implicitly[String] // adding type here will fail compilation
@@ -35,15 +35,15 @@ object ExplicitResultTypesBase {
     def `x`: Int = "abc".length
     def `x `: Int = "abc".length
   }
-  locally {
-    implicit val Implicit: scala.concurrent.Future[Int] = scala.concurrent.Future.successful(2)
-    val Var: scala.concurrent.Future[Int] = scala.concurrent.Future.successful(2)
-    val Val: scala.concurrent.Future[Int] = scala.concurrent.Future.successful(2)
-    def Def: scala.concurrent.Future[Int] = scala.concurrent.Future.successful(2)
+  locally[Unit] {
+    implicit val Implicit: scala.concurrent.Future[Int] = scala.concurrent.Future.successful[Int](2)
+    val Var: scala.concurrent.Future[Int] = scala.concurrent.Future.successful[Int](2)
+    val Val: scala.concurrent.Future[Int] = scala.concurrent.Future.successful[Int](2)
+    def Def: scala.concurrent.Future[Int] = scala.concurrent.Future.successful[Int](2)
   }
   object unicode {
     object `->` {
-      def unapply[S](in: (S, S)): Option[(S, S)] = Some(in)
+      def unapply[S](in: (S, S)): Option[(S, S)] = Some.apply[Tuple2[S,S]](in)
     }
     val `→`: fix.explicitResultTypes.ExplicitResultTypesBase.unicode.->.type = `->`
   }

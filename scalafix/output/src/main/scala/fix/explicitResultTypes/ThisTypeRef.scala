@@ -5,7 +5,7 @@ object ThisTypeRef {
     class T
   }
   class Sub extends Base {
-    val ref: Sub.this.T = identity(new T())
+    val ref: Sub.this.T = identity[Sub.this.T](new T())
   }
 
   trait ThisType  {
