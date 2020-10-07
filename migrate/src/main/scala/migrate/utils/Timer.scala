@@ -1,16 +1,18 @@
 package migrate.utils
 
-import scala.util.control.NonFatal
-import scala.util.{Success, Failure, Try}
-import scribe._
+import java.time.{Instant}
+
+import scala.concurrent.duration.{FiniteDuration, MILLISECONDS}
 import scala.language.experimental.macros
-import scala.reflect.macros.blackbox
-import scala.annotation.compileTimeOnly
 
 private[migrate] object Timer {
-  def timedMs[A](task: => A): (A, Long) ={
-    val start = System.currentTimeMillis()
+  def timedMs[A](task: => A): (A, FiniteDuration) ={
+    val start =  Instant.now()
     val result = task
-    (result, System.currentTimeMillis() - start)
+
+    (result, toFiniteDuration(start, Instant.now()))
   }
+
+  def toFiniteDuration(start: Instant, end: Instant): FiniteDuration =
+    FiniteDuration(end.toEpochMilli - start.toEpochMilli, MILLISECONDS).toCoarsest
 }
