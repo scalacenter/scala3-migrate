@@ -8,30 +8,30 @@ import scala.annotation.tailrec
 import migrate.utils.Timer._
 
 /**
- * Given a [[MigrationFile]] and a [[Scala3Compiler]], the [[FileMigration]] class
+ * Given a [[FileMigrationState]] and a [[Scala3Compiler]], the [[FileMigration]] class
  * tries to find the minimum set of patches that makes the code compile
  **/
-private[migrate] class FileMigration(file: MigrationFile, compiler: Scala3Compiler) {
+private[migrate] class FileMigration(fileToMigrate: FileMigrationState.Initial, compiler: Scala3Compiler) {
 
-  def migrate(): FileMigrationResult = {
-    val initialState = CompilingState(file.patches, Seq.empty)
+  def migrate(): FileMigrationState.FinalState = {
+    val initialState = CompilingState(fileToMigrate.patches, Seq.empty)
     timedMs {
       loopUntilNoCandidates(Success(initialState))
     }  match {
       case (Success(finalState), timeMs) =>
-        scribe.info(s"Found ${finalState.necessaryPatches.size} required patch(es) in ${file.source} after $timeMs ms")
-        FileMigrationSuccess(finalState.necessaryPatches)
-      case (Failure(exception), timeMs) => FileMigrationFailure(exception)
+        scribe.info(s"Found ${finalState.necessaryPatches.size} required patch(es) in ${fileToMigrate.source} after $timeMs ms")
+        fileToMigrate.success(finalState.necessaryPatches)
+      case (Failure(exception), timeMs) => fileToMigrate.failed(exception)
     }
   }
-  
+
   @tailrec
   private def loopUntilNoCandidates(state: Try[CompilingState]): Try[CompilingState] = {
     state match {
-      case Success(state) if state.candidates.nonEmpty => 
+      case Success(state) if state.candidates.nonEmpty =>
         scribe.info(s"${state.candidates.size} remaining candidate(s)")
         loopUntilNoCandidates(state.next())
-      case finalState => finalState  
+      case finalState => finalState
     }
   }
 
@@ -39,7 +39,7 @@ private[migrate] class FileMigration(file: MigrationFile, compiler: Scala3Compil
     * A instance of [[CompilingState]] is a set of patches that are sufficient to make the code compiles.
     *
     * @param candidates         A set of patches that may or may not be necessary
-    * @param necessaryPatches   A set of necessary patches 
+    * @param necessaryPatches   A set of necessary patches
     */
   private case class CompilingState(
     candidates: Seq[ScalafixPatch],
@@ -51,9 +51,9 @@ private[migrate] class FileMigration(file: MigrationFile, compiler: Scala3Compil
       val initialStep = CompilationStep(
         kept = Seq.empty,
         removed = candidates,
-        necessary = None 
+        necessary = None
       )
-      
+
       loopUntilCompile(Success(initialStep)) map {
         case CompilationStep(kept, _, necessary) =>
           CompilingState(kept, necessaryPatches ++ necessary)
@@ -66,7 +66,7 @@ private[migrate] class FileMigration(file: MigrationFile, compiler: Scala3Compil
         case Success(step) =>
           step.doesCompile() match {
             case Success(true) => Success(step)
-            case Success(false) => 
+            case Success(false) =>
               if (step.removed.size == 1) {
                 // the last patch is necessary
                 Success(
@@ -99,7 +99,7 @@ private[migrate] class FileMigration(file: MigrationFile, compiler: Scala3Compil
     ) {
 
       def doesCompile(): Try[Boolean] = {
-        file.previewPatches(kept ++ necessaryPatches)
+        fileToMigrate.previewPatches(kept ++ necessaryPatches)
           .map { source =>
             try {
               compiler.compile(List(source))

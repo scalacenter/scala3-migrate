@@ -1,10 +1,9 @@
 package migrate
 
 import migrate.test.BuildInfo
+import migrate.utils.FileUtils._
 import org.scalatest.funsuite.AnyFunSuiteLike
 import scalafix.testkit.DiffAssertions
-import utils.FileUtils._
-import dotty.tools.io.ClassPath
 
 
 class MigrationSuite extends AnyFunSuiteLike with DiffAssertions {
@@ -41,16 +40,4 @@ class MigrationSuite extends AnyFunSuiteLike with DiffAssertions {
     }
   }
 
-  private def getProperty(key: String): String = {
-    val props = new java.util.Properties()
-    val path = "migrate.properties"
-    val in = this.getClass.getClassLoader.getResourceAsStream(path)
-    if (in == null) {
-      sys.error(s"Failed to load resource $path")
-    } else {
-      try props.load(in)
-      finally in.close()
-    }
-    props.getProperty(key)
-  }
 }

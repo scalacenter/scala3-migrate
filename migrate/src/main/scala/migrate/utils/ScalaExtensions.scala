@@ -27,6 +27,10 @@ private[migrate] object ScalaExtensions {
       case Some(v) => Success(v)
       case None => Failure(new Exception("Empty value"))
     }
+    def toTry(e: => Throwable): Try[A] = in match {
+      case Some(v) => Success(v)
+      case None => Failure(e)
+    }
   }
 
   implicit class OptionalExtension[A](val in: Optional[A]) extends AnyVal {
