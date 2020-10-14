@@ -12,6 +12,7 @@ class MigrationSuite extends AnyFunSuiteLike with DiffAssertions {
   val output = AbsolutePath.from(BuildInfo.output)
   val workspace = AbsolutePath.from(BuildInfo.workspace)
   val scala2Classpath = Classpath.from(BuildInfo.scala2Classpath).get
+  val semanticdbTargetRoot = AbsolutePath.from(BuildInfo.semanticdbPath)
   val scala2CompilerOptions = BuildInfo.scala2CompilerOptions.toSeq
   val toolClasspath = Classpath.from(BuildInfo.toolClasspath).get
   val scala3Classpath = Classpath.from(BuildInfo.scala3Classpath).get
@@ -20,11 +21,12 @@ class MigrationSuite extends AnyFunSuiteLike with DiffAssertions {
   
   listFiles(input).foreach { inputFile =>
     test(s"${inputFile.getName}") {
+      val scala2ClasspathWithSemanticdb = scala2Classpath :+ semanticdbTargetRoot
 
       val preview = Main.previewMigration(
         workspace,
         inputFile,
-        scala2Classpath,
+        scala2ClasspathWithSemanticdb,
         scala2CompilerOptions,
         toolClasspath,
         scala3Classpath,

@@ -1,7 +1,6 @@
 import BuildInfoExtension._
 
 ThisBuild / scalaVersion := V.scala213
-//ThisBuild / scalacOptions ++= List("-P:semanticdb:synthetics:on")
 
 lazy val interfaces = project.in(file("interfaces"))
   .settings(
@@ -31,6 +30,7 @@ lazy val migrate = project.in(file("migrate"))
       "output" -> (output / Compile / sourceDirectory).value,
       "workspace" -> (ThisBuild / baseDirectory).value,
       fromClasspath("scala2Classpath", input / Compile / fullClasspath),
+      "semanticdbPath" -> (input / Compile / semanticdbTargetRoot).value,
       fromScalacOptions("scala2CompilerOptions", input / Compile / scalacOptions),
       fromClasspath("toolClasspath", `scalafix-rules` / Compile / fullClasspath),
       fromClasspath("scala3Classpath", output / Compile / fullClasspath),
@@ -45,7 +45,6 @@ lazy val migrate = project.in(file("migrate"))
 lazy val input = project.in(file("input"))
   .settings(
     semanticdbEnabled := true,
-    semanticdbIncludeInJar := true,
     scalacOptions ++= List("-P:semanticdb:synthetics:on")
   )
 
@@ -69,7 +68,6 @@ lazy val `scalafix-input` = project.in(file("scalafix/input"))
     scalacOptions ++= List(
       "-P:semanticdb:synthetics:on"
     ),
-    semanticdbIncludeInJar := true,
     skip in publish := true,
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,

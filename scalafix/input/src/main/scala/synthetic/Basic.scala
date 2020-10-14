@@ -1,5 +1,5 @@
 /*
-rule = Infertypes
+rule = MigrationRule
 */
 package synthetic
 
