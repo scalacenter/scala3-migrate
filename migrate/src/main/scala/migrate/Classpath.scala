@@ -3,7 +3,7 @@ package migrate
 import java.io.File
 import java.net.URLClassLoader
 
-import utils.ScalaExtensions._
+import migrate.utils.ScalaExtensions._
 
 import scala.util.Try
 
@@ -14,6 +14,8 @@ case class Classpath(paths: AbsolutePath*) {
     val urls = paths.map(_.toNio.toUri.toURL).toArray
     new URLClassLoader(urls, parent)
   }
+
+  def :+(newPath : AbsolutePath): Classpath = Classpath((paths :+ newPath): _*)
 }
 object Classpath {
   def from(value: String): Try[Classpath] = {

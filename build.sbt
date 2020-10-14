@@ -28,8 +28,9 @@ lazy val migrate = project.in(file("migrate"))
     Test / buildInfoKeys := Seq(
       "input" -> (input / Compile / sourceDirectory).value,
       "output" -> (output / Compile / sourceDirectory).value,
-      "sourceRoot" -> (input / sourceDirectory).value,
+      "workspace" -> (ThisBuild / baseDirectory).value,
       fromClasspath("scala2Classpath", input / Compile / fullClasspath),
+      "semanticdbPath" -> (input / Compile / semanticdbTargetRoot).value,
       fromScalacOptions("scala2CompilerOptions", input / Compile / scalacOptions),
       fromClasspath("toolClasspath", `scalafix-rules` / Compile / fullClasspath),
       fromClasspath("scala3Classpath", output / Compile / fullClasspath),
@@ -43,7 +44,8 @@ lazy val migrate = project.in(file("migrate"))
 
 lazy val input = project.in(file("input"))
   .settings(
-    semanticdbEnabled := true
+    semanticdbEnabled := true,
+    scalacOptions ++= List("-P:semanticdb:synthetics:on")
   )
 
 lazy val output = project.in(file("output"))
@@ -62,6 +64,10 @@ lazy val `scalafix-rules` = project.in(file("scalafix/rules"))
 
 lazy val `scalafix-input` = project.in(file("scalafix/input"))
   .settings(
+    semanticdbEnabled := true,
+    scalacOptions ++= List(
+      "-P:semanticdb:synthetics:on"
+    ),
     skip in publish := true,
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
@@ -75,8 +81,8 @@ lazy val `scalafix-output` = project.in(file("scalafix/output"))
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "com.twitter" %% "bijection-core" % "0.9.7"
+    )
   )
-)
 
 
 lazy val `scalafix-tests` = project.in(file("scalafix/tests"))
@@ -105,6 +111,5 @@ lazy val V = new {
   val scalatest = "3.2.0"
   val dotty = "0.27.0-RC1"
   val scalafix = "0.9.20"
-  val coursier = "2.0.0-RC6-25"
   val scribe = "2.7.12"
 }

@@ -5,6 +5,7 @@ import java.nio.charset.{Charset, StandardCharsets}
 import java.nio.file.Files
 
 import migrate.AbsolutePath
+
 import scala.util.Try
 
 private[migrate] object FileUtils {

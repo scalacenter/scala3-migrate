@@ -106,7 +106,7 @@ object Main {
                          compilerOptions: Seq[String]
                         ): Try[ScalafixEvaluation] = Try {
     val args = scalafix.newArguments()
-      .withRules(Seq("Infertypes").asJava)
+      .withRules(Seq("MigrationRule").asJava)
       .withPaths(sources.map(_.toNio).asJava)
       .withClasspath(classpath.paths.map(_.toNio).asJava)
       .withScalacOptions(compilerOptions.asJava) // not sure which compiler option we need here !!

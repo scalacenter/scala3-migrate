@@ -1,6 +1,6 @@
 package migrate.utils
 
-import java.time.{Instant}
+import java.time.Instant
 
 import scala.concurrent.duration.{FiniteDuration, MILLISECONDS}
 import scala.language.experimental.macros
