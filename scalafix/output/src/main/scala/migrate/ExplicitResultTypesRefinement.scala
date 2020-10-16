@@ -25,8 +25,8 @@ object ExplicitResultTypesRefinement {
     val results: List[Int] = List.apply[Int](e.length())
   }
   val access: java.io.Serializable = new Serializable {
-    private val results: List[Int] = List.empty
-    protected val results2: List[Int] = List.empty
+    private val results: List[Int] = List.empty[scala.Nothing]
+    protected val results2: List[Int] = List.empty[scala.Nothing]
   }
   val product: Product = new Product {
     override def productArity: Int = ???

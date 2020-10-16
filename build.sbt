@@ -85,7 +85,7 @@ lazy val `scalafix-output` = project.in(file("scalafix/output"))
   )
 
 
-lazy val `scalafix-tests` = project.in(file("scalafix/tests"))
+lazy val scalafix = project.in(file("scalafix/tests"))
   .settings(
     libraryDependencies +=
       "ch.epfl.scala" %

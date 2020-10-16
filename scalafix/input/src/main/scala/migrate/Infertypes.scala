@@ -11,5 +11,5 @@ object Infertypes {
   val duration = scala.concurrent.duration.Duration.Zero
 
   case class User(firstName: String, lastName: String)
-  val ml = User("Meriam", "Lachkar")
+  val ml = User("m", "l")
 }

@@ -11,5 +11,5 @@ object LowerBound {
   case object A extends BoundObject[City]
   case object B extends BoundObject[Town]
   case object C extends BoundObject[Village]
-  val x: scala.collection.immutable.List[Product with migrate.LowerBound.BoundObject[_ >: migrate.LowerBound.Village with migrate.LowerBound.Town with migrate.LowerBound.City <: migrate.LowerBound.Bound] with java.io.Serializable] = List(A, B, C)
+  val x: scala.collection.immutable.List[Product with migrate.LowerBound.BoundObject[_ >: migrate.LowerBound.Village with migrate.LowerBound.Town with migrate.LowerBound.City <: migrate.LowerBound.Bound] with java.io.Serializable] = List.apply[Product with migrate.LowerBound.BoundObject[_ >: migrate.LowerBound.Village with migrate.LowerBound.Town with migrate.LowerBound.City <: migrate.LowerBound.Bound] with java.io.Serializable](A, B, C)
 }

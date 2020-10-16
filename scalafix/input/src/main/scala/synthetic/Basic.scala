@@ -4,13 +4,6 @@ rule = MigrationRule
 package synthetic
 
 object Basic {
-  def func(name: String)(age1: Int, age2: Int)(implicit email: String, number: Int = 5): Unit = println(s"number = ${number}")
-  implicit val email: String = "a@b.com"
-  implicit val age = 5
-
-  val person = func("jon")(28, 30)
-  val person2 = func("jon")(28, 30)(email)
-
   val people = List(1).map(_ + 1).map(elm => Map(elm -> elm))
 
   for {
@@ -21,4 +14,18 @@ object Basic {
   for {
     (a, b) <- List(1 -> 2) // pattern
   } yield a + b
+
+  val listOfTEst = List(Other.Test(1))
+  def a[A](in: A) = List(in)
+}
+
+object Other {
+  case class Test(i: Int)
+}
+
+class Test {
+  case class Ok(s: String)
+
+
+  val list: scala.collection.immutable.List[Test.this.Ok] = List.apply[Test.this.Ok](Ok("ok"))
 }
