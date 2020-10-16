@@ -23,6 +23,7 @@ object Main {
                         scala3CompilerOptions: Seq[String],
                         scala3ClassDirectory: AbsolutePath
                       ): Try[String] = {
+    scribe.info(s"Migrating $source")
     for {
       compiler <- setupScala3Compiler(scala3Classpath, scala3ClassDirectory)
       initialFileToMigrate <- buildMigrationFiles(
@@ -56,6 +57,7 @@ object Main {
                              ): Try[Unit] = {
     for {
       compilationUnits <- migrationFiles.map(_.previewAllPatches()).sequence
+      _ = compilationUnits.foreach(file => scribe.info(file.content))
       _ <- timedMs {
         Try {
           compiler.compile(compilationUnits.toList)

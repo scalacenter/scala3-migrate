@@ -17,11 +17,11 @@ object ExplicitResultTypesBase {
   private implicit var j: Int = 1
   val k: (Int, String) = (1, "msg")
   implicit val L: List[Int] = List.apply[Int](1)
-  implicit val M: Map[Int,String] = Map.apply[Int,String](1 -> "STRING")
+  implicit val M: Map[Int,String] = Map.apply[Int, String](1 -> "STRING")
   implicit def D: Int = 2
   implicit def tparam[T](e: T): T = e
   implicit def tparam2[T](e: T): List[T] = List.apply[T](e)
-  implicit def tparam3[T](e: T): Map[T,T] = Map.apply[T,T](e -> e)
+  implicit def tparam3[T](e: T): Map[T,T] = Map.apply[T, T](e -> e)
   class implicitlytrick {
     implicit val s: _root_.java.lang.String = "string"
 //    implicit val x = implicitly[String] // adding type here will fail compilation
@@ -43,7 +43,7 @@ object ExplicitResultTypesBase {
   }
   object unicode {
     object `->` {
-      def unapply[S](in: (S, S)): Option[(S, S)] = Some.apply[Tuple2[S,S]](in)
+      def unapply[S](in: (S, S)): Option[(S, S)] = Some.apply[(S, S)](in)
     }
     val `→`: migrate.ExplicitResultTypesBase.unicode.->.type = `->`
   }

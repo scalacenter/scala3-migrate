@@ -8,5 +8,5 @@ object Infertypes {
   val duration: scala.concurrent.duration.FiniteDuration = scala.concurrent.duration.Duration.Zero
 
   case class User(firstName: String, lastName: String)
-  val ml: migrate.Infertypes.User = User.apply("Meriam", "Lachkar")
+  val ml: migrate.Infertypes.User = User("m", "l")
 }
