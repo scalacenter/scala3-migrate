@@ -13,7 +13,7 @@ import scala.meta.tokens.Token
 import scala.tools.nsc.reporters.StoreReporter
 import scala.util.{Failure, Success}
 
-class MigrationRule(global: ScalafixGlobal) extends SemanticRule("MigrationRule") {
+class MigrationRule(g: ScalafixGlobal) extends SemanticRule("MigrationRule") {
   override def description: String = "infer types and show synthetics"
 
   def this() = this(null)
@@ -31,7 +31,7 @@ class MigrationRule(global: ScalafixGlobal) extends SemanticRule("MigrationRule"
   }
 
   override def fix(implicit doc: SemanticDocument): Patch = {
-    lazy implicit val unit = global.newCompilationUnit(doc.input.text, doc.input.syntax)
+    lazy implicit val unit = g.newCompilationUnit(doc.input.text, doc.input.syntax)
 
     val patchForExplicitResultTypes = addExplicitResultType()
     val patchForTypeApply = AddTypeApply()
@@ -40,50 +40,40 @@ class MigrationRule(global: ScalafixGlobal) extends SemanticRule("MigrationRule"
   }
 
   private def AddTypeApply()(implicit doc: SemanticDocument,
-                             unit: global.CompilationUnit): Patch = {
+                             unit: g.CompilationUnit): Patch = {
+
     doc.synthetics.collect {
       case syn@TypeApplyTree(function: SemanticTree, typeArguments: List[SemanticType]) =>
-        val symbols = typeArguments.map(getAbsoluteType)
-        if (symbols.length < typeArguments.length) Patch.empty
-        else {
-          val gsymbols = symbols.sequence
-          (for {
-            originalTree <- SyntheticHelper.getOriginalTree(syn)
-            if (!originalTree.isInstanceOf[Term.ApplyInfix])
-            if (!(originalTree.isInstanceOf[Pat] && !originalTree.isInstanceOf[Term])) // Never add types on elements that are on the right side of "="
-            replace <- if (syn.toString.startsWith("*.apply")) Some(".apply")
-            else if (syn.toString.startsWith("*[")) Some("")
-            else None
-            typesFromSemantic = gsymbols
-            typesSeenFromGlobal = getTypeNameAsSeenByGlobal(originalTree).map(_.map(_.dealiasWiden))
-            types <- typesSeenFromGlobal.orElse(typesFromSemantic)
-          } yield Patch.addRight(originalTree, s"${replace}[${types.mkString(", ")}]")).getOrElse(Patch.empty)
-        }
+        (for {
+          originalTree <- SyntheticHelper.getOriginalTree(syn)
+          if (!originalTree.isInstanceOf[Term.ApplyInfix])
+          if (!(originalTree.isInstanceOf[Pat] && !originalTree.isInstanceOf[Term])) // Never add types on elements that are on the right side of "="
+          replace <- if (syn.toString.startsWith("*.apply")) Some(".apply")  else if (syn.toString.startsWith("*[")) Some("") else None
+          typesSeenFromGlobal = getTypeNameAsSeenByGlobal(originalTree, replace).map(_.map(_.dealiasWiden.toString()))
+          types <- typesSeenFromGlobal
+            .orElse(typeArguments.map(getAbsoluteType).sequence)
+          // if we don't know how to express a type, we don't create a patch
+          if types.length == typeArguments.length
+        } yield Patch.addRight(originalTree, s"${replace}[${types.mkString(", ")}]")
+          ).getOrElse(Patch.empty)
     }.toList.reverse.asPatch
   }
 
 
-  private def getTypeNameAsSeenByGlobal(origin: Tree)
+  private def getTypeNameAsSeenByGlobal(origin: Tree, replace: String)
                                        (implicit doc: SemanticDocument,
-                                        unit: global.CompilationUnit): Option[List[global.Type]] = {
+                                        unit: g.CompilationUnit): Option[List[g.Type]] = {
     for {
-      globalOrigin <- CompilerService.getTreeInGlobal(origin.tokens.last, global)
+      globalOrigin <- CompilerService.getTreeInGlobal(origin.tokens.last, g, replace)
       types <- globalOrigin match {
-        case t@global.Apply(fun, args) => {
-          fun match {
-            case global.TypeApply(fun, args) =>
-              Some(args.map(_.tpe.asInstanceOf[global.Type]))
-            case _ => None
-          }
-        }
+        case g.TypeApply(fun, args) => Some(args.map(_.tpe.asInstanceOf[g.Type]))
         case _ => None
       }
     } yield types
   }
 
-
   private def addExplicitResultType()(implicit doc: SemanticDocument,
-                                      unit: global.CompilationUnit): Patch = {
+                                      unit: g.CompilationUnit): Patch = {
     doc.tree.collect {
       case t@Defn.Val(mods, Pat.Var(name) :: Nil, None, body) => {
         fixDefinition(t, name, body)
@@ -97,27 +87,26 @@ class MigrationRule(global: ScalafixGlobal) extends SemanticRule("MigrationRule"
   }
 
   private def fixDefinition(defn: Defn, name: Term.Name, body: Term)
-                           (implicit doc: SemanticDocument, unit: global.CompilationUnit): Patch = {
+                           (implicit doc: SemanticDocument, unit: g.CompilationUnit): Patch = {
     (for {
       (replace, spaces) <- getReplaceAndSpaces(defn, body)
       explicitType <- getTypeAsSeenFromGlobal(name)
       filteredType <- filterType(explicitType)
       //      _ = println(s"filteredType.prefixString = ${filteredType.prefix}")
-    } yield Patch.addRight(replace, s"$spaces: ${filteredType.finalResultType}")
-      ).getOrElse(Patch.empty)
+    } yield Patch.addRight(replace, s"$spaces: ${filteredType.finalResultType}")).getOrElse(Patch.empty)
   }
 
   private def getTypeAsSeenFromGlobal(name: Term.Name)
-                                     (implicit doc: SemanticDocument, unit: global.CompilationUnit): Option[global.Type] = {
+                                     (implicit doc: SemanticDocument, unit: g.CompilationUnit): Option[g.Type] = {
     for {
-      context <- CompilerService.getContext(name, global)
+      context <- CompilerService.getContext(name, g)
       finalType = context.tree.symbol.info
-    } yield finalType.asInstanceOf[global.Type]
+    } yield finalType.asInstanceOf[g.Type]
   }
 
-  private def filterType(finalType: global.Type): Option[global.Type] = {
+  private def filterType(finalType: g.Type): Option[g.Type] = {
     finalType match {
-      case f if f.isInstanceOf[global.ConstantType] =>
+      case f if f.isInstanceOf[g.ConstantType] =>
         None // don't annotate ConstantTypes
       case f if f.toString().contains("#") && f.toString().contains(".type") =>
         None // don't annotate types that look like fix.WidenSingleType#strings.type

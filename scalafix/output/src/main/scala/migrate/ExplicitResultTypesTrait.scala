@@ -7,7 +7,9 @@ object ExplicitResultTypesTrait {
   }
 
   object Overrides extends Trait {
-    val foo: scala.collection.immutable.Map[Int,Nothing] = Map.empty[scala.Int, scala.Nothing]
+    val foo: scala.collection.immutable.Map[Int,Nothing] = Map.empty[Int, Nothing]
+    var foo2: scala.collection.immutable.Map[Nothing,Nothing] = Map.empty[Nothing, Nothing]
+    def foo3: scala.collection.immutable.Map[Nothing,Nothing] = Map.empty[Nothing, Nothing]
     val message: String = s"hello $foo"
   }
 }

@@ -11,6 +11,8 @@ object ExplicitResultTypesTrait {
 
   object Overrides extends Trait {
     val foo = Map.empty
+    var foo2 = Map.empty
+    def foo3 = Map.empty
     val message = s"hello $foo"
   }
 }

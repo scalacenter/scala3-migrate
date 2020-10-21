@@ -14,6 +14,6 @@ object Incompat9 {
     def cleanup[E](e: E): IO[Nothing] = ???
     def acquire[E]: Acquire[E] = ???
 
-    def foo(io: IO[Nothing]): IO[Nothing] = acquire(cleanup[scala.Any])(io)
+    def foo(io: IO[Nothing]): IO[Nothing] = acquire(cleanup[Any])(io)
   }
 }
