@@ -16,6 +16,6 @@ object Example3 {
     def cleanup[E](e: E): IO[Nothing] = ???
     def acquire[E]: Acquire[E] = ???
 
-    def foo(io: IO[Nothing]): IO[Nothing] = acquire[scala.Nothing].apply[scala.Any](cleanup[scala.Any]).apply[scala.Nothing](io)
+    def foo(io: IO[Nothing]): IO[Nothing] = acquire[Nothing].apply[Any](cleanup[Any]).apply[scala.Nothing](io)
   }
 }

@@ -22,7 +22,5 @@ object Other {
 
 class Test {
   case class Ok(s: String)
-
-
   val list: scala.collection.immutable.List[Test.this.Ok] = List.apply[Test.this.Ok](Ok("ok"))
 }

@@ -16,14 +16,14 @@ object RscCompat {
   class Patterns {
     val List() = List()
     val List(x2) = List.apply[Int](2)
-    val List(x3, y3) = List.apply[scala.Int](3, 3)
+    val List(x3, y3) = List.apply[Int](3, 3)
     val x4, y4 = 4
-    val x9 :: y9 = List.apply[scala.Int](9, 9, 9)
+    val x9 :: y9 = List.apply[Int](9, 9, 9)
     var List() = List()
     var List(x6) = List.apply[Int](6)
-    var List(x7, y7) = List.apply[scala.Int](7, 7)
+    var List(x7, y7) = List.apply[Int](7, 7)
     var x8, y8 = 8
-    var x10 :: y10 = List.apply[scala.Int](10, 10, 10)
+    var x10 :: y10 = List.apply[Int](10, 10, 10)
   }
 
   class Visibility {
