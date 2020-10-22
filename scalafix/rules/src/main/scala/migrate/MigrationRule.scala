@@ -34,12 +34,12 @@ class MigrationRule(g: ScalafixGlobal) extends SemanticRule("MigrationRule") {
     lazy implicit val unit = g.newCompilationUnit(doc.input.text, doc.input.syntax)
 
     val patchForExplicitResultTypes = addExplicitResultType()
-    val patchForTypeApply = AddTypeApply()
+    val patchForTypeApply = addTypeApply()
 
     patchForExplicitResultTypes + patchForTypeApply
   }
 
-  private def AddTypeApply()(implicit doc: SemanticDocument,
+  private def addTypeApply()(implicit doc: SemanticDocument,
                              unit: g.CompilationUnit): Patch = {
 
     doc.synthetics.collect {
@@ -48,15 +48,17 @@ class MigrationRule(g: ScalafixGlobal) extends SemanticRule("MigrationRule") {
           originalTree <- SyntheticHelper.getOriginalTree(syn)
           if (!originalTree.isInstanceOf[Term.ApplyInfix])
           if (!(originalTree.isInstanceOf[Pat] && !originalTree.isInstanceOf[Term])) // Never add types on elements that are on the right side of "="
-          replace <- if (syn.toString.startsWith("*.apply")) Some(".apply")  else if (syn.toString.startsWith("*[")) Some("") else None
+          replace <- if (syn.toString.startsWith("*.apply")) Some(".apply") else if (syn.toString.startsWith("*[")) Some("") else None
           typesSeenFromGlobal = getTypeNameAsSeenByGlobal(originalTree, replace).map(_.map(_.dealiasWiden.toString()))
           types <- typesSeenFromGlobal
             .orElse(typeArguments.map(getAbsoluteType).sequence)
           // if we don't know how to express a type, we don't create a patch
-          if types.length == typeArguments.length
         } yield Patch.addRight(originalTree, s"${replace}[${types.mkString(", ")}]")
           ).getOrElse(Patch.empty)
-    }.toList.reverse.asPatch
+      // if we have two patches on the same originalTree, ex: a[Type1].apply[Type2]
+      // since synthetics traverse the file from top to bottom, we create the patches in the same order
+      // but when applying them, we need to apply in the reverse order.
+    }.toList.reverse.asPatch //
   }
 
 

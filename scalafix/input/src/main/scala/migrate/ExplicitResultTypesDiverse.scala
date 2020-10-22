@@ -6,7 +6,7 @@ package migrate
 import scala.reflect.runtime.universe._
 import scala.collection.{mutable => mut}
 
-object ExplicitResultTypesBug {
+object ExplicitResultTypesDiverse {
 
   class MyMirror(owner: ClassMirror) {
     val symbol =

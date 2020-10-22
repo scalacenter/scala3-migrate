@@ -1,0 +1,10 @@
+package incompat
+
+class ScalafixIncompat6 {
+  trait Show[A]
+
+  object Test {
+    def foo[F[_], A](f: F[A]): F[A] = ???
+    def bar[A: Show, B: Show]: Show[A] = foo[ScalafixIncompat6.this.Show, A](implicitly[ScalafixIncompat6.this.Show[A]])
+  }
+}

@@ -1,6 +1,6 @@
-package synthetic
+package incompat
 
-object Example3 {
+object ScalafixIncompat9 {
   trait IO[+E]
 
   trait Acquire[+E] {
