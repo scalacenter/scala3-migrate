@@ -53,13 +53,13 @@ object CompilerService {
         Option(gtree2.asInstanceOf[g.Tree])
     }
     ftermName.flatMap { termName =>
-      gtree2.flatMap(gt => getTheInterstingPartOfTree(g)(gt, termName, replace))
+      gtree2.flatMap(gt => getTheInterstingPartOfTree(g)(gt, termName))
     }
   }
 
-  private def getTheInterstingPartOfTree(g: ScalafixGlobal)(gtree: g.Tree, termName: g.Name, replace: String): Option[g.Tree] = {
+  private def getTheInterstingPartOfTree(g: ScalafixGlobal)(gtree: g.Tree, termName: g.Name): Option[g.Tree] = {
     val k = gtree.collect {
-      case t @g.TypeApply(fun, args) if fun.isInstanceOf[g.Select] && fun.asInstanceOf[g.Select].name == termName =>
+      case t @g.TypeApply(fun, _) if fun.isInstanceOf[g.Select] && fun.asInstanceOf[g.Select].name == termName =>
         t
     }
     k.headOption
