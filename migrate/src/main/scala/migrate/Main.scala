@@ -105,6 +105,7 @@ object Main {
       fileToMigrate <- sources.map(src => fileEvaluationMap.get(src).map(FileMigrationState.Initial).toTry).sequence
     } yield fileToMigrate
 
+<<<<<<< HEAD
   private def inferTypes(
     sourceRoot: AbsolutePath,
     sources: Seq[AbsolutePath],
@@ -115,6 +116,16 @@ object Main {
     val args = scalafix
       .newArguments()
       .withRules(Seq("MigrationRule").asJava)
+=======
+  private def inferTypes(sourceRoot: AbsolutePath,
+                         sources: Seq[AbsolutePath],
+                         classpath: Classpath,
+                         toolClasspath: Classpath,
+                         compilerOptions: Seq[String]
+                        ): Try[ScalafixEvaluation] = Try {
+    val args = scalafix.newArguments()
+      .withRules(Seq("MigrationRule", "ExplicitImplicits").asJava)
+>>>>>>> Add a new reul ExplicitImplicits
       .withPaths(sources.map(_.toNio).asJava)
       .withClasspath(classpath.paths.map(_.toNio).asJava)
       .withScalacOptions(compilerOptions.asJava) // not sure which compiler option we need here !!

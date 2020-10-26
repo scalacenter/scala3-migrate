@@ -1,7 +1,7 @@
 /*
 rule = MigrationRule
 */
-package synthetic
+package migrate
 
 object Basic {
   val people = List(1).map(_ + 1).map(elm => Map(elm -> elm))
