@@ -3,9 +3,9 @@ package migrate
 import java.io.File
 import java.net.URLClassLoader
 
-import migrate.utils.ScalaExtensions._
-
 import scala.util.Try
+
+import migrate.utils.ScalaExtensions._
 
 case class Classpath(paths: AbsolutePath*) {
   val value: String = paths.mkString(File.pathSeparator)
@@ -15,7 +15,7 @@ case class Classpath(paths: AbsolutePath*) {
     new URLClassLoader(urls, parent)
   }
 
-  def :+(newPath : AbsolutePath): Classpath = Classpath((paths :+ newPath): _*)
+  def :+(newPath: AbsolutePath): Classpath = Classpath((paths :+ newPath): _*)
 }
 object Classpath {
   def from(value: String): Try[Classpath] = {
