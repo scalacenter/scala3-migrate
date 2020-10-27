@@ -9,7 +9,6 @@ class RuleSuite extends AbstractSemanticRuleSuite with FunSuiteLike {
   //  runOnSpecificTest("example3")
 
   //   for running only one test if using Intellij
-  def runOnSpecificTest(name: String): Unit = {
+  def runOnSpecificTest(name: String): Unit =
     testsToRun.filter(_.path.testName.toLowerCase.contains(name.toLowerCase())).foreach(runOn)
-  }
 }

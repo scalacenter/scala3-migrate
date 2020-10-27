@@ -1,32 +1,33 @@
 package migrate
 
+import scala.meta.Lit
+
 import org.typelevel.paiges.Doc
 import scalafix.internal.v1.Types
-import scalafix.v1.{NoType, _}
-
-import scala.meta.Lit
+import scalafix.v1.NoType
+import scalafix.v1._
 
 object Pretty {
 
   import scalafix.internal.util.DocConstants._
 
   def pretty(constant: Constant): Doc = constant match {
-    case UnitConstant => `()`
+    case UnitConstant           => `()`
     case BooleanConstant(value) => Doc.str(value)
-    case ByteConstant(value) => Doc.text(Lit.Byte(value).syntax)
-    case ShortConstant(value) => Doc.text(Lit.Short(value).syntax)
-    case CharConstant(value) => Doc.text(Lit.Char(value).syntax)
-    case IntConstant(value) => Doc.str(value)
-    case LongConstant(value) => Doc.text(Lit.Long(value).syntax)
-    case FloatConstant(value) => Doc.text(Lit.Float(value).syntax)
-    case DoubleConstant(value) => Doc.text(Lit.Double(value).syntax)
-    case StringConstant(value) => Doc.text(Lit.String(value).syntax)
-    case NullConstant => `null`
+    case ByteConstant(value)    => Doc.text(Lit.Byte(value).syntax)
+    case ShortConstant(value)   => Doc.text(Lit.Short(value).syntax)
+    case CharConstant(value)    => Doc.text(Lit.Char(value).syntax)
+    case IntConstant(value)     => Doc.str(value)
+    case LongConstant(value)    => Doc.text(Lit.Long(value).syntax)
+    case FloatConstant(value)   => Doc.text(Lit.Float(value).syntax)
+    case DoubleConstant(value)  => Doc.text(Lit.Double(value).syntax)
+    case StringConstant(value)  => Doc.text(Lit.String(value).syntax)
+    case NullConstant           => `null`
   }
 
   def pretty(prefix: SemanticType, sym: Symbol): Doc = {
     def removeEmptyPackage(symbol: Symbol): String = {
-      val stringSymb = sym.normalized.value
+      val stringSymb   = sym.normalized.value
       val emptyPackage = "_empty_."
       if (stringSymb.startsWith(emptyPackage)) stringSymb.drop(emptyPackage.length) else stringSymb
     }
@@ -38,13 +39,11 @@ object Pretty {
     }
   }
 
-  def pretty(symbol: Symbol): Doc = {
+  def pretty(symbol: Symbol): Doc =
     Doc.text(symbol.displayName)
-  }
-
 
   def pretty(tpe: SemanticType): Doc = {
-    def prefix(tpe: SemanticType): Doc = {
+    def prefix(tpe: SemanticType): Doc =
       tpe match {
         case NoType => Doc.empty
         case t: TypeRef =>
@@ -58,9 +57,9 @@ object Pretty {
               prefix(t.prefix) + Doc.char('#')
           }
           val symbol = pretty(t.prefix, t.symbol)
-          val targs = t.typeArguments.map(normal)
+          val targs  = t.typeArguments.map(normal)
           targs match {
-            case Nil => pre + symbol
+            case Nil                              => pre + symbol
             case docs if docs.contains(Doc.empty) => Doc.empty
             case docs =>
               pre + symbol + `[` + Doc.intercalate(Doc.comma + Doc.space, docs) + `]`
@@ -85,7 +84,7 @@ object Pretty {
           Doc.empty
         case t: UnionType =>
           Doc.empty
-        case t: WithType => Doc.empty
+        case t: WithType       => Doc.empty
         case t: StructuralType => Doc.empty
         case t: AnnotatedType =>
           val annotations = t.annotations.filter(_.tpe.nonEmpty)
@@ -107,7 +106,6 @@ object Pretty {
         case t: RepeatedType =>
           `*` + Doc.space + pretty(t.tpe)
       }
-    }
 
     def normal(tpe: SemanticType): Doc = tpe match {
       case _: SingleType | _: ThisType | _: SuperType =>
@@ -126,27 +124,23 @@ object Pretty {
     if (annotation.tpe.isEmpty) Doc.empty
     else Doc.text("@") + pretty(annotation.tpe)
 
-  def pretty(info: SymbolInformation): Doc = {
+  def pretty(info: SymbolInformation): Doc =
     Doc.text(info.toString)
-  }
 
-  def prettyTermParameter(parameter: SymbolInformation): Doc = {
+  def prettyTermParameter(parameter: SymbolInformation): Doc =
     Doc.text(parameter.displayName) + Doc.text(":") + Doc.space +
       pretty(parameter.signature)
-  }
 
-  def prettyTypeParameter(parameter: SymbolInformation): Doc = {
+  def prettyTypeParameter(parameter: SymbolInformation): Doc =
     Doc.text(parameter.displayName) + pretty(parameter.signature)
-  }
 
-  def prettyTypeParameters(typeParameters: List[SymbolInformation]): Doc = {
+  def prettyTypeParameters(typeParameters: List[SymbolInformation]): Doc =
     if (typeParameters.isEmpty) Doc.empty
     else {
       `[` +
         Doc.intercalate(Doc.comma, typeParameters.map(prettyTypeParameter)) +
         `]`
     }
-  }
 
   def pretty(signature: Signature): Doc = signature match {
     case NoSignature => Doc.empty
