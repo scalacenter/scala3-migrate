@@ -7,16 +7,20 @@ import scala.util.Success
 import scala.meta._
 import scala.meta.contrib.Trivia
 import scala.meta.internal.pc.ScalafixGlobal
+import scala.meta.internal.proxy.GlobalProxy
 import scala.meta.tokens.Token
 
 import metaconfig.Configured
 import scalafix.patch.Patch
 import scalafix.util.TokenOps
 import scalafix.v1._
+import utils.CompilerService
+import utils.Pretty
 import utils.ScalaExtensions._
+import utils.SyntheticHelper
 
 class MigrationRule(g: ScalafixGlobal) extends SemanticRule("MigrationRule") {
-  override def description: String = "infer types and show synthetics"
+  override def description: String = "infer types and typeApply"
 
   def this() = this(null)
 
@@ -51,7 +55,7 @@ class MigrationRule(g: ScalafixGlobal) extends SemanticRule("MigrationRule") {
         replace <- if (syn.toString.startsWith("*.apply")) Some(".apply")
                    else if (syn.toString.startsWith("*[")) Some("")
                    else None
-        typesSeenFromGlobal = getTypeNameAsSeenByGlobal(originalTree, replace).map(_.map(_.dealiasWiden.toString()))
+        typesSeenFromGlobal = getTypeNameAsSeenByGlobal(originalTree, replace).map(_.map(_.dealias.toString()))
         types <- typesSeenFromGlobal
                    .orElse(typeArguments.map(getAbsoluteType).sequence)
         // if we don't know how to express a type, we don't create a patch
@@ -59,19 +63,36 @@ class MigrationRule(g: ScalafixGlobal) extends SemanticRule("MigrationRule") {
     // if we have two patches on the same originalTree, ex: a[Type1].apply[Type2]
     // since synthetics traverse the file from top to bottom, we create the patches in the same order
     // but when applying them, we need to apply in the reverse order.
-    }.toList.reverse.asPatch //
+    }.toList.reverse.asPatch
 
   private def getTypeNameAsSeenByGlobal(origin: Tree, replace: String)(implicit
     doc: SemanticDocument,
     unit: g.CompilationUnit
   ): Option[List[g.Type]] =
     for {
-      globalOrigin <- CompilerService.getTreeInGlobal(origin.tokens.last, g, replace)
-      types <- globalOrigin match {
-                 case g.TypeApply(fun, args) => Some(args.map(_.tpe.asInstanceOf[g.Type]))
-                 case _                      => None
-               }
+      term         <- SyntheticHelper.getTermName(origin)
+      gterm         = if (replace.isEmpty) g.TermName(term.toString()) else g.TermName("apply")
+      context      <- CompilerService.getContext(origin.tokens.last, g)
+      globalOrigin <- getTreeFromContext(context)
+      filteredTree <- getTypeApplyTree(globalOrigin, gterm)
+      types         = filteredTree.args.map(_.tpe)
     } yield types
+
+  private def getTreeFromContext(context: g.Context): Option[g.Tree] =
+    context.tree match {
+      case apply: g.Apply if apply.fun.isInstanceOf[g.TypeApply] =>
+        Option(context.tree.asInstanceOf[g.Tree])
+      case _ =>
+        val gtree2 = GlobalProxy.typedTreeAt(g, context.tree.pos)
+        Option(gtree2.asInstanceOf[g.Tree])
+    }
+
+  private def getTypeApplyTree(gtree: g.Tree, termName: g.Name): Option[g.TypeApply] =
+    // TODO: Pattern match instead
+    gtree.collect {
+      case t @ g.TypeApply(fun, _) if fun.isInstanceOf[g.Select] && fun.asInstanceOf[g.Select].name == termName =>
+        t
+    }.headOption
 
   private def addExplicitResultType()(implicit doc: SemanticDocument, unit: g.CompilationUnit): Patch =
     doc.tree.collect {

@@ -1,4 +1,4 @@
-package migrate
+package utils
 
 import scala.meta.Lit
 
