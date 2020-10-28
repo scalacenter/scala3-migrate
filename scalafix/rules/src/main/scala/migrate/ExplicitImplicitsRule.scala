@@ -3,6 +3,7 @@ package migrate
 import scala.tools.nsc.reporters.StoreReporter
 import scala.util.Failure
 import scala.util.Success
+import scala.util.control.NonFatal
 
 import scala.meta.Tree
 import scala.meta.internal.pc.ScalafixGlobal
@@ -32,19 +33,31 @@ class ExplicitImplicitsRule(g: ScalafixGlobal) extends SemanticRule("ExplicitImp
       }
     }
 
+  override def afterComplete(): Unit =
+    try {
+      g.askShutdown()
+      g.close()
+    } catch {
+      case NonFatal(_) =>
+    }
+
   override def fix(implicit doc: SemanticDocument): Patch = {
     lazy implicit val unit: g.CompilationUnit = g.newCompilationUnit(doc.input.text, doc.input.syntax)
 
-    doc.synthetics.collect { case syn @ ApplyTree(function, arguments) =>
-      // case for implicit params
-      if (syn.toString.startsWith("*")) {
-        (for {
-          originalTree <- SyntheticHelper.getOriginalTree(syn)
-          args         <- getImplicitParams(originalTree)
-        } yield Patch.addRight(originalTree, "(" + args.mkString(", ") + ")")).getOrElse(Patch.empty)
-      } else if (syn.toString().contains("(*)")) {
-        Patch.empty
-      } else Patch.empty
+    doc.synthetics.flatMap {
+      case syn @ ApplyTree(function, arguments) =>
+        // case for implicit params
+        if (syn.toString.startsWith("*")) {
+          for {
+            originalTree <- SyntheticHelper.getOriginalTree(syn)
+            args         <- getImplicitParams(originalTree)
+          } yield Patch.addRight(originalTree, "(" + args.mkString(", ") + ")")
+        }
+        // case for implicit conversions
+        else if (syn.toString().contains("(*)")) {
+          None
+        } else None
+      case _ => None
     }.toList.asPatch
   }
 

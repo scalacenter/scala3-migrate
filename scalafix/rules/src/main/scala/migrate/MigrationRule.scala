@@ -3,6 +3,7 @@ package migrate
 import scala.tools.nsc.reporters.StoreReporter
 import scala.util.Failure
 import scala.util.Success
+import scala.util.control.NonFatal
 
 import scala.meta._
 import scala.meta.contrib.Trivia
@@ -34,6 +35,14 @@ class MigrationRule(g: ScalafixGlobal) extends SemanticRule("MigrationRule") {
           Configured.ok(new MigrationRule(new ScalafixGlobal(settings, new StoreReporter, Map())))
         case Failure(exception) => Configured.error(exception.getMessage)
       }
+    }
+
+  override def afterComplete(): Unit =
+    try {
+      g.askShutdown()
+      g.close()
+    } catch {
+      case NonFatal(_) =>
     }
 
   override def fix(implicit doc: SemanticDocument): Patch = {
