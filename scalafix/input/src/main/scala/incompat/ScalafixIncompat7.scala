@@ -1,5 +1,5 @@
 /*
-rule = MigrationRule
+rule = [MigrationRule, ExplicitImplicits]
 */
 package incompat
 
@@ -18,6 +18,6 @@ object ScalafixIncompat7 {
 
     implicit val writer: Writer[Map[List[Int], Int]] = ???
 
-    rw(Map(List(1) -> 1))
+    rw(Map(List(1) -> 1))(mapReader, writer)
   }
 }

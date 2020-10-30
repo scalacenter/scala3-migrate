@@ -1,1 +1,2 @@
 migrate.MigrationRule
+migrate.ExplicitImplicitsRule

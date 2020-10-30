@@ -114,7 +114,7 @@ object Main {
   ): Try[ScalafixEvaluation] = Try {
     val args = scalafix
       .newArguments()
-      .withRules(Seq("MigrationRule").asJava)
+      .withRules(Seq("MigrationRule", "ExplicitImplicits").asJava)
       .withPaths(sources.map(_.toNio).asJava)
       .withClasspath(classpath.paths.map(_.toNio).asJava)
       .withScalacOptions(compilerOptions.asJava) // not sure which compiler option we need here !!
