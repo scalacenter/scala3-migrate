@@ -18,19 +18,19 @@ sealed trait FileMigrationState {
   def previewAllPatches(): Try[CompilationUnit] =
     evaluation
       .previewPatches()
+      .asScala
       .map { content =>
         new CompilationUnit(source.value, content)
       }
-      .asScala
       .toTry(new ScalafixException(s"Cannot apply patch on file $source"))
 
   def previewPatches(patches: Seq[ScalafixPatch]): Try[CompilationUnit] =
     evaluation
       .previewPatches(patches.toArray)
+      .asScala
       .map { content =>
         new CompilationUnit(source.value, content)
       }
-      .asScala
       .toTry(new ScalafixException(s"Cannot apply patch on file $source"))
 }
 

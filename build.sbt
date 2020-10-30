@@ -1,9 +1,9 @@
 import BuildInfoExtension._
+import sbt.Keys.organization
 
 ThisBuild / scalaVersion := V.scala213
 ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision // use Scalafix compatible version
-ThisBuild / scalafixScalaBinaryVersion := V.scala213BinaryVersion
 ThisBuild / scalafixDependencies ++= List("com.github.liancheng" %% "organize-imports" % V.organizeImports)
 
 lazy val interfaces = project
@@ -21,10 +21,11 @@ lazy val migrate = project
   .settings(addBuildInfoToConfig(Test))
   .settings(
     scalacOptions ++= Seq(
-      "-Wunused",
+      "-Ywarn-unused",
       "-P:semanticdb:synthetics:on",
       "-deprecation"
     ),
+    scalaVersion := V.scala212,
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler"      % scalaVersion.value,
       "ch.epfl.scala"  % "scalafix-interfaces" % V.scalafix,
@@ -136,4 +137,5 @@ lazy val V = new {
   val scalafix              = "0.9.20"
   val scribe                = "2.7.12"
   val organizeImports       = "0.4.3"
+  val scala212              = "2.12.12"
 }

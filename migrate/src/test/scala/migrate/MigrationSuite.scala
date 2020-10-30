@@ -6,7 +6,6 @@ import org.scalatest.funsuite.AnyFunSuiteLike
 import scalafix.testkit.DiffAssertions
 
 class MigrationSuite extends AnyFunSuiteLike with DiffAssertions {
-
   val input: AbsolutePath                = AbsolutePath.from(BuildInfo.input)
   val output: AbsolutePath               = AbsolutePath.from(BuildInfo.output)
   val workspace: AbsolutePath            = AbsolutePath.from(BuildInfo.workspace)
@@ -20,6 +19,9 @@ class MigrationSuite extends AnyFunSuiteLike with DiffAssertions {
 
   listFiles(input).foreach { inputFile =>
     test(s"${inputFile.getName}") {
+      println(s"toolClasspath $toolClasspath")
+      println(s"scala3ClassDirectory $scala3ClassDirectory")
+      println(s"scala3Classpath $scala3Classpath")
       val scala2ClasspathWithSemanticdb = scala2Classpath :+ semanticdbTargetRoot
 
       val preview = Main
