@@ -1,6 +1,4 @@
-package interfaces;
-
-import dotty.tools.dotc.reporting.Diagnostic.Error;
+package compiler.interfaces;
 
 class CompilationException extends Exception {
     public CompilationException(String message){

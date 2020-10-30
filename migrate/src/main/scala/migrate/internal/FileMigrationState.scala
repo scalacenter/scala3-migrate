@@ -2,8 +2,8 @@ package migrate.internal
 
 import scala.util.Try
 
-import interfaces.CompilationUnit
-import interfaces.Scala3Compiler
+import compiler.interfaces.CompilationUnit
+import compiler.interfaces.Scala3Compiler
 import migrate.AbsolutePath
 import migrate.utils.ScalaExtensions._
 import scalafix.interfaces._
@@ -32,6 +32,7 @@ sealed trait FileMigrationState {
       }
       .asScala
       .toTry(new ScalafixException(s"Cannot apply patch on file $source"))
+
 }
 
 object FileMigrationState {
@@ -43,10 +44,14 @@ object FileMigrationState {
 
     def failed(cause: Throwable): Failed = Failed(evaluation, cause)
   }
-  sealed trait FinalState
-  case class Succeeded(evaluation: ScalafixFileEvaluation, necessaryPatched: Seq[ScalafixPatch])
+  sealed trait FinalState {
+    def isSuccess: Boolean = this.isInstanceOf[Succeeded]
+  }
+  case class Succeeded(evaluation: ScalafixFileEvaluation, necessaryPatches: Seq[ScalafixPatch])
       extends FileMigrationState
-      with FinalState
+      with FinalState {
+    def newFileContent: Try[String] = previewPatches(necessaryPatches).map(_.content)
+  }
 
   case class Failed(evaluation: ScalafixFileEvaluation, cause: Throwable) extends FileMigrationState with FinalState
 }

@@ -1,4 +1,4 @@
-package interfaces;
+package compiler.interfaces;
 
 import dotty.tools.dotc.Driver;
 import dotty.tools.dotc.core.Contexts.Context;
