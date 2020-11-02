@@ -1,5 +1,5 @@
 /*
-rules = ExplicitResultTypes
+rule = [MigrationRule, ExplicitImplicits]
 */
 package migrate
 

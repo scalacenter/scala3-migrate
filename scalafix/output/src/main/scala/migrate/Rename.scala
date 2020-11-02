@@ -6,6 +6,6 @@ import scala.collection.immutable.{List => LList}
 
 object Rename {
   type List = Int
-  def foo(a: Int): LList[Int] = List(a)
-  def foo: JBoolean = identity(JBoolean.TRUE)
+  def foo(a: Int): scala.collection.immutable.List[Int] = List.apply[Int](a)
+  def foo: Boolean = identity[Boolean](JBoolean.TRUE)
 }

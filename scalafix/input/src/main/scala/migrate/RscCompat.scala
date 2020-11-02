@@ -1,6 +1,6 @@
 /*
-rules = MigrationRule
- */
+rule = [MigrationRule, ExplicitImplicits]
+*/
 package migrate
 
 import com.twitter.bijection._

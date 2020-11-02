@@ -67,8 +67,13 @@ class ExplicitImplicitsRule(g: ScalafixGlobal) extends SemanticRule("ExplicitImp
       context    <- CompilerService.getContext(term, g)
       globalTree <- getTreeFromContext(context)
       args <- globalTree match {
-                case g.Apply(_, args) => {
+                case g.Apply(_, args) if globalTree.isInstanceOf[g.ApplyToImplicitArgs] => {
                   val listOfArgs = args.map(_.symbol.asInstanceOf[g.Symbol])
+                  listOfArgs.map(printSymbol).sequence
+                }
+                case g.Apply(_, args) if args.nonEmpty && args.head.isInstanceOf[g.ApplyToImplicitArgs] => {
+                  val newArgs    = args.head.asInstanceOf[g.Apply].args
+                  val listOfArgs = newArgs.map(_.symbol.asInstanceOf[g.Symbol])
                   listOfArgs.map(printSymbol).sequence
                 }
                 case _ => None
