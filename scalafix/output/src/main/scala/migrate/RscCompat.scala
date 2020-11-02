@@ -152,7 +152,7 @@ object RscCompat {
     val innerClass4: java.util.Base64.Decoder = Base64.getMimeDecoder
 
     implicit val crazy2: com.twitter.bijection.Bijection[migrate.RscCompat.In,migrate.RscCompat.Out1] = Bijection.connect[In, Out1]
-    val sane1: String = implicitly[String]
+    val sane1: String = implicitly[String](migrate.RscCompat.implicit_y)
     val sane2: com.twitter.bijection.Bijection[migrate.RscCompat.In,migrate.RscCompat.Out2] = Bijection.connect[In, Out2]
 
     val t: migrate.foo.T = ??? : foo.T

@@ -1,6 +1,5 @@
 /*
-rules = ExplicitResultTypes
-ExplicitResultTypes.rewriteStructuralTypesToNamedSubclass = false
+rule = [MigrationRule, ExplicitImplicits]
 */
 package migrate
 
