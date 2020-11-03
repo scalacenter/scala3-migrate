@@ -108,12 +108,12 @@ object RscCompat {
     val compoundType4: AnyRef{def k: Int} = new { def k: Int = ??? }
     val compoundType5: migrate.RscCompat.TypesHelpers.A with migrate.RscCompat.TypesHelpers.B = new A with B
     val compoundType6: migrate.RscCompat.TypesHelpers.A with migrate.RscCompat.TypesHelpers.B{def k: Int} = new A with B { def k: Int = ??? }
-    val compoundType7: migrate.RscCompat.TypesHelpers.A with scala.collection.immutable.List[_] with migrate.RscCompat.TypesHelpers.B = ??? : A with (List[T] forSome { type T }) with B
+    val compoundType7: migrate.RscCompat.TypesHelpers.A with List[_] with migrate.RscCompat.TypesHelpers.B = ??? : A with (List[T] forSome { type T }) with B
 
      val annType1: migrate.RscCompat.TypesHelpers.C @migrate.RscCompat.TypesHelpers.ann = ??? : C @ann
 
     val existentialType1: Any = ??? : T forSome { type T }
-    val existentialType2: scala.collection.immutable.List[Any] = ??? : List[_]
+    val existentialType2: List[Any] = ??? : List[_]
 
     val byNameType: (=> Any) => Any = ??? : ((=> Any) => Any)
   }
@@ -133,7 +133,7 @@ object RscCompat {
       def compare(a: List[T], b: List[T]): Int = ???
     }
 
-    val gauges: scala.collection.immutable.List[Int] = {
+    val gauges: List[Int] = {
       val local1: Int = 42
       val local2: Int = 43
       List.apply[Int](local1, local2)
@@ -143,7 +143,7 @@ object RscCompat {
 
     val compound: AnyRef{def m(x: Int): Int} = ??? : { def m(x: Int): Int }
 
-    val loaded: scala.collection.immutable.List[Class[_]] = List[Class[_]]()
+    val loaded: List[Class[_]] = List[Class[_]]()
 
     val ti: Types[Int] = ???
     val innerClass1: migrate.RscCompat.Types[String]#X = new Types[String]().x

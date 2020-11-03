@@ -14,7 +14,7 @@ object ScalafixIncompat7 {
     implicit val intReader: Reader[Int] = ???
 
     implicit val writer: Writer[Map[List[Int], Int]] = ???
-
-    rw[scala.collection.immutable.Map[scala.collection.immutable.List[Int],Int]](Map.apply[scala.collection.immutable.List[Int], Int](List.apply[Int](1) -> 1))(mapReader[scala.collection.immutable.List[Int], Int](incompat.ScalafixIncompat7.Test.seqLikeReader, incompat.ScalafixIncompat7.Test.intReader), writer)
+    
+    rw[scala.collection.immutable.Map[List[Int],Int]](Map.apply[List[Int], Int](List.apply[Int](1) -> 1))(mapReader[List[Int], Int](incompat.ScalafixIncompat7.Test.seqLikeReader, incompat.ScalafixIncompat7.Test.intReader), writer)
   }
 }
