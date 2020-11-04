@@ -37,7 +37,7 @@ public class Scala3Compiler {
     Run run = compiler.newRun(freshContext);
     run.compileSources(sources);
     if (reporter.hasErrors()) {
-      throw new CompilationException();
+      throw new CompilationException(reporter.allErrors().mkString("\n"));
     }
   }
 }

@@ -34,11 +34,11 @@ object SyntheticHelper {
       case NoTree                                   => None
     }
 
-  def getTermName(origin: Tree): Option[Term.Name] =
+  def getTermName(origin: Tree): Option[Term] =
     origin match {
       case Term.Select(_, name)               => Some(name)
       case t: Term.Name                       => Some(t)
-      case Term.Apply(name: Term.Name, _)     => Some(name)
+      case Term.Apply(name: Term, _)          => Some(name)
       case Term.ApplyType(name: Term.Name, _) => Some(name)
       case _                                  => None
     }

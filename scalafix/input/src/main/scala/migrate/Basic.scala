@@ -4,6 +4,7 @@ rule = [MigrationRule, ExplicitImplicits]
 package migrate
 
 object Basic {
+  val name = "String"
   val people = List(1).map(_ + 1).map(elm => Map(elm -> elm))
   
   for {

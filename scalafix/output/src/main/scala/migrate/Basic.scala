@@ -1,6 +1,7 @@
 package migrate
 
 object Basic {
+  val name: String = "String"
   val people: List[scala.collection.immutable.Map[Int,Int]] = List.apply[Int](1).map[Int](_ + 1).map[scala.collection.immutable.Map[Int,Int]](elm => Map.apply[Int, Int](elm -> elm))
   
   for {

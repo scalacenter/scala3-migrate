@@ -151,9 +151,9 @@ object RscCompat {
     val innerClass3: Bugs.this.ti.X = ti.x
     val innerClass4: java.util.Base64.Decoder = Base64.getMimeDecoder
 
-    implicit val crazy2: com.twitter.bijection.Bijection[migrate.RscCompat.In,migrate.RscCompat.Out1] = Bijection.connect[In, Out1]
+    implicit val crazy2: com.twitter.bijection.Bijection[migrate.RscCompat.In,migrate.RscCompat.Out1] = Bijection.connect[In, Out1](migrate.RscCompat.implicit_bijection1)
     val sane1: String = implicitly[String](migrate.RscCompat.implicit_y)
-    val sane2: com.twitter.bijection.Bijection[migrate.RscCompat.In,migrate.RscCompat.Out2] = Bijection.connect[In, Out2]
+    val sane2: com.twitter.bijection.Bijection[migrate.RscCompat.In,migrate.RscCompat.Out2] = Bijection.connect[In, Out2](migrate.RscCompat.implicit_bijection2)
 
     val t: migrate.foo.T = ??? : foo.T
 
