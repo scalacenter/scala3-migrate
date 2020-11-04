@@ -17,7 +17,7 @@ object ScalafixIncompat7 {
     implicit val intReader: Reader[Int] = ???
 
     implicit val writer: Writer[Map[List[Int], Int]] = ???
-
+    
     rw(Map(List(1) -> 1))(mapReader, writer)
   }
 }

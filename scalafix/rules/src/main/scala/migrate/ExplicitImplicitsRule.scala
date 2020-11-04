@@ -1,13 +1,13 @@
 package migrate
 
+import scala.tools.nsc.interactive.Global
 import scala.tools.nsc.reporters.StoreReporter
 import scala.util.Failure
 import scala.util.Success
 import scala.util.control.NonFatal
 
 import scala.meta.Tree
-import scala.meta.internal.pc.ScalafixGlobal
-import scala.meta.internal.proxy.GlobalProxy
+import scala.meta.internal.proxy.GlobalProxyService
 
 import metaconfig.Configured
 import scalafix.patch.Patch
@@ -16,7 +16,7 @@ import utils.CompilerService
 import utils.ScalaExtensions._
 import utils.SyntheticHelper
 
-class ExplicitImplicitsRule(g: ScalafixGlobal) extends SemanticRule("ExplicitImplicits") {
+class ExplicitImplicitsRule(g: Global) extends SemanticRule("ExplicitImplicits") {
   override def description: String = "Show implicit parameters and conversions"
 
   def this() = this(null)
@@ -28,7 +28,7 @@ class ExplicitImplicitsRule(g: ScalafixGlobal) extends SemanticRule("ExplicitImp
       val global = CompilerService.newGlobal(config.scalacClasspath, config.scalacOptions)
       global match {
         case Success(settings) =>
-          Configured.ok(new ExplicitImplicitsRule(new ScalafixGlobal(settings, new StoreReporter, Map())))
+          Configured.ok(new ExplicitImplicitsRule(new Global(settings, new StoreReporter, "ExplicitImplicit Rule")))
         case Failure(exception) => Configured.error(exception.getMessage)
       }
     }
@@ -91,7 +91,7 @@ class ExplicitImplicitsRule(g: ScalafixGlobal) extends SemanticRule("ExplicitImp
       case g.Apply(_, args) if args.nonEmpty =>
         Option(context.tree.asInstanceOf[g.Tree])
       case _ =>
-        val gtree2 = GlobalProxy.typedTreeAt(g, context.tree.pos)
+        val gtree2 = GlobalProxyService.typedTreeAt(g, context.tree.pos)
         Option(gtree2.asInstanceOf[g.Tree])
     }
 }

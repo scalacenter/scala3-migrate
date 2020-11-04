@@ -13,6 +13,6 @@ object Incompat7 {
 
     implicit val writer: Writer[Map[List[Int], Int]] = ???
 
-    rw(Map.apply[scala.collection.immutable.List[Int], Int](List(1) -> 1))
+    rw(Map.apply[List[Int], Int](List(1) -> 1))
   }
 }

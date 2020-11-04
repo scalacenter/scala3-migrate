@@ -1,5 +1,6 @@
 package migrate
 
+import scala.tools.nsc.interactive.Global
 import scala.tools.nsc.reporters.StoreReporter
 import scala.util.Failure
 import scala.util.Success
@@ -7,8 +8,7 @@ import scala.util.control.NonFatal
 
 import scala.meta._
 import scala.meta.contrib.Trivia
-import scala.meta.internal.pc.ScalafixGlobal
-import scala.meta.internal.proxy.GlobalProxy
+import scala.meta.internal.proxy.GlobalProxyService
 import scala.meta.tokens.Token
 
 import metaconfig.Configured
@@ -20,7 +20,7 @@ import utils.Pretty
 import utils.ScalaExtensions._
 import utils.SyntheticHelper
 
-class MigrationRule(g: ScalafixGlobal) extends SemanticRule("MigrationRule") {
+class MigrationRule(g: Global) extends SemanticRule("MigrationRule") {
   override def description: String = "infer types and typeApply"
 
   def this() = this(null)
@@ -32,7 +32,7 @@ class MigrationRule(g: ScalafixGlobal) extends SemanticRule("MigrationRule") {
       val global = CompilerService.newGlobal(config.scalacClasspath, config.scalacOptions)
       global match {
         case Success(settings) =>
-          Configured.ok(new MigrationRule(new ScalafixGlobal(settings, new StoreReporter, Map())))
+          Configured.ok(new MigrationRule(new Global(settings, new StoreReporter, "scala-migrat3")))
         case Failure(exception) => Configured.error(exception.getMessage)
       }
     }
@@ -92,7 +92,7 @@ class MigrationRule(g: ScalafixGlobal) extends SemanticRule("MigrationRule") {
       case apply: g.Apply if apply.fun.isInstanceOf[g.TypeApply] =>
         Option(context.tree.asInstanceOf[g.Tree])
       case _ =>
-        val gtree2 = GlobalProxy.typedTreeAt(g, context.tree.pos)
+        val gtree2 = GlobalProxyService.typedTreeAt(g, context.tree.pos)
         Option(gtree2.asInstanceOf[g.Tree])
     }
 

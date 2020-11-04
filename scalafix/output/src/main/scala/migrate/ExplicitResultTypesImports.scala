@@ -27,7 +27,7 @@ object ExplicitResultTypesImports {
     case object A extends ADT
     case object B extends ADT
   }
-  val productWithSerializable: scala.collection.immutable.List[Product with migrate.ExplicitResultTypesImports.ADT with java.io.Serializable] = List.apply[Product with migrate.ExplicitResultTypesImports.ADT with java.io.Serializable](ADT.A, ADT.B)
+  val productWithSerializable: List[Product with migrate.ExplicitResultTypesImports.ADT with java.io.Serializable] = List.apply[Product with migrate.ExplicitResultTypesImports.ADT with java.io.Serializable](ADT.A, ADT.B)
 
   sealed abstract class ADT2
   trait Mixin[T]
@@ -36,8 +36,8 @@ object ExplicitResultTypesImports {
     case object B extends ADT2 with Mixin[String]
     case object C extends ADT2 with Mixin[Int]
   }
-  val longSharedParent1: scala.collection.immutable.List[Product with migrate.ExplicitResultTypesImports.ADT2 with migrate.ExplicitResultTypesImports.Mixin[_ >: String with Int] with java.io.Serializable] = List.apply[Product with migrate.ExplicitResultTypesImports.ADT2 with migrate.ExplicitResultTypesImports.Mixin[_ >: String with Int] with java.io.Serializable](ADT2.A, ADT2.B)
-  val longSharedParent2: scala.collection.immutable.List[Product with migrate.ExplicitResultTypesImports.ADT2 with migrate.ExplicitResultTypesImports.Mixin[Int] with java.io.Serializable] = List.apply[Product with migrate.ExplicitResultTypesImports.ADT2 with migrate.ExplicitResultTypesImports.Mixin[Int] with java.io.Serializable](ADT2.A, ADT2.C)
+  val longSharedParent1: List[Product with migrate.ExplicitResultTypesImports.ADT2 with migrate.ExplicitResultTypesImports.Mixin[_ >: String with Int] with java.io.Serializable] = List.apply[Product with migrate.ExplicitResultTypesImports.ADT2 with migrate.ExplicitResultTypesImports.Mixin[_ >: String with Int] with java.io.Serializable](ADT2.A, ADT2.B)
+  val longSharedParent2: List[Product with migrate.ExplicitResultTypesImports.ADT2 with migrate.ExplicitResultTypesImports.Mixin[Int] with java.io.Serializable] = List.apply[Product with migrate.ExplicitResultTypesImports.ADT2 with migrate.ExplicitResultTypesImports.Mixin[Int] with java.io.Serializable](ADT2.A, ADT2.C)
 
   val juMap: java.util.Map[Int,String] = java.util.Collections.emptyMap[Int, String]()
 }
