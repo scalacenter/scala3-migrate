@@ -85,7 +85,7 @@ lazy val `scalafix-input` = project
     skip in publish := true,
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect"  % scalaVersion.value,
-      "com.twitter"   %% "bijection-core" % "0.9.7"
+      "com.twitter"   %% "bijection-core" % V.bijectionCore
     )
   )
   .disablePlugins(ScalafixPlugin)
@@ -96,7 +96,7 @@ lazy val `scalafix-output` = project
     skip in publish := true,
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect"  % scalaVersion.value,
-      "com.twitter"   %% "bijection-core" % "0.9.7"
+      "com.twitter"   %% "bijection-core" % V.bijectionCore
     )
   )
   .disablePlugins(ScalafixPlugin)
@@ -136,4 +136,5 @@ lazy val V = new {
   val scalafix              = "0.9.20"
   val scribe                = "2.7.12"
   val organizeImports       = "0.4.3"
+  val bijectionCore         = "0.9.7"
 }
