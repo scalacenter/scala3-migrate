@@ -1,4 +1,3 @@
-
 package cats.instances
 
 import cats.{Always, Applicative, Eval, FlatMap, Foldable, Monoid, MonoidK, Order, Show, Traverse, TraverseFilter}
@@ -40,7 +39,7 @@ trait SortedMapInstances extends SortedMapInstances2 {
         Foldable
           .iterateRight[(K, A), G[scala.collection.immutable.SortedMap[K,B]]](fa, gba) { (kv, lbuf) =>
             G.map2Eval[B, scala.collection.immutable.SortedMap[K,B], scala.collection.immutable.SortedMap[K,B]](f(kv._2), lbuf)({ (b, buf) =>
-              buf + (kv._1 -> b)
+              buf + (scala.Predef.ArrowAssoc(kv._1) -> b)
             })
           }
           .value
@@ -127,9 +126,9 @@ trait SortedMapInstances extends SortedMapInstances2 {
         keys
           .foldLeft[scala.collection.mutable.Builder[(K, C),scala.collection.immutable.SortedMap[K,C]]](builder) { (builder, k) =>
             (fa.get(k), fb.get(k)) match {
-              case (Some(a), Some(b)) => builder += k -> f(Ior.both[A, B](a, b))
-              case (Some(a), None)    => builder += k -> f(Ior.left[A, Nothing](a))
-              case (None, Some(b))    => builder += k -> f(Ior.right[Nothing, B](b))
+              case (Some(a), Some(b)) => builder += scala.Predef.ArrowAssoc(k) -> f(Ior.both[A, B](a, b))
+              case (Some(a), None)    => builder += scala.Predef.ArrowAssoc(k) -> f(Ior.left[A, Nothing](a))
+              case (None, Some(b))    => builder += scala.Predef.ArrowAssoc(k) -> f(Ior.right[Nothing, B](b))
               case (None, None)       => ??? // should not happen
             }
           }
@@ -188,20 +187,20 @@ private[instances] trait SortedMapInstancesBinCompat0 {
         Foldable
           .iterateRight[(K, A), G[scala.collection.immutable.SortedMap[K,B]]](fa, gba) { (kv, lbuf) =>
             G.map2Eval[Option[B], scala.collection.immutable.SortedMap[K,B], scala.collection.immutable.SortedMap[K,B]](f(kv._2), lbuf)({ (ob, buf) =>
-              ob.fold[scala.collection.immutable.SortedMap[K,B]](buf)(b => buf + (kv._1 -> b))
+              ob.fold[scala.collection.immutable.SortedMap[K,B]](buf)(b => buf + (scala.Predef.ArrowAssoc(kv._1) -> b))
             })
           }
           .value
       }
 
       override def mapFilter[A, B](fa: SortedMap[K, A])(f: (A) => Option[B]): SortedMap[K, B] =
-        fa.collect[K, B](scala.Function.unlift[(K, A), (K, B)](t => f(t._2).map[(K, B)](t._1 -> _)))
+        fa.collect[K, B](scala.Function.unlift[(K, A), (K, B)](t => f(t._2).map[(K, B)](scala.Predef.ArrowAssoc(t._1) -> _)))
 
       override def collect[A, B](fa: SortedMap[K, A])(f: PartialFunction[A, B]): SortedMap[K, B] =
-        fa.collect[K, B](scala.Function.unlift[(K, A), (K, B)](t => f.lift(t._2).map[(K, B)](t._1 -> _)))
+        fa.collect[K, B](scala.Function.unlift[(K, A), (K, B)](t => f.lift(t._2).map[(K, B)](scala.Predef.ArrowAssoc(t._1) -> _)))
 
       override def flattenOption[A](fa: SortedMap[K, Option[A]]): SortedMap[K, A] =
-        fa.collect[K, A](scala.Function.unlift[(K, Option[A]), (K, A)](t => t._2.map[(K, A)](t._1 -> _)))
+        fa.collect[K, A](scala.Function.unlift[(K, Option[A]), (K, A)](t => t._2.map[(K, A)](scala.Predef.ArrowAssoc(t._1) -> _)))
 
       override def filter[A](fa: SortedMap[K, A])(f: (A) => Boolean): SortedMap[K, A] =
         fa.filter { case (_, v) => f(v) }

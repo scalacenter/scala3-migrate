@@ -10,4 +10,4 @@
 //    def await(implicit duration: Duration = 10.seconds): T = Await.result(future, duration)
 //  }
 //  def test = Future(new Foo())(global).await.status
-//}
+//

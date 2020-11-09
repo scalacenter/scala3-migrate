@@ -1,4 +1,3 @@
-
 package cats
 
 private[cats] trait ComposedDistributive[F[_], G[_]] extends Distributive[λ[α => F[G[α]]]] with ComposedFunctor[F, G] {
@@ -167,7 +166,7 @@ private[cats] trait ComposedInvariantApplySemigroupal[F[_], G[_]]
   def product[A, B](fa: F[G[A]], fb: F[G[B]]): F[G[(A, B)]] =
     F.imap[(G[A], G[B]), G[(A, B)]](F.product[G[A], G[B]](fa, fb)) {
       case (ga, gb) =>
-        G.map2[A, B, (A, B)](ga, gb)(_ -> _)
+        G.map2[A, B, (A, B)](ga, gb)(scala.Predef.ArrowAssoc(_) -> _)
     } { (g: G[(A, B)]) =>
       (G.map[(A, B), A](g)(_._1), G.map[(A, B), B](g)(_._2))
     }

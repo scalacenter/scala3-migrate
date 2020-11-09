@@ -1,4 +1,3 @@
-
 package cats
 
 import cats.ApplicativeError.CatchOnlyPartiallyApplied

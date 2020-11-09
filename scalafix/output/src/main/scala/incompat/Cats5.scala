@@ -1,4 +1,3 @@
-
 package cats
 package instances
 
@@ -30,7 +29,7 @@ trait MapInstances extends cats.kernel.instances.MapInstances {
         val gbb: G[Map[K,B]] = Foldable
           .iterateRight[(K, A), G[Map[K,B]]](fa, gba) { (kv, lbuf) =>
             G.map2Eval[B, scala.collection.immutable.Map[K,B], scala.collection.immutable.Map[K,B]](f(kv._2), lbuf)({ (b, buf) =>
-              buf + (kv._1 -> b)
+              buf + (scala.Predef.ArrowAssoc(kv._1) -> b)
             })
           }
           .value
@@ -103,9 +102,9 @@ trait MapInstances extends cats.kernel.instances.MapInstances {
         keys
           .foldLeft[scala.collection.mutable.Builder[(K, C),scala.collection.immutable.Map[K,C]]](builder) { (builder, k) =>
             (fa.get(k), fb.get(k)) match {
-              case (Some(a), Some(b)) => builder += k -> f(Ior.both[A, B](a, b))
-              case (Some(a), None)    => builder += k -> f(Ior.left[A, Nothing](a))
-              case (None, Some(b))    => builder += k -> f(Ior.right[Nothing, B](b))
+              case (Some(a), Some(b)) => builder += scala.Predef.ArrowAssoc(k) -> f(Ior.both[A, B](a, b))
+              case (Some(a), None)    => builder += scala.Predef.ArrowAssoc(k) -> f(Ior.left[A, Nothing](a))
+              case (None, Some(b))    => builder += scala.Predef.ArrowAssoc(k) -> f(Ior.right[Nothing, B](b))
               case (None, None)       => ??? // should not happen
             }
           }
@@ -135,7 +134,7 @@ private[instances] trait MapInstancesBinCompat0 {
       g.foldLeft[scala.collection.immutable.Map[A,C]](Map.empty[A, C]) {
         case (acc, (key, value)) =>
           f.get(value) match {
-            case Some(other) => acc + (key -> other)
+            case Some(other) => acc + (scala.Predef.ArrowAssoc(key) -> other)
             case _           => acc
           }
       }
@@ -147,13 +146,13 @@ private[instances] trait MapInstancesBinCompat0 {
       val functor: Functor[Map[K, *]] = cats.instances.map.catsStdInstancesForMap[K]
 
       def mapFilter[A, B](fa: Map[K, A])(f: A => Option[B]): scala.collection.immutable.Map[K,B] =
-        fa.collect[K, B](scala.Function.unlift[(K, A), (K, B)](t => f(t._2).map[(K, B)](t._1 -> _)))
+        fa.collect[K, B](scala.Function.unlift[(K, A), (K, B)](t => f(t._2).map[(K, B)](scala.Predef.ArrowAssoc(t._1) -> _)))
 
       override def collect[A, B](fa: Map[K, A])(f: PartialFunction[A, B]): scala.collection.immutable.Map[K,B] =
-        fa.collect[K, B](scala.Function.unlift[(K, A), (K, B)](t => f.lift(t._2).map[(K, B)](t._1 -> _)))
+        fa.collect[K, B](scala.Function.unlift[(K, A), (K, B)](t => f.lift(t._2).map[(K, B)](scala.Predef.ArrowAssoc(t._1) -> _)))
 
       override def flattenOption[A](fa: Map[K, Option[A]]): scala.collection.immutable.Map[K,A] =
-        fa.collect[K, A](scala.Function.unlift[(K, Option[A]), (K, A)](t => t._2.map[(K, A)](t._1 -> _)))
+        fa.collect[K, A](scala.Function.unlift[(K, Option[A]), (K, A)](t => t._2.map[(K, A)](scala.Predef.ArrowAssoc(t._1) -> _)))
 
       override def filter[A](fa: Map[K, A])(f: A => Boolean): scala.collection.immutable.Map[K,A] =
         fa.filter { case (_, v) => f(v) }

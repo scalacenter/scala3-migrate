@@ -1,4 +1,3 @@
-
 package migrate
 
 object ExplicitResultTypesPathDependent {
