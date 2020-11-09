@@ -8,7 +8,6 @@ import scala.util.control.NonFatal
 
 import scala.meta._
 import scala.meta.contrib.Trivia
-import scala.meta.internal.proxy.GlobalProxyService
 import scala.meta.tokens.Token
 
 import metaconfig.Configured
@@ -17,7 +16,6 @@ import scalafix.util.TokenOps
 import scalafix.v1._
 import utils.CompilerService
 import utils.Pretty
-import utils.ScalaExtensions._
 import utils.SyntheticHelper
 
 class MigrationRule(g: Global) extends SemanticRule("MigrationRule") {
@@ -64,9 +62,7 @@ class MigrationRule(g: Global) extends SemanticRule("MigrationRule") {
         replace <- if (syn.toString.startsWith("*.apply")) Some(".apply")
                    else if (syn.toString.startsWith("*[")) Some("")
                    else None
-        typesSeenFromGlobal = getTypeNameAsSeenByGlobal(originalTree, replace).map(_.map(_.dealias.toString()))
-        types <- typesSeenFromGlobal
-                   .orElse(typeArguments.map(getAbsoluteType).sequence)
+        types <- getTypeNameAsSeenByGlobal(originalTree, replace).map(_.map(_.toString()))
         // if we don't know how to express a type, we don't create a patch
       } yield Patch.addRight(originalTree, s"${replace}[${types.mkString(", ")}]")).getOrElse(Patch.empty)
     // if we have two patches on the same originalTree, ex: a[Type1].apply[Type2]
@@ -81,20 +77,10 @@ class MigrationRule(g: Global) extends SemanticRule("MigrationRule") {
     for {
       term         <- SyntheticHelper.getTermName(origin)
       gterm         = if (replace.isEmpty) g.TermName(term.toString()) else g.TermName("apply")
-      context      <- CompilerService.getContext(origin.tokens.last, g)
-      globalOrigin <- getTreeFromContext(context)
-      filteredTree <- getTypeApplyTree(globalOrigin, gterm)
-      types         = filteredTree.args.map(_.tpe)
+      globalTree   <- CompilerService.getGlobalTree(origin, g)
+      filteredTree <- getTypeApplyTree(globalTree, gterm)
+      types         = filteredTree.args.map(_.tpe.dealias)
     } yield types
-
-  private def getTreeFromContext(context: g.Context): Option[g.Tree] =
-    context.tree match {
-      case apply: g.Apply if apply.fun.isInstanceOf[g.TypeApply] =>
-        Option(context.tree.asInstanceOf[g.Tree])
-      case _ =>
-        val gtree2 = GlobalProxyService.typedTreeAt(g, context.tree.pos)
-        Option(gtree2.asInstanceOf[g.Tree])
-    }
 
   private def getTypeApplyTree(gtree: g.Tree, termName: g.Name): Option[g.TypeApply] =
     // TODO: Pattern match instead
@@ -124,7 +110,7 @@ class MigrationRule(g: Global) extends SemanticRule("MigrationRule") {
       explicitType      <- getTypeAsSeenFromGlobal(name)
       filteredType      <- filterType(explicitType)
       //      _ = println(s"filteredType.prefixString = ${filteredType.prefix}")
-    } yield Patch.addRight(replace, s"$spaces: ${filteredType.finalResultType}")).getOrElse(Patch.empty)
+    } yield Patch.addRight(replace, s"$spaces: ${filteredType.toString()}")).getOrElse(Patch.empty)
 
   private def getTypeAsSeenFromGlobal(
     name: Term.Name
@@ -143,7 +129,7 @@ class MigrationRule(g: Global) extends SemanticRule("MigrationRule") {
       //Todo: add a special case for structural type: remove implicit and replace lazy val by a def
       //Todo: deal with the root prefix to avoid cyclical types
       //Todo: remove super types: we don't infer them
-      case f => Some(f)
+      case f => Some(f.finalResultType)
     }
 
   private def getReplaceAndSpaces(defn: Defn, body: Term)(implicit doc: SemanticDocument): Option[(Token, String)] = {

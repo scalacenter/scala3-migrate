@@ -1,4 +1,5 @@
 import BuildInfoExtension._
+import sbt.Keys.libraryDependencies
 
 ThisBuild / scalaVersion := V.scala213
 ThisBuild / semanticdbEnabled := true
@@ -53,14 +54,22 @@ lazy val migrate = project
 lazy val input = project
   .in(file("input"))
   .settings(
-    scalacOptions ++= List("-P:semanticdb:synthetics:on")
+    scalacOptions ++= List("-P:semanticdb:synthetics:on"),
+    libraryDependencies ++= List(
+      "org.typelevel"                 %% "cats-core"      % V.catsCore,
+      compilerPlugin(("org.typelevel" %% "kind-projector" % V.kindProjector).cross(CrossVersion.full))
+    )
   )
   .disablePlugins(ScalafixPlugin)
 
 lazy val output = project
   .in(file("output"))
   .settings(
-    scalaVersion := V.dotty
+    scalaVersion := V.dotty,
+    scalacOptions := Seq("-Ykind-projector"),
+    libraryDependencies ++= Seq(
+      "org.typelevel" % "cats-core_2.13" % V.catsCore
+    )
   )
   .disablePlugins(ScalafixPlugin)
 
@@ -84,8 +93,10 @@ lazy val `scalafix-input` = project
     scalacOptions ++= List("-P:semanticdb:synthetics:on"),
     skip in publish := true,
     libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-reflect"  % scalaVersion.value,
-      "com.twitter"   %% "bijection-core" % V.bijectionCore
+      "org.scala-lang"                 % "scala-reflect"  % scalaVersion.value,
+      "com.twitter"                   %% "bijection-core" % V.bijectionCore,
+      "org.typelevel"                 %% "cats-core"      % V.catsCore,
+      compilerPlugin(("org.typelevel" %% "kind-projector" % V.kindProjector).cross(CrossVersion.full))
     )
   )
   .disablePlugins(ScalafixPlugin)
@@ -95,8 +106,10 @@ lazy val `scalafix-output` = project
   .settings(
     skip in publish := true,
     libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-reflect"  % scalaVersion.value,
-      "com.twitter"   %% "bijection-core" % V.bijectionCore
+      "org.scala-lang"                 % "scala-reflect"  % scalaVersion.value,
+      "com.twitter"                   %% "bijection-core" % V.bijectionCore,
+      "org.typelevel"                 %% "cats-core"      % V.catsCore,
+      compilerPlugin(("org.typelevel" %% "kind-projector" % V.kindProjector).cross(CrossVersion.full))
     )
   )
   .disablePlugins(ScalafixPlugin)
@@ -137,4 +150,6 @@ lazy val V = new {
   val scribe                = "2.7.12"
   val organizeImports       = "0.4.3"
   val bijectionCore         = "0.9.7"
+  val catsCore              = "2.2.0"
+  val kindProjector         = "0.11.0"
 }

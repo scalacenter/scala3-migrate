@@ -7,7 +7,6 @@ import scala.util.Success
 import scala.util.control.NonFatal
 
 import scala.meta.Tree
-import scala.meta.internal.proxy.GlobalProxyService
 
 import metaconfig.Configured
 import scalafix.patch.Patch
@@ -63,21 +62,8 @@ class ExplicitImplicitsRule(g: Global) extends SemanticRule("ExplicitImplicits")
 
   def getImplicitParams(originalTree: Tree)(implicit unit: g.CompilationUnit): Option[List[String]] =
     for {
-      term       <- SyntheticHelper.getTermName(originalTree)
-      context    <- CompilerService.getContext(term, g)
-      globalTree <- getTreeFromContext(context)
-      args <- globalTree match {
-                case g.Apply(_, args) if globalTree.isInstanceOf[g.ApplyToImplicitArgs] => {
-                  val listOfArgs = args.map(_.symbol.asInstanceOf[g.Symbol])
-                  listOfArgs.map(printSymbol).sequence
-                }
-                case g.Apply(_, args) if args.nonEmpty && args.head.isInstanceOf[g.ApplyToImplicitArgs] => {
-                  val newArgs    = args.head.asInstanceOf[g.Apply].args
-                  val listOfArgs = newArgs.map(_.symbol.asInstanceOf[g.Symbol])
-                  listOfArgs.map(printSymbol).sequence
-                }
-                case _ => None
-              }
+      globalTree <- CompilerService.getContext(originalTree, g)
+      args       <- collectImplicit(globalTree.tree)
     } yield args
 
   private def printSymbol(symbol: g.Symbol): Option[String] =
@@ -86,12 +72,19 @@ class ExplicitImplicitsRule(g: Global) extends SemanticRule("ExplicitImplicits")
     else if (symbol.isStatic) Some(symbol.fullName)
     else None
 
-  private def getTreeFromContext(context: g.Context): Option[g.Tree] =
-    context.tree match {
-      case g.Apply(_, args) if args.nonEmpty =>
-        Option(context.tree.asInstanceOf[g.Tree])
-      case _ =>
-        val gtree2 = GlobalProxyService.typedTreeAt(g, context.tree.pos)
-        Option(gtree2.asInstanceOf[g.Tree])
+  private def collectImplicit(globalTree: g.Tree): Option[List[String]] =
+    globalTree match {
+      case g.Apply(_, args) if globalTree.isInstanceOf[g.ApplyToImplicitArgs] => {
+        val listOfArgs = args.map(_.symbol.asInstanceOf[g.Symbol])
+        listOfArgs.map(printSymbol).sequence
+      }
+      case g.Apply(_, args) if args.nonEmpty && args.head.isInstanceOf[g.ApplyToImplicitArgs] => {
+        val newArgs    = args.head.asInstanceOf[g.Apply].args
+        val listOfArgs = newArgs.map(_.symbol.asInstanceOf[g.Symbol])
+        listOfArgs.map(printSymbol).sequence
+      }
+      case t =>
+        None
     }
+
 }
