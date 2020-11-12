@@ -1,4 +1,3 @@
-
 package migrate
 
 import scala.util._

@@ -15,6 +15,8 @@ class RuleSuite extends AbstractSemanticRuleSuite with FunSuiteLike {
   val (passing, failing) = testsToRun.partition(!_.path.testName.contains("_fails"))
   passing.foreach(runOn)
 
+//  writeTestResult("Basic")
+
   //   for running only one test if using Intellij
   def runSpecificTests(name: String): Unit =
     filterRuleTest(name).map(runOn)
@@ -40,10 +42,10 @@ class RuleSuite extends AbstractSemanticRuleSuite with FunSuiteLike {
         res.semanticdbIndex,
         res.patches
       )
-    val tokens   = fixed.tokenize.get
-    val obtained = SemanticRuleSuite.stripTestkitComments(tokens)
+    val tokens                = fixed.tokenize.get
+    val emptyLine :: obtained = SemanticRuleSuite.stripTestkitComments(tokens).linesIterator.toList
     ruleTest.path.resolveOutput(props) match {
-      case Right(file) => writeFile(file, obtained)
+      case Right(file) => writeFile(file, obtained.mkString("\n"))
       case Left(err)   => throw new Exception(s"File not found $err")
     }
   }

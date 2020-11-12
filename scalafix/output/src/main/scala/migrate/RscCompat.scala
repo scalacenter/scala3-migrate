@@ -1,4 +1,3 @@
-
 package migrate
 
 import com.twitter.bijection._

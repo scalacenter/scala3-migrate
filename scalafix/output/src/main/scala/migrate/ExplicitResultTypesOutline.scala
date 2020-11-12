@@ -1,4 +1,3 @@
-
 package migrate
 
 object ExplicitResultTypesOutline {
@@ -6,4 +5,3 @@ object ExplicitResultTypesOutline {
     def format: Int = 24
   }
 }
-
