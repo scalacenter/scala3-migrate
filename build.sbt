@@ -82,8 +82,7 @@ lazy val `scalafix-rules` = project
     ),
     moduleName := "scalafix",
     libraryDependencies ++= Seq(
-      "ch.epfl.scala" %% "scalafix-core"  % V.scalafix,
-      "ch.epfl.scala" %% "scalafix-rules" % V.scalafix
+      "ch.epfl.scala" %% "scalafix-core" % V.scalafix
     )
   )
 
