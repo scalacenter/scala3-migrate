@@ -29,13 +29,8 @@ object Main {
     scribe.info(s"Migrating $source")
     for {
       compiler <- setupScala3Compiler(scala3Classpath, scala3ClassDirectory, scala3CompilerOptions)
-      initialFileToMigrate <- buildMigrationFiles(
-                                sourceRoot,
-                                Seq(source),
-                                scala2Classpath,
-                                toolClasspath,
-                                scala2CompilerOptions
-                              )
+      initialFileToMigrate <-
+        buildMigrationFiles(sourceRoot, Seq(source), scala2Classpath, toolClasspath, scala2CompilerOptions)
       _          <- compileInScala3(initialFileToMigrate, compiler)
       initialFile = initialFileToMigrate.head
       result <- initialFile.migrate(compiler) match {
@@ -51,13 +46,8 @@ object Main {
     scala3CompilerOptions: Seq[String]
   ): Try[Scala3Compiler] = {
     // It's easier no to deal with semanticdb option, since we don't need semanticdb files
-    val modified = scala3CompilerOptions.filterNot(_ == "-Ysemanticdb")
-    val scala3CompilerArgs = modified.toArray ++ Array(
-      "-classpath",
-      classpath.value,
-      "-d",
-      classDirectory.value
-    )
+    val modified           = scala3CompilerOptions.filterNot(_ == "-Ysemanticdb")
+    val scala3CompilerArgs = modified.toArray ++ Array("-classpath", classpath.value, "-d", classDirectory.value)
     Try {
       Scala3Compiler.setup(scala3CompilerArgs)
     }

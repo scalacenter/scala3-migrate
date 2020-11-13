@@ -37,11 +37,7 @@ class RuleSuite extends AbstractSemanticRuleSuite with FunSuiteLike {
       finally rule.afterComplete()
     // verify to verify that tokenPatchApply and fixed are the same
     val fixed =
-      PatchInternals.tokenPatchApply(
-        res.ruleCtx,
-        res.semanticdbIndex,
-        res.patches
-      )
+      PatchInternals.tokenPatchApply(res.ruleCtx, res.semanticdbIndex, res.patches)
     val tokens                = fixed.tokenize.get
     val emptyLine :: obtained = SemanticRuleSuite.stripTestkitComments(tokens).linesIterator.toList
     ruleTest.path.resolveOutput(props) match {

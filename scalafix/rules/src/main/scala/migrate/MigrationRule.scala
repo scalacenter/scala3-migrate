@@ -70,10 +70,10 @@ class MigrationRule(g: Global) extends SemanticRule("MigrationRule") {
     // but when applying them, we need to apply in the reverse order.
     }.toList.reverse.asPatch
 
-  private def getTypeNameAsSeenByGlobal(origin: Tree, replace: String)(implicit
-    doc: SemanticDocument,
-    unit: g.CompilationUnit
-  ): Option[List[g.Type]] =
+  private def getTypeNameAsSeenByGlobal(
+    origin: Tree,
+    replace: String
+  )(implicit doc: SemanticDocument, unit: g.CompilationUnit): Option[List[g.Type]] =
     for {
       term         <- SyntheticHelper.getTermName(origin)
       gterm         = if (replace.isEmpty) g.TermName(term.toString()) else g.TermName("apply")
@@ -101,8 +101,8 @@ class MigrationRule(g: Global) extends SemanticRule("MigrationRule") {
         fixDefinition(t, name, body)
     }.asPatch
 
-  private def fixDefinition(defn: Defn, name: Term.Name, body: Term)(implicit
-    doc: SemanticDocument,
+  private def fixDefinition(defn: Defn, name: Term.Name, body: Term)(
+    implicit doc: SemanticDocument,
     unit: g.CompilationUnit
   ): Patch =
     (for {

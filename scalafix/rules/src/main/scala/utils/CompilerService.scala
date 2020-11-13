@@ -64,16 +64,13 @@ object CompilerService {
     Try(g.doLocateContext(gtree.pos)).toOption
   }
 
-  private def getPosAfter(scalaMetaPos: Position, g: Global)(implicit
-    unit: g.CompilationUnit
-  ): ReflectPos = ReflectPos.range(unit.source, scalaMetaPos.start, scalaMetaPos.start, scalaMetaPos.end + 1)
+  private def getPosAfter(scalaMetaPos: Position, g: Global)(implicit unit: g.CompilationUnit): ReflectPos =
+    ReflectPos.range(unit.source, scalaMetaPos.start, scalaMetaPos.start, scalaMetaPos.end + 1)
 
-  private def getPosBefore(scalaMetaPos: Position, g: Global)(implicit
-    unit: g.CompilationUnit
-  ): ReflectPos = ReflectPos.range(unit.source, scalaMetaPos.start - 1, scalaMetaPos.start, scalaMetaPos.end)
+  private def getPosBefore(scalaMetaPos: Position, g: Global)(implicit unit: g.CompilationUnit): ReflectPos =
+    ReflectPos.range(unit.source, scalaMetaPos.start - 1, scalaMetaPos.start, scalaMetaPos.end)
 
-  private def getExactPos(scalaMetaPos: Position, g: Global)(implicit
-    unit: g.CompilationUnit
-  ): ReflectPos = ReflectPos.range(unit.source, scalaMetaPos.start, scalaMetaPos.start, scalaMetaPos.end)
+  private def getExactPos(scalaMetaPos: Position, g: Global)(implicit unit: g.CompilationUnit): ReflectPos =
+    ReflectPos.range(unit.source, scalaMetaPos.start, scalaMetaPos.start, scalaMetaPos.end)
 
 }
