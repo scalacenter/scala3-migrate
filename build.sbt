@@ -10,9 +10,7 @@ ThisBuild / scalafixDependencies ++= List("com.github.liancheng" %% "organize-im
 lazy val interfaces = project
   .in(file("interfaces"))
   .settings(
-    libraryDependencies ++= Seq(
-      "ch.epfl.lamp" % "dotty-compiler_0.27" % V.dotty
-    ),
+    libraryDependencies ++= Seq("ch.epfl.lamp" % "dotty-compiler_0.27" % V.dotty),
     crossPaths := false,
     autoScalaLibrary := false
   )
@@ -21,11 +19,7 @@ lazy val migrate = project
   .in(file("migrate"))
   .settings(addBuildInfoToConfig(Test))
   .settings(
-    scalacOptions ++= Seq(
-      "-Wunused",
-      "-P:semanticdb:synthetics:on",
-      "-deprecation"
-    ),
+    scalacOptions ++= Seq("-Wunused", "-P:semanticdb:synthetics:on", "-deprecation"),
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler"      % scalaVersion.value,
       "ch.epfl.scala"  % "scalafix-interfaces" % V.scalafix,
@@ -67,23 +61,16 @@ lazy val output = project
   .settings(
     scalaVersion := V.dotty,
     scalacOptions := Seq("-Ykind-projector"),
-    libraryDependencies ++= Seq(
-      "org.typelevel" % "cats-core_2.13" % V.catsCore
-    )
+    libraryDependencies ++= Seq("org.typelevel" % "cats-core_2.13" % V.catsCore)
   )
   .disablePlugins(ScalafixPlugin)
 
 lazy val `scalafix-rules` = project
   .in(file("scalafix/rules"))
   .settings(
-    scalacOptions ++= List(
-      "-Wunused",
-      "-P:semanticdb:synthetics:on"
-    ),
+    scalacOptions ++= List("-Wunused", "-P:semanticdb:synthetics:on"),
     moduleName := "scalafix",
-    libraryDependencies ++= Seq(
-      "ch.epfl.scala" %% "scalafix-core" % V.scalafix
-    )
+    libraryDependencies ++= Seq("ch.epfl.scala" %% "scalafix-core" % V.scalafix)
   )
 
 lazy val `scalafix-input` = project
@@ -116,11 +103,7 @@ lazy val `scalafix-output` = project
 lazy val `scalafix-tests` = project
   .in(file("scalafix/tests"))
   .settings(
-    scalacOptions ++= Seq(
-      "-Wunused",
-      "-P:semanticdb:synthetics:on",
-      "-deprecation"
-    ),
+    scalacOptions ++= Seq("-Wunused", "-P:semanticdb:synthetics:on", "-deprecation"),
     libraryDependencies +=
       "ch.epfl.scala" %
         "scalafix-testkit" %

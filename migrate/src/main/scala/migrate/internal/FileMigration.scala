@@ -45,18 +45,11 @@ private[migrate] class FileMigration(fileToMigrate: FileMigrationState.Initial, 
    * @param candidates         A set of patches that may or may not be necessary
    * @param necessaryPatches   A set of necessary patches
    */
-  private case class CompilingState(
-    candidates: Seq[ScalafixPatch],
-    necessaryPatches: Seq[ScalafixPatch]
-  ) {
+  private case class CompilingState(candidates: Seq[ScalafixPatch], necessaryPatches: Seq[ScalafixPatch]) {
 
     def next(): Try[CompilingState] = {
       // We first try to remove all candidates
-      val initialStep = CompilationStep(
-        kept = Seq.empty,
-        removed = candidates,
-        necessary = None
-      )
+      val initialStep = CompilationStep(kept = Seq.empty, removed = candidates, necessary = None)
 
       loopUntilCompile(Success(initialStep)) map { case CompilationStep(kept, _, necessary) =>
         CompilingState(kept, necessaryPatches ++ necessary)
@@ -72,13 +65,7 @@ private[migrate] class FileMigration(fileToMigrate: FileMigrationState.Initial, 
             case Success(false) =>
               if (step.removed.size == 1) {
                 // the last patch is necessary
-                Success(
-                  CompilationStep(
-                    step.kept,
-                    Seq.empty,
-                    Some(step.removed.head)
-                  )
-                )
+                Success(CompilationStep(step.kept, Seq.empty, Some(step.removed.head)))
               } else {
                 loopUntilCompile(Success(step.keepMorePatches()))
               }
@@ -113,11 +100,7 @@ private[migrate] class FileMigration(fileToMigrate: FileMigrationState.Initial, 
 
       def keepMorePatches(): CompilationStep = {
         val (keepMore, removeLess) = removed.splitAt(removed.size / 2)
-        CompilationStep(
-          kept ++ keepMore,
-          removeLess,
-          necessary
-        )
+        CompilationStep(kept ++ keepMore, removeLess, necessary)
       }
     }
   }
