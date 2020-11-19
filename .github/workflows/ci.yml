@@ -6,13 +6,24 @@ on:
   pull_request:
 jobs:
   test:
-    name: test
+    name: test jdk8
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
-      - uses: olafurpg/setup-scala@v7
+      - uses: olafurpg/setup-scala@v10
+      - run: sbt test
+  jdk11:
+    name: test jdk11
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v2
+      - uses: olafurpg/setup-scala@v10
+        with:
+          java-version: adopt@1.11
       - run: sbt test
 
   checks:
@@ -23,4 +34,3 @@ jobs:
       - uses: olafurpg/setup-scala@v7
       - run: sbt "scalafix --check"
       - run: bin/scalafmt --test
-
