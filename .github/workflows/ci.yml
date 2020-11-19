@@ -31,6 +31,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: olafurpg/setup-scala@v7
+      - uses: olafurpg/setup-scala@v10
       - run: sbt "scalafix --check"
       - run: bin/scalafmt --test
