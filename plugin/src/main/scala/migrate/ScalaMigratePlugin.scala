@@ -16,9 +16,9 @@ object ScalaMigratePlugin extends AutoPlugin {
   val classpathAttribute      = AttributeKey[Seq[Path]]("unmanagedClasspath")
   val scalacOptionAttribute   = AttributeKey[Seq[String]]("scalacOptions")
   val classDirectoryAttribute = AttributeKey[Path]("scala3ClassDirectory")
-  val scalaBinaryVersion = BuildInfo.scalaBinaryVersion
-  val migrateVersion = BuildInfo.version
-  val toolClasspath = BuildInfo.toolClasspath.split(java.io.File.pathSeparator).toList
+  val scalaBinaryVersion      = BuildInfo.scalaBinaryVersion
+  val migrateVersion          = BuildInfo.version
+  val toolClasspath           = BuildInfo.toolClasspath.split(java.io.File.pathSeparator).toList
 
   object autoImport {
     // val scala3CompilerOptions = taskKey[Seq[String]]("scalacOptions for scala 3")
@@ -34,7 +34,7 @@ object ScalaMigratePlugin extends AutoPlugin {
   override def requires: Plugins = JvmPlugin
 
   override def trigger = AllRequirements
-    
+
   override def projectSettings: Seq[Setting[_]] =
     inConfig(Compile)(configSettings) ++
       inConfig(Test)(configSettings)

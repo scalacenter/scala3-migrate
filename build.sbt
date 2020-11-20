@@ -70,9 +70,19 @@ lazy val input = project
 lazy val plugin = project
   .in(file("plugin"))
   .enablePlugins(SbtPlugin)
-  .settings(scalaVersion := V.scala212, name := "sbt-scala-migrat3")
+  .settings(
+    scalaVersion := V.scala212,
+    name := "sbt-scala-migrat3",
+    buildInfoKeys := Seq[BuildInfoKey](
+      name,
+      "scalaBinaryVersion" -> V.scala213BinaryVersion,
+      version,
+      fromClasspath("toolClasspath", `scalafix-rules` / Compile / fullClasspath)
+    )
+  )
   .dependsOn(`migrate-interfaces`)
   .disablePlugins(ScalafixPlugin)
+  .enablePlugins(BuildInfoPlugin)
 
 lazy val output = project
   .in(file("output"))
@@ -145,12 +155,8 @@ lazy val `scalafix-tests` = project
 lazy val V = new {
   val scala213              = "2.13.3"
   val scala213BinaryVersion = "2.13"
-<<<<<<< HEAD
-  val scalatest             = "3.2.3"
-=======
   val scala212              = "2.12.11"
-  val scalatest             = "3.2.0"
->>>>>>> Bootstrap plugin
+  val scalatest             = "3.2.3"
   val dotty                 = "0.27.0-RC1"
   val scalafix              = "0.9.23"
   val scribe                = "3.0.4"

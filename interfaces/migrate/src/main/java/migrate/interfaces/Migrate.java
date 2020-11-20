@@ -11,13 +11,11 @@ import java.util.List;
 import coursierapi.*;
 
 public interface Migrate {
-    String migrateVersion = "0.1.0-SNAPSHOT";
-    ScalaVersion scalaVersion = ScalaVersion.of("2.13");
 
     MigrateService getService();
 
-    static Migrate fetchAndClassloadInstance() throws Exception {
-        List<URL> jars = getJars();
+    static Migrate fetchAndClassloadInstance(String migrateVersion, String scalaVersion) throws Exception {
+        List<URL> jars = getJars(migrateVersion, scalaVersion);
         
         ClassLoader parent = new MigrateClassloader(Migrate.class.getClassLoader());
         URLClassLoader classLoader = new URLClassLoader(jars.stream().toArray(URL[]::new), parent);
@@ -33,10 +31,11 @@ public interface Migrate {
     }
     
     // put all needed dependecies here.
-    static List<URL> getJars() throws Exception {
+    static List<URL> getJars(String migrateVersion, String scalaVersion) throws Exception {
+        ScalaVersion scalaV = ScalaVersion.of(scalaVersion);
         Dependency migrate = Dependency.parse(
                 "ch.epfl.scala:::migrate:" + migrateVersion,
-                scalaVersion
+                scalaV
         );
         return fetch(Collections.singletonList(migrate), ResolutionParams.create());
     }
