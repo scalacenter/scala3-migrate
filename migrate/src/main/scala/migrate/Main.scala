@@ -85,18 +85,14 @@ object Main {
   private def compileInScala3(migrationFiles: Seq[FileMigrationState], compiler: Scala3Compiler): Try[Unit] =
     for {
       compilationUnits <- migrationFiles.map(_.previewAllPatches()).sequence
-      _ <- timedMs {
-             Try {
-               compiler.compile(compilationUnits.toList)
-             }
-           } match {
-             case (success @ Success(_), finiteduration) =>
-               scribe.info(s"Compiled ${migrationFiles.size} file(s) successfully after ${finiteduration}")
-               success
-             case (failure @ Failure(cause), _) =>
-               scribe.error(s"Compilation failed", cause)
-               failure
+      _ <- timeAndLog(Try(compiler.compile(compilationUnits.toList))) {
+             case (finiteDuration, Success(_)) =>
+               scribe.info(s"Succefully compiled with scala 3 in $finiteDuration")
+             case (_, Failure(e)) =>
+               scribe.info(s"""|Compilation with scala 3 failed because:
+                               |Cause: ${e.getMessage}""".stripMargin)
            }
+
     } yield ()
 
   private def buildMigrationFiles(
@@ -107,22 +103,19 @@ object Main {
     compilerOptions: Seq[String]
   ): Try[Seq[FileMigrationState.Initial]] =
     for {
-      fileEvaluations <- timedMs {
-                           inferTypes(sources, classpath, toolClasspath, compilerOptions, targetRoot)
-                         } match {
-                           case (Success(evaluation), finiteDuration) =>
-                             val fileEvaluations = evaluation.getFileEvaluations().toSeq
-                             val patchesCount    = fileEvaluations.map(_.getPatches().size).sum
-                             scribe.info(
-                               s"Found $patchesCount patch candidate(s) in ${sources.size} file(s) after $finiteDuration"
-                             )
-                             Success(fileEvaluations)
-
-                           case (Failure(cause), _) =>
-                             scribe.error("Failed inferring types", cause)
-                             Failure(cause)
-                         }
+      fileEvaluations <-
+        timeAndLog(inferTypes(sources, classpath, toolClasspath, compilerOptions, targetRoot)) {
+          case (duration, Success(files)) =>
+            val fileEvaluationsSeq = files.getFileEvaluations().toSeq
+            val patchesCount       = fileEvaluationsSeq.map(_.getPatches().size).sum
+            scribe.info(s"Found ${patchesCount} patch candidate(s) in ${sources.size} file(s)after $duration")
+          case (_, Failure(e)) =>
+            scribe.info(s"""|Failed inferring types 
+                            |Cause ${e.getMessage()}""".stripMargin)
+        }
       fileEvaluationMap <- fileEvaluations
+                             .getFileEvaluations()
+                             .toSeq
                              .map(e => AbsolutePath.from(e.getEvaluatedFile()).map(file => file -> e))
                              .sequence
                              .map(_.toMap)
