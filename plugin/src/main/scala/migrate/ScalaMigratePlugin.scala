@@ -67,10 +67,9 @@ object ScalaMigratePlugin extends AutoPlugin {
       log.info("we are going to migrate your project to scala 3 maybe")
 
       val sourcesPath           = sources.value.seq.map(_.toPath())
-      val workspace             = (ThisBuild / baseDirectory).value
+      val targetRoot            = semanticdbTargetRoot.value
       val scala2Classpath       = fullClasspath.value.seq.map(_.data.toPath())
       val scala2CompilerOptions = scalacOptions.value
-      val semanticdbPath        = semanticdbTargetRoot.value
 
       // computed values
       val scala3InputsValue = scala3Inputs.value
@@ -86,7 +85,7 @@ object ScalaMigratePlugin extends AutoPlugin {
 
       migrateAPI.migrate(
         sourcesPath.asJava,
-        workspace.toPath(),
+        targetRoot.toPath(),
         scala2Classpath.asJava,
         scala2CompilerOptions.asJava,
         toolCp.asJava,

@@ -42,8 +42,7 @@ lazy val migrate = project
     Test / buildInfoKeys := Seq(
       "input" -> (input / Compile / sourceDirectory).value,
       fromSources("sources", (input / Compile / sources)),
-      "output"    -> (output / Compile / sourceDirectory).value,
-      "workspace" -> (ThisBuild / baseDirectory).value,
+      "output" -> (output / Compile / sourceDirectory).value,
       fromClasspath("scala2Classpath", input / Compile / fullClasspath),
       "semanticdbPath" -> (input / Compile / semanticdbTargetRoot).value,
       fromScalacOptions("scala2CompilerOptions", input / Compile / scalacOptions),
