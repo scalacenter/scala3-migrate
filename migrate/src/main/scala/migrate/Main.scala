@@ -5,8 +5,9 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-import interfaces._
+import compiler.interfaces.Scala3Compiler
 import migrate.internal._
+import migrate.utils.FileUtils
 import migrate.utils.ScalaExtensions._
 import migrate.utils.Timer._
 import scalafix.interfaces.Scalafix
@@ -17,28 +18,56 @@ object Main {
   lazy val scalafixClassLoader: ClassLoader = scalafix.getClass().getClassLoader()
 
   def previewMigration(
-    sourceRoot: AbsolutePath,
-    source: AbsolutePath,
+    sources: Seq[AbsolutePath],
     scala2Classpath: Classpath,
     scala2CompilerOptions: Seq[String],
     toolClasspath: Classpath,
+    targetRoot: AbsolutePath,
     scala3Classpath: Classpath,
     scala3CompilerOptions: Seq[String],
     scala3ClassDirectory: AbsolutePath
-  ): Try[String] = {
-    scribe.info(s"Migrating $source")
+  ): Try[Map[AbsolutePath, FileMigrationState.FinalState]] = {
+    scribe.info(s"""Migrating
+                   |${sources.toList.mkString("\n")}""".stripMargin)
     for {
       compiler <- setupScala3Compiler(scala3Classpath, scala3ClassDirectory, scala3CompilerOptions)
       initialFileToMigrate <-
-        buildMigrationFiles(sourceRoot, Seq(source), scala2Classpath, toolClasspath, scala2CompilerOptions)
-      _          <- compileInScala3(initialFileToMigrate, compiler)
-      initialFile = initialFileToMigrate.head
-      result <- initialFile.migrate(compiler) match {
-                  case FileMigrationState.Failed(_, cause)          => Failure(cause)
-                  case f @ FileMigrationState.Succeeded(_, patches) => f.previewPatches(patches)
-                }
-    } yield result.content
+        buildMigrationFiles(sources, scala2Classpath, targetRoot, toolClasspath, scala2CompilerOptions)
+      _            <- compileInScala3(initialFileToMigrate, compiler)
+      migratedFiles = initialFileToMigrate.map(f => (f.source, f.migrate(compiler))).toMap
+    } yield migratedFiles
   }
+
+  def migrate(
+    sources: Seq[AbsolutePath],
+    scala2Classpath: Classpath,
+    scala2CompilerOptions: Seq[String],
+    toolClasspath: Classpath,
+    targetRoot: AbsolutePath,
+    scala3Classpath: Classpath,
+    scala3CompilerOptions: Seq[String],
+    scala3ClassDirectory: AbsolutePath
+  ): Try[Unit] =
+    for {
+      migratedFiles <- previewMigration(
+                         sources,
+                         scala2Classpath,
+                         scala2CompilerOptions,
+                         toolClasspath,
+                         targetRoot,
+                         scala3Classpath,
+                         scala3CompilerOptions,
+                         scala3ClassDirectory
+                       )
+      (success, failures) = migratedFiles.toSeq.partition { case (_, migrated) => migrated.isSuccess }
+      _ <- success.map { case (file, migrated: FileMigrationState.Succeeded) =>
+             migrated.newFileContent.flatMap(FileUtils.writeFile(file, _))
+           }.sequence
+      _ = success.foreach { case (file, _) => scribe.info(s"${file.value} has been successfully migrated") }
+      _ = failures.foreach { case (file, FileMigrationState.Failed(_, cause)) =>
+            scribe.info(s"${file.value} has not been migrated because ${cause.getMessage()}")
+          }
+    } yield ()
 
   private def setupScala3Compiler(
     classpath: Classpath,
@@ -56,7 +85,6 @@ object Main {
   private def compileInScala3(migrationFiles: Seq[FileMigrationState], compiler: Scala3Compiler): Try[Unit] =
     for {
       compilationUnits <- migrationFiles.map(_.previewAllPatches()).sequence
-      _                 = compilationUnits.foreach(file => scribe.info(file.content))
       _ <- timedMs {
              Try {
                compiler.compile(compilationUnits.toList)
@@ -72,15 +100,15 @@ object Main {
     } yield ()
 
   private def buildMigrationFiles(
-    sourceRoot: AbsolutePath,
     sources: Seq[AbsolutePath],
     classpath: Classpath,
+    targetRoot: AbsolutePath,
     toolClasspath: Classpath,
     compilerOptions: Seq[String]
   ): Try[Seq[FileMigrationState.Initial]] =
     for {
       fileEvaluations <- timedMs {
-                           inferTypes(sourceRoot, sources, classpath, toolClasspath, compilerOptions)
+                           inferTypes(sources, classpath, toolClasspath, compilerOptions, targetRoot)
                          } match {
                            case (Success(evaluation), finiteDuration) =>
                              val fileEvaluations = evaluation.getFileEvaluations().toSeq
@@ -90,7 +118,7 @@ object Main {
                              )
                              Success(fileEvaluations)
 
-                           case (failure @ Failure(cause), _) =>
+                           case (Failure(cause), _) =>
                              scribe.error("Failed inferring types", cause)
                              Failure(cause)
                          }
@@ -102,20 +130,20 @@ object Main {
     } yield fileToMigrate
 
   private def inferTypes(
-    sourceRoot: AbsolutePath,
     sources: Seq[AbsolutePath],
     classpath: Classpath,
     toolClasspath: Classpath,
-    compilerOptions: Seq[String]
+    compilerOptions: Seq[String],
+    targetRootSemantic: AbsolutePath
   ): Try[ScalafixEvaluation] = Try {
+    val classpathWithTargetSemantic = classpath :+ targetRootSemantic
     val args = scalafix
       .newArguments()
       .withRules(Seq("MigrationRule", "ExplicitImplicits").asJava)
       .withPaths(sources.map(_.toNio).asJava)
-      .withClasspath(classpath.paths.map(_.toNio).asJava)
-      .withScalacOptions(compilerOptions.asJava) // not sure which compiler option we need here !!
+      .withClasspath(classpathWithTargetSemantic.paths.map(_.toNio).asJava)
+      .withScalacOptions(compilerOptions.asJava)
       .withToolClasspath(toolClasspath.toUrlClassLoader(scalafixClassLoader))
-      .withSourceroot(sourceRoot.toNio)
     args.evaluate()
   }
 }

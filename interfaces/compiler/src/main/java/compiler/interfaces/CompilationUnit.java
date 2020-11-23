@@ -1,4 +1,4 @@
-package interfaces;
+package compiler.interfaces;
 
 public class CompilationUnit {
   public String content;

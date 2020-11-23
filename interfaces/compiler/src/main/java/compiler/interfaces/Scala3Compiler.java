@@ -1,15 +1,14 @@
-package interfaces;
+package compiler.interfaces;
 
 import dotty.tools.dotc.Compiler;
 import dotty.tools.dotc.Run;
 import dotty.tools.dotc.core.Contexts.Context;
+import dotty.tools.dotc.reporting.Reporter;
 import dotty.tools.dotc.util.SourceFile;
 import dotty.tools.dotc.util.SourceFile$;
-import scala.collection.immutable.List;
-import scala.collection.immutable.List$;
 import scala.Function1;
+import scala.collection.immutable.List;
 import scala.runtime.AbstractFunction1;
-import dotty.tools.dotc.reporting.Reporter;
 
 public class Scala3Compiler {
   private Compiler compiler;

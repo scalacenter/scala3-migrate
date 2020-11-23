@@ -13,4 +13,10 @@ object BuildInfoExtension {
     map(task) { case (_, scalacOptions) =>
       key -> scalacOptions
     }
+
+  def fromSources(key: String, task: Entry[Seq[File]]): Entry[Seq[File]] =
+    map(task) { case (_, sources) =>
+      key -> sources
+    }
+
 }

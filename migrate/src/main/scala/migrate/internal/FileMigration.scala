@@ -6,7 +6,7 @@ import scala.util.Success
 import scala.util.Try
 import scala.util.control.NonFatal
 
-import interfaces.Scala3Compiler
+import compiler.interfaces.Scala3Compiler
 import migrate.utils.Timer._
 import scalafix.interfaces.ScalafixPatch
 
