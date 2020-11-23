@@ -12,7 +12,8 @@ ThisBuild / version := "0.1.0-SNAPSHOT"
 lazy val `compiler-interfaces` = project
   .in(file("interfaces/compiler"))
   .settings(
-    libraryDependencies ++= Seq("ch.epfl.lamp" % "dotty-compiler_0.27" % V.dotty),
+    scalaVersion := V.dotty,
+    libraryDependencies ++= Seq("ch.epfl.lamp" %% "dotty-compiler" % V.dotty),
     crossPaths := false,
     autoScalaLibrary := false
   )
@@ -39,7 +40,8 @@ lazy val migrate = project
     ),
     Test / buildInfoPackage := "migrate.test",
     Test / buildInfoKeys := Seq(
-      "input"     -> (input / Compile / sourceDirectory).value,
+      "input" -> (input / Compile / sourceDirectory).value,
+      fromSources("sources", (input / Compile / sources)),
       "output"    -> (output / Compile / sourceDirectory).value,
       "workspace" -> (ThisBuild / baseDirectory).value,
       fromClasspath("scala2Classpath", input / Compile / fullClasspath),
@@ -67,7 +69,7 @@ lazy val input = project
   )
   .disablePlugins(ScalafixPlugin)
 
-lazy val plugin = project
+lazy val `sbt-plugin` = project
   .in(file("plugin"))
   .enablePlugins(SbtPlugin)
   .settings(
@@ -88,7 +90,6 @@ lazy val output = project
   .in(file("output"))
   .settings(
     scalaVersion := V.dotty,
-    semanticdbEnabled := false,
     scalacOptions := Seq("-Ykind-projector"),
     libraryDependencies ++= Seq("org.typelevel" % "cats-core_2.13" % V.catsCore)
   )

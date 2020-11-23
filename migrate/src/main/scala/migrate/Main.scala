@@ -7,7 +7,6 @@ import scala.util.Try
 
 import compiler.interfaces.Scala3Compiler
 import migrate.internal._
-import migrate.utils.FileUtils
 import migrate.utils.ScalaExtensions._
 import migrate.utils.Timer._
 import scalafix.interfaces.Scalafix
@@ -18,7 +17,7 @@ object Main {
   lazy val scalafixClassLoader: ClassLoader = scalafix.getClass().getClassLoader()
 
   def migrate(
-    sourceRoot: AbsolutePath,
+    sources: Seq[AbsolutePath],
     workspace: AbsolutePath,
     scala2Classpath: Classpath,
     scala2CompilerOptions: Seq[String],
@@ -27,12 +26,11 @@ object Main {
     scala3CompilerOptions: Seq[String],
     scala3ClassDirectory: AbsolutePath
   ): Try[Map[AbsolutePath, FileMigrationState.FinalState]] = {
-    val filesToMigrate = FileUtils.listFiles(sourceRoot)
-    scribe.info(s"Migrating ${filesToMigrate.toList}")
+    scribe.info(s"Migrating ${sources.toList}")
     for {
       compiler <- setupScala3Compiler(scala3Classpath, scala3ClassDirectory, scala3CompilerOptions)
       initialFileToMigrate <-
-        buildMigrationFiles(workspace, filesToMigrate, scala2Classpath, toolClasspath, scala2CompilerOptions)
+        buildMigrationFiles(workspace, sources, scala2Classpath, toolClasspath, scala2CompilerOptions)
       _            <- compileInScala3(initialFileToMigrate, compiler)
       migratedFiles = initialFileToMigrate.map(f => (f.source, f.migrate(compiler))).toMap
     } yield migratedFiles

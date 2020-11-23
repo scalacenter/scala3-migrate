@@ -13,12 +13,10 @@ import buildinfo.BuildInfo
 case class Scala3Inputs(scalacOptions: Seq[String], classpath: Seq[Path], classDirectory: Path)
 
 object ScalaMigratePlugin extends AutoPlugin {
-  val classpathAttribute      = AttributeKey[Seq[Path]]("unmanagedClasspath")
-  val scalacOptionAttribute   = AttributeKey[Seq[String]]("scalacOptions")
-  val classDirectoryAttribute = AttributeKey[Path]("scala3ClassDirectory")
-  val scalaBinaryVersion      = BuildInfo.scalaBinaryVersion
-  val migrateVersion          = BuildInfo.version
-  val toolClasspath           = BuildInfo.toolClasspath.split(java.io.File.pathSeparator).toList
+  val scala3inputsAttirbute = AttributeKey[Scala3Inputs]("scala3Inputs")
+  val scalaBinaryVersion    = BuildInfo.scalaBinaryVersion
+  val migrateVersion        = BuildInfo.version
+  val toolClasspath         = BuildInfo.toolClasspath.split(java.io.File.pathSeparator).toList
 
   object autoImport {
     // val scala3CompilerOptions = taskKey[Seq[String]]("scalacOptions for scala 3")
@@ -40,62 +38,61 @@ object ScalaMigratePlugin extends AutoPlugin {
       inConfig(Test)(configSettings)
 
   val configSettings: Seq[Setting[_]] =
-    Def.settings(
+    Seq(
+      semanticdbEnabled := {
+        if (scalaVersion.value.startsWith("2.13.")) true
+        else semanticdbEnabled.value
+      },
       migrate := migrateImp.value,
       scala3Inputs := {
         val state1 = Command.process(s"""set scalaVersion:="${scala3Version}" """, state.value)
         val state2 = Command.process("storeScala3Inputs", state1)
         (for {
-          classpath      <- state2.attributes.get(classpathAttribute)
-          scalacOptions  <- state2.attributes.get(scalacOptionAttribute)
-          classDirectory <- state2.attributes.get(classDirectoryAttribute)
-        } yield Scala3Inputs(scalacOptions, classpath, classDirectory)).get
+          inputs <- state2.attributes.get(scala3inputsAttirbute)
+        } yield Scala3Inputs(inputs.scalacOptions, inputs.classpath, inputs.classDirectory)).get
 
       },
       storeScala3Inputs := {
-        val classpath            = (Compile / managedClasspath).value.seq.map(_.data.toPath())
-        val soptions             = (Compile / scalacOptions).value
-        val scala3ClassDirectory = (Compile / compile / classDirectory).value.toPath
-        StateTransform(s =>
-          s.put(classpathAttribute, classpath)
-            .put(scalacOptionAttribute, soptions)
-            .put(classDirectoryAttribute, scala3ClassDirectory)
-        )
+        val sOptions             = scalacOptions.value
+        val classpath            = managedClasspath.value.seq.map(_.data.toPath())
+        val scala3ClassDirectory = (compile / classDirectory).value.toPath
+        val scala3Inputs         = Scala3Inputs(sOptions, classpath, scala3ClassDirectory)
+        StateTransform(s => s.put(scala3inputsAttirbute, scala3Inputs))
       }
     )
 
-  lazy val migrateImp = Def.task {
-    val log = streams.value.log
-    log.info("we are going to migrate your project to scala 3 maybe")
+  def migrateImp =
+    Def.task {
+      val log = streams.value.log
+      log.info("we are going to migrate your project to scala 3 maybe")
 
-    val input                 = (Compile / sourceDirectory).value
-    val workspace             = (ThisBuild / baseDirectory).value
-    val scala2Classpath       = (Compile / fullClasspath).value.seq.map(_.data.toPath())
-    val scala2CompilerOptions = (Compile / scalacOptions).value
-    val semanticdbPath        = (Compile / semanticdbTargetRoot).value
+      val sourcesPath           = sources.value.seq.map(_.toPath())
+      val workspace             = (ThisBuild / baseDirectory).value
+      val scala2Classpath       = fullClasspath.value.seq.map(_.data.toPath())
+      val scala2CompilerOptions = scalacOptions.value
+      val semanticdbPath        = semanticdbTargetRoot.value
 
-    // computed values
-    val scala3InputsValue = scala3Inputs.value
-    val scalac3Options    = scala3InputsValue.scalacOptions
-    val scala3Classpath   = scala3InputsValue.classpath
-    val scala3ClassDir    = scala3InputsValue.classDirectory
-    if (!Files.exists(scala3ClassDir)) Files.createDirectory(scala3ClassDir)
+      // computed values
+      val scala3InputsValue = scala3Inputs.value
+      val scalac3Options    = scala3InputsValue.scalacOptions
+      val scala3Classpath   = scala3InputsValue.classpath
+      val scala3ClassDir    = scala3InputsValue.classDirectory
+      if (!Files.exists(scala3ClassDir)) Files.createDirectory(scala3ClassDir)
 
-    // value from buildInfo
-    val toolCp = toolClasspath.map(Paths.get(_))
+      // value from buildInfo
+      val toolCp = toolClasspath.map(Paths.get(_))
 
-    val migrateAPI     = Migrate.fetchAndClassloadInstance(migrateVersion, scalaBinaryVersion)
-    val migrateService = migrateAPI.getService()
+      val migrateAPI = Migrate.fetchAndClassloadInstance(migrateVersion, scalaBinaryVersion)
 
-    migrateService.migrate(
-      input.toPath(),
-      workspace.toPath(),
-      scala2Classpath.asJava,
-      scala2CompilerOptions.asJava,
-      toolCp.asJava,
-      scala3Classpath.asJava,
-      scalac3Options.asJava,
-      scala3ClassDir
-    )
-  }
+      migrateAPI.migrate(
+        sourcesPath.asJava,
+        workspace.toPath(),
+        scala2Classpath.asJava,
+        scala2CompilerOptions.asJava,
+        toolCp.asJava,
+        scala3Classpath.asJava,
+        scalac3Options.asJava,
+        scala3ClassDir
+      )
+    }
 }

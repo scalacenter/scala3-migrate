@@ -8,15 +8,14 @@ import scala.jdk.CollectionConverters._
 import migrate.AbsolutePath
 import migrate.Classpath
 import migrate.Main
-import migrate.interfaces.MigrateService
 import migrate.internal.FileMigrationState
 import migrate.utils.FileUtils
 import migrate.utils.ScalaExtensions._
 
-final class MigrateServiceImpl() extends MigrateService {
+final class MigrateImpl() extends Migrate {
 
   override def migrate(
-    sourceRoot: Path,
+    sources: jutil.List[Path],
     workspace: Path,
     scala2Cp: jutil.List[Path],
     scala2CompilerOptions: jutil.List[String],
@@ -26,8 +25,8 @@ final class MigrateServiceImpl() extends MigrateService {
     scala3ClassDirectory: Path
   ): Unit = {
 
-    val sourceRootAbs = AbsolutePath.from(sourceRoot).get
-    val sourceAbs     = AbsolutePath.from(workspace).get
+    val sourcesAbs = sources.asScala.toSeq.map(AbsolutePath.from(_).get)
+    val sourceAbs  = AbsolutePath.from(workspace).get
 
     val scala2Classpath = Classpath(scala2Cp.asScala.toList.map(m => AbsolutePath.from(m).get).toList: _*)
     val toolClasspath   = Classpath(toolCp.asScala.toList.map(AbsolutePath.from(_).get).toList: _*)
@@ -37,7 +36,7 @@ final class MigrateServiceImpl() extends MigrateService {
 
     val fileMigratedTry = Main
       .migrate(
-        sourceRoot = sourceRootAbs,
+        sources = sourcesAbs,
         workspace = sourceAbs,
         scala2Classpath = scala2Classpath,
         scala2CompilerOptions = scala2CompilerOptions.asScala.toList,
