@@ -18,15 +18,19 @@ private[migrate] class FileMigration(fileToMigrate: FileMigrationState.Initial, 
 
   def migrate(): FileMigrationState.FinalState = {
     val initialState = CompilingState(fileToMigrate.patches, Seq.empty)
-    timedMs {
-      loopUntilNoCandidates(Success(initialState))
-    } match {
-      case (Success(finalState), timeMs) =>
+
+    timeAndLog(loopUntilNoCandidates(Success(initialState))) {
+      case (timeMs, Success(finalState)) =>
         scribe.info(
           s"Found ${finalState.necessaryPatches.size} required patch(es) in ${fileToMigrate.source} after $timeMs ms"
         )
-        fileToMigrate.success(finalState.necessaryPatches)
-      case (Failure(exception), timeMs) => fileToMigrate.failed(exception)
+      case (timeMs, Failure(e)) =>
+        scribe.info(
+          s"Failed finding the required patches in ${fileToMigrate.source} after $timeMs ms because ${e.getMessage()}"
+        )
+    } match {
+      case Success(finalState) => fileToMigrate.success(finalState.necessaryPatches)
+      case Failure(exception)  => fileToMigrate.failed(exception)
     }
   }
 
