@@ -74,6 +74,13 @@ lazy val `sbt-plugin` = project
   .settings(
     scalaVersion := V.scala212,
     name := "sbt-scala-migrat3",
+    scriptedLaunchOpts ++= Seq(s"-Dplugin.version=${version.value}"),
+    scriptedDependencies := {
+      scriptedDependencies
+        .dependsOn(publishLocal in `migrate-interfaces`, publishLocal in `compiler-interfaces`, publishLocal in migrate)
+        .value
+    },
+    scriptedBufferLog := false,
     buildInfoKeys := Seq[BuildInfoKey](
       name,
       "scalaBinaryVersion" -> V.scala213BinaryVersion,
