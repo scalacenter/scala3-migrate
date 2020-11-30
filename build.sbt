@@ -160,16 +160,16 @@ lazy val `scalafix-tests` = project
   .enablePlugins(ScalafixTestkitPlugin)
 
 lazy val V = new {
-  val scala213              = "2.13.3"
+  val scala213              = "2.13.4"
   val scala213BinaryVersion = "2.13"
   val scala212              = "2.12.11"
   val scalatest             = "3.2.3"
   val dotty                 = "0.27.0-RC1"
-  val scalafix              = "0.9.23"
+  val scalafix              = "0.9.24"
   val scribe                = "3.0.4"
   val organizeImports       = "0.4.3"
   val bijectionCore         = "0.9.7"
   val catsCore              = "2.2.0"
-  val kindProjector         = "0.11.0"
+  val kindProjector         = "0.11.1"
   val coursierInterface     = "0.0.25"
 }
