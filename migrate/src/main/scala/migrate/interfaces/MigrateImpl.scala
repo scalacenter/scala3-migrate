@@ -42,6 +42,7 @@ final class MigrateImpl() extends Migrate {
         scala3CompilerOptions = scala3CompilerOptions.asScala.toList,
         scala3ClassDirectory = scala3ClassDirectoryAbs
       )
+      .get
 
   }
 

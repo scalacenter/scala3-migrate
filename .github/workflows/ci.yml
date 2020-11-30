@@ -5,7 +5,7 @@ on:
       - master
   pull_request:
 jobs:
-  test:
+  jdk8:
     name: test jdk8
     runs-on: ubuntu-latest
     strategy:
@@ -25,6 +25,15 @@ jobs:
         with:
           java-version: adopt@1.11
       - run: sbt test
+  plugin:
+    name: plugin test with jdk8
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v2
+      - uses: olafurpg/setup-scala@v10
+      - run: sbt sbt-plugin/scripted
 
   checks:
     name: Scalafmt and Scalafix

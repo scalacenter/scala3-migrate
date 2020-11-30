@@ -1,0 +1,6 @@
+# verify that scala3Inputs succeeded
+> main / compile
+> migrate main
+
+# the project definition for `basic` project is not prepared for migration. it should fails
+# -> migrate basic # this is just a comment. in fact this command fails, but it's not possible to test it.
