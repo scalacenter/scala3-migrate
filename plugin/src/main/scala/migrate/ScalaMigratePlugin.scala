@@ -23,7 +23,8 @@ case class Scala2Inputs(
   scalaVerson: String,
   scalacOptions: Seq[String],
   classpath: Seq[Path],
-  sources: Seq[Path]
+  unmanagedSources: Seq[Path],
+  managedSources: Seq[Path]
 )
 
 object ScalaMigratePlugin extends AutoPlugin {
@@ -61,6 +62,8 @@ object ScalaMigratePlugin extends AutoPlugin {
       import sbt.BasicCommandStrings._
       val result = List(
         StashOnFailure,
+        s"""set $projectId / scalacOptions += "-P:semanticdb:synthetics:on" """,
+        s"$projectId / compile",
         s"$projectId / storeScala2Inputs",
         s"""set $projectId / scalaVersion := "${scala3Version}"""",
         s"$projectId / storeScala3Inputs",
@@ -98,7 +101,8 @@ object ScalaMigratePlugin extends AutoPlugin {
           inputs.scalaVerson,
           inputs.scalacOptions,
           inputs.classpath,
-          inputs.sources
+          inputs.unmanagedSources,
+          inputs.managedSources
         )).get
       },
       storeScala3Inputs := {
@@ -114,9 +118,10 @@ object ScalaMigratePlugin extends AutoPlugin {
         val projectId    = thisProject.value.id
         val scalaVersion = Keys.scalaVersion.value
         val sOptions     = scalacOptions.value
-        val classpath    = managedClasspath.value.seq.map(_.data.toPath())
-        val sources      = Keys.sources.value.seq.map(_.toPath())
-        val scala2Inputs = Scala2Inputs(projectId, scalaVersion, sOptions, classpath, sources)
+        val classpath    = managedClasspath.value.map(_.data.toPath())
+        val unmanaged    = Keys.unmanagedSources.value.map(_.toPath())
+        val managed      = Keys.managedSources.value.map(_.toPath())
+        val scala2Inputs = Scala2Inputs(projectId, scalaVersion, sOptions, classpath, unmanaged, managed)
         StateTransform(s => s.put(scala2inputsAttirbute, scala2Inputs))
       }
     )
@@ -132,7 +137,8 @@ object ScalaMigratePlugin extends AutoPlugin {
       val scala2InputsValue     = state.value.attributes.get(scala2inputsAttirbute).get
       val scala2Classpath       = scala2InputsValue.classpath
       val scala2CompilerOptions = scala2InputsValue.scalacOptions
-      val sourcesPath           = scala2InputsValue.sources
+      val unamangedSources      = scala2InputsValue.unmanagedSources
+      val managedSources        = scala2InputsValue.managedSources
 
       val scala3InputsValue = state.value.attributes.get(scala3inputsAttirbute).get
       val scalac3Options    = scala3InputsValue.scalacOptions
@@ -146,7 +152,8 @@ object ScalaMigratePlugin extends AutoPlugin {
       val migrateAPI = Migrate.fetchAndClassloadInstance(migrateVersion, scalaBinaryVersion)
 
       migrateAPI.migrate(
-        sourcesPath.asJava,
+        unamangedSources.asJava,
+        managedSources.asJava,
         targetRoot.toPath(),
         scala2Classpath.asJava,
         scala2CompilerOptions.asJava,

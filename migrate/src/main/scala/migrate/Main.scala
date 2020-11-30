@@ -5,6 +5,7 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
+import compiler.interfaces.CompilationUnit
 import compiler.interfaces.Scala3Compiler
 import migrate.internal._
 import migrate.utils.FileUtils
@@ -18,7 +19,8 @@ object Main {
   lazy val scalafixClassLoader: ClassLoader = scalafix.getClass().getClassLoader()
 
   def previewMigration(
-    sources: Seq[AbsolutePath],
+    unmanagedSources: Seq[AbsolutePath],
+    managedSources: Seq[AbsolutePath],
     scala2Classpath: Classpath,
     scala2CompilerOptions: Seq[String],
     toolClasspath: Classpath,
@@ -28,18 +30,19 @@ object Main {
     scala3ClassDirectory: AbsolutePath
   ): Try[Map[AbsolutePath, FileMigrationState.FinalState]] = {
     scribe.info(s"""Migrating
-                   |${sources.toList.mkString("\n")}""".stripMargin)
+                   |${unmanagedSources.toList.mkString("\n")}""".stripMargin)
     for {
       compiler <- setupScala3Compiler(scala3Classpath, scala3ClassDirectory, scala3CompilerOptions)
       initialFileToMigrate <-
-        buildMigrationFiles(sources, scala2Classpath, targetRoot, toolClasspath, scala2CompilerOptions)
-      _            <- compileInScala3(initialFileToMigrate, compiler)
+        buildMigrationFiles(unmanagedSources, scala2Classpath, targetRoot, toolClasspath, scala2CompilerOptions)
+      _            <- compileInScala3(initialFileToMigrate, managedSources, compiler)
       migratedFiles = initialFileToMigrate.map(f => (f.source, f.migrate(compiler))).toMap
     } yield migratedFiles
   }
 
   def migrate(
-    sources: Seq[AbsolutePath],
+    unmanagedSources: Seq[AbsolutePath],
+    managedSources: Seq[AbsolutePath],
     scala2Classpath: Classpath,
     scala2CompilerOptions: Seq[String],
     toolClasspath: Classpath,
@@ -50,7 +53,8 @@ object Main {
   ): Try[Unit] =
     for {
       migratedFiles <- previewMigration(
-                         sources,
+                         unmanagedSources,
+                         managedSources,
                          scala2Classpath,
                          scala2CompilerOptions,
                          toolClasspath,
@@ -75,17 +79,24 @@ object Main {
     scala3CompilerOptions: Seq[String]
   ): Try[Scala3Compiler] = {
     // It's easier no to deal with semanticdb option, since we don't need semanticdb files
-    val modified           = scala3CompilerOptions.filterNot(_ == "-Ysemanticdb")
+    // synthetics do not exist yet in scala 3 and not needed neither
+    val modified =
+      scala3CompilerOptions.filterNot(value => value == "-Ysemanticdb" || value == "-P:semanticdb:synthetics:on")
     val scala3CompilerArgs = modified.toArray ++ Array("-classpath", classpath.value, "-d", classDirectory.value)
     Try {
       Scala3Compiler.setup(scala3CompilerArgs)
     }
   }
 
-  private def compileInScala3(migrationFiles: Seq[FileMigrationState], compiler: Scala3Compiler): Try[Unit] =
+  private def compileInScala3(
+    migrationFiles: Seq[FileMigrationState],
+    managedSources: Seq[AbsolutePath],
+    compiler: Scala3Compiler
+  ): Try[Unit] =
     for {
-      compilationUnits <- migrationFiles.map(_.previewAllPatches()).sequence
-      _ <- timeAndLog(Try(compiler.compile(compilationUnits.toList))) {
+      cuUnmanagedSources <- migrationFiles.map(_.previewAllPatches()).sequence
+      cuManagedSources    = managedSources.map(path => new CompilationUnit(path.value, FileUtils.read(path)))
+      _ <- timeAndLog(Try(compiler.compile(cuManagedSources.toList ++ cuUnmanagedSources.toList))) {
              case (finiteDuration, Success(_)) =>
                scribe.info(s"Succefully compiled with scala 3 in $finiteDuration")
              case (_, Failure(e)) =>
@@ -96,7 +107,7 @@ object Main {
     } yield ()
 
   private def buildMigrationFiles(
-    sources: Seq[AbsolutePath],
+    unmanagedSources: Seq[AbsolutePath],
     classpath: Classpath,
     targetRoot: AbsolutePath,
     toolClasspath: Classpath,
@@ -104,11 +115,11 @@ object Main {
   ): Try[Seq[FileMigrationState.Initial]] =
     for {
       fileEvaluations <-
-        timeAndLog(inferTypes(sources, classpath, toolClasspath, compilerOptions, targetRoot)) {
+        timeAndLog(inferTypes(unmanagedSources, classpath, toolClasspath, compilerOptions, targetRoot)) {
           case (duration, Success(files)) =>
             val fileEvaluationsSeq = files.getFileEvaluations().toSeq
             val patchesCount       = fileEvaluationsSeq.map(_.getPatches().size).sum
-            scribe.info(s"Found ${patchesCount} patch candidate(s) in ${sources.size} file(s)after $duration")
+            scribe.info(s"Found ${patchesCount} patch candidate(s) in ${unmanagedSources.size} file(s)after $duration")
           case (_, Failure(e)) =>
             scribe.info(s"""|Failed inferring types 
                             |Cause ${e.getMessage()}""".stripMargin)
@@ -119,7 +130,8 @@ object Main {
                              .map(e => AbsolutePath.from(e.getEvaluatedFile()).map(file => file -> e))
                              .sequence
                              .map(_.toMap)
-      fileToMigrate <- sources.map(src => fileEvaluationMap.get(src).map(FileMigrationState.Initial).toTry).sequence
+      fileToMigrate <-
+        unmanagedSources.map(src => fileEvaluationMap.get(src).map(FileMigrationState.Initial).toTry).sequence
     } yield fileToMigrate
 
   private def inferTypes(

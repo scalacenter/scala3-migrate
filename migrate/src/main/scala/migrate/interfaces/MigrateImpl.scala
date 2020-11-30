@@ -12,7 +12,8 @@ import migrate.Main
 final class MigrateImpl() extends Migrate {
 
   override def migrate(
-    sources: jutil.List[Path],
+    unmanagedSources: jutil.List[Path],
+    managedSources: jutil.List[Path],
     targetRoot: Path,
     scala2Cp: jutil.List[Path],
     scala2CompilerOptions: jutil.List[String],
@@ -22,8 +23,9 @@ final class MigrateImpl() extends Migrate {
     scala3ClassDirectory: Path
   ): Unit = {
 
-    val sourcesAbs    = sources.asScala.toSeq.map(AbsolutePath.from(_).get)
-    val targetRootAbs = AbsolutePath.from(targetRoot).get
+    val unmanagedSourcesAbs = unmanagedSources.asScala.toSeq.map(AbsolutePath.from(_).get)
+    val managedSourcesAbs   = managedSources.asScala.toSeq.map(AbsolutePath.from(_).get)
+    val targetRootAbs       = AbsolutePath.from(targetRoot).get
 
     val scala2Classpath = Classpath(scala2Cp.asScala.toList.map(m => AbsolutePath.from(m).get).toList: _*)
     val toolClasspath   = Classpath(toolCp.asScala.toList.map(AbsolutePath.from(_).get).toList: _*)
@@ -33,7 +35,8 @@ final class MigrateImpl() extends Migrate {
 
     Main
       .migrate(
-        sources = sourcesAbs,
+        unmanagedSources = unmanagedSourcesAbs,
+        managedSources = managedSourcesAbs,
         scala2Classpath = scala2Classpath,
         targetRoot = targetRootAbs,
         scala2CompilerOptions = scala2CompilerOptions.asScala.toList,

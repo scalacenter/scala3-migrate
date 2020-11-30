@@ -12,22 +12,24 @@ import scalafix.testkit.DiffAssertions
 
 class MigrationSuite extends AnyFunSuiteLike with DiffAssertions {
 
-  val sources: Seq[AbsolutePath]         = BuildInfo.sources.map(AbsolutePath.from)
+  val managed: Seq[AbsolutePath]         = BuildInfo.unmanagedSources.map(AbsolutePath.from)
+  val unamanged: Seq[AbsolutePath]       = BuildInfo.managedSources.map(AbsolutePath.from)
   val input: AbsolutePath                = AbsolutePath.from(BuildInfo.input)
   val output: AbsolutePath               = AbsolutePath.from(BuildInfo.output)
   val scala2Classpath: Classpath         = Classpath.from(BuildInfo.scala2Classpath).get
   val semanticdbTargetRoot: AbsolutePath = AbsolutePath.from(BuildInfo.semanticdbPath)
-  val scala2CompilerOptions              = BuildInfo.scala2CompilerOptions.toSeq
+  val scala2CompilerOptions              = BuildInfo.scala2CompilerOptions
   val toolClasspath: Classpath           = Classpath.from(BuildInfo.toolClasspath).get
   val scala3Classpath: Classpath         = Classpath.from(BuildInfo.scala3Classpath).get
-  val scala3CompilerOptions              = BuildInfo.scala3CompilerOptions.toSeq
+  val scala3CompilerOptions              = BuildInfo.scala3CompilerOptions
   val scala3ClassDirectory: AbsolutePath = AbsolutePath.from(BuildInfo.scala3ClassDirectory)
 
-  sources.foreach { inputFile =>
+  managed.foreach { inputFile =>
     test(s"${inputFile.getName}") {
       val migrateResult = Main
         .previewMigration(
-          sources = Seq(inputFile),
+          unmanagedSources = Seq(inputFile),
+          managedSources = unamanged,
           scala2Classpath = scala2Classpath,
           scala2CompilerOptions = scala2CompilerOptions,
           toolClasspath = toolClasspath,

@@ -122,6 +122,7 @@ class MigrationRule(g: Global) extends SemanticRule("MigrationRule") {
 
   private def filterType(finalType: g.Type): Option[g.Type] =
     finalType match {
+      case g.ErrorType => None
       case f if f.isInstanceOf[g.ConstantType] =>
         None // don't annotate ConstantTypes
       case f if f.toString().contains("#") && f.toString().contains(".type") =>

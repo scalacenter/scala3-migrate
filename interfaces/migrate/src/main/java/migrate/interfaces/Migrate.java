@@ -1,21 +1,30 @@
 package migrate.interfaces;
 
+import coursierapi.Dependency;
+import coursierapi.Fetch;
+import coursierapi.ResolutionParams;
+import coursierapi.ScalaVersion;
+
 import java.io.File;
-import java.nio.file.Path;
 import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import coursierapi.*;
-
 public interface Migrate {
 
-    void migrate(List<Path> sourceRoot, Path targetRoot, List<Path> scala2Classpath, List<String> scala2CompilerOptions,
-            List<Path> toolClasspath, List<Path> scala3Classpath, List<String> scala3CompilerOptions,
-            Path scala3ClassDirectory);
+    void migrate(List<Path> unmanagedSources, 
+                 List<Path> managedSources,
+                 Path targetRoot,
+                 List<Path> scala2Classpath,
+                 List<String> scala2CompilerOptions,
+                 List<Path> toolClasspath,
+                 List<Path> scala3Classpath,
+                 List<String> scala3CompilerOptions,
+                 Path scala3ClassDirectory);
 
     // Todo: Maybe using ServiceLoader could simplify this code a bit:
     // https://www.baeldung.com/java-spi
