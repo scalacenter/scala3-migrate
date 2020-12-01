@@ -171,5 +171,5 @@ lazy val V = new {
   val bijectionCore         = "0.9.7"
   val catsCore              = "2.2.0"
   val kindProjector         = "0.11.1"
-  val coursierInterface     = "0.0.25"
+  val coursierInterface     = "1.0.2"
 }
