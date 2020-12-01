@@ -14,7 +14,7 @@ lazy val main = project
     libraryDependencies ++= Seq(
       ("org.typelevel" %% "cats-core" % V.catsCore)
         .withDottyCompat(scalaVersion.value),
-      "com.outr" %% "scribe" % "3.0.4"
+      "com.outr" %% "scribe" % "3.1.5"
     )
   )
 
