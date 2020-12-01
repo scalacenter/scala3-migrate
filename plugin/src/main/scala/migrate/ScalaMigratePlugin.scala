@@ -32,9 +32,9 @@ object ScalaMigratePlugin extends AutoPlugin {
   val scalaBinaryVersion    = BuildInfo.scalaBinaryVersion
   val migrateVersion        = BuildInfo.version
   val toolClasspath         = BuildInfo.toolClasspath.split(java.io.File.pathSeparator).toList
+  val scala3Version         = BuildInfo.scala3Version
 
   object autoImport {
-    val scala3Version     = "0.27.0-RC1"
     val checkRequirements = taskKey[Unit]("check requirements")
 
     val scala3InputComputed = taskKey[Scala3Inputs]("show scala 3 inputs if available")
