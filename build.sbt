@@ -13,7 +13,7 @@ lazy val `compiler-interfaces` = project
   .in(file("interfaces/compiler"))
   .settings(
     scalaVersion := V.dotty,
-    libraryDependencies ++= Seq("ch.epfl.lamp" %% "dotty-compiler" % V.dotty),
+    libraryDependencies ++= Seq("org.scala-lang" %% "scala3-compiler" % V.dotty),
     crossPaths := false,
     autoScalaLibrary := false
   )
@@ -83,6 +83,7 @@ lazy val `sbt-plugin` = project
     scriptedBufferLog := false,
     buildInfoKeys := Seq[BuildInfoKey](
       name,
+      "scala3Version"      -> V.dotty,
       "scalaBinaryVersion" -> V.scala213BinaryVersion,
       version,
       fromClasspath("toolClasspath", `scalafix-rules` / Compile / fullClasspath)
@@ -164,7 +165,7 @@ lazy val V = new {
   val scala213BinaryVersion = "2.13"
   val scala212              = "2.12.11"
   val scalatest             = "3.2.3"
-  val dotty                 = "0.27.0-RC1"
+  val dotty                 = "3.0.0-M1"
   val scalafix              = "0.9.24"
   val scribe                = "3.0.4"
   val organizeImports       = "0.4.3"
