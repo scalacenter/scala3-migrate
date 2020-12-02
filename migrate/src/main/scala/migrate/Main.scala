@@ -79,9 +79,7 @@ object Main {
     scala3CompilerOptions: Seq[String]
   ): Try[Scala3Compiler] = {
     // It's easier no to deal with semanticdb option, since we don't need semanticdb files
-    // synthetics do not exist yet in scala 3 and not needed neither
-    val modified =
-      scala3CompilerOptions.filterNot(value => value == "-Ysemanticdb" || value == "-P:semanticdb:synthetics:on")
+    val modified           = scala3CompilerOptions.filterNot(_ == "-Ysemanticdb")
     val scala3CompilerArgs = modified.toArray ++ Array("-classpath", classpath.value, "-d", classDirectory.value)
     Try {
       Scala3Compiler.setup(scala3CompilerArgs)
