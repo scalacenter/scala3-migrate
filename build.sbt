@@ -152,9 +152,9 @@ lazy val `scalafix-tests` = project
         V.scalafix %
         Test cross CrossVersion.full,
     scalafixTestkitOutputSourceDirectories :=
-      sourceDirectories.in(`scalafix-output`, Compile).value,
+      unmanagedSourceDirectories.in(`scalafix-output`, Compile).value,
     scalafixTestkitInputSourceDirectories :=
-      sourceDirectories.in(`scalafix-input`, Compile).value,
+      unmanagedSourceDirectories.in(`scalafix-input`, Compile).value,
     scalafixTestkitInputClasspath :=
       fullClasspath.in(`scalafix-input`, Compile).value,
     scalafixTestkitInputScalacOptions :=
