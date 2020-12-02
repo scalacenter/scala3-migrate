@@ -52,7 +52,7 @@ lazy val migrate = project
       fromScalacOptions("scala3CompilerOptions", output / Compile / scalacOptions),
       "scala3ClassDirectory" -> (output / Compile / compile / classDirectory).value
     ),
-    Compile / buildInfoKeys := Seq()
+    Compile / buildInfoKeys := Seq(fromClasspath("toolClasspath", `scalafix-rules` / Compile / fullClasspath))
   )
   .enablePlugins(BuildInfoPlugin)
   .dependsOn(`compiler-interfaces`)
@@ -86,8 +86,7 @@ lazy val `sbt-plugin` = project
       name,
       "scala3Version"      -> V.dotty,
       "scalaBinaryVersion" -> V.scala213BinaryVersion,
-      version,
-      fromClasspath("toolClasspath", `scalafix-rules` / Compile / fullClasspath)
+      version
     )
   )
   .dependsOn(`migrate-interfaces`)

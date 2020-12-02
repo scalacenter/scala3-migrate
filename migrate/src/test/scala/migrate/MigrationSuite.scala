@@ -19,7 +19,6 @@ class MigrationSuite extends AnyFunSuiteLike with DiffAssertions {
   val scala2Classpath: Classpath         = Classpath.from(BuildInfo.scala2Classpath).get
   val semanticdbTargetRoot: AbsolutePath = AbsolutePath.from(BuildInfo.semanticdbPath)
   val scala2CompilerOptions              = BuildInfo.scala2CompilerOptions
-  val toolClasspath: Classpath           = Classpath.from(BuildInfo.toolClasspath).get
   val scala3Classpath: Classpath         = Classpath.from(BuildInfo.scala3Classpath).get
   val scala3CompilerOptions              = BuildInfo.scala3CompilerOptions
   val scala3ClassDirectory: AbsolutePath = AbsolutePath.from(BuildInfo.scala3ClassDirectory)
@@ -32,7 +31,6 @@ class MigrationSuite extends AnyFunSuiteLike with DiffAssertions {
           managedSources = unamanged,
           scala2Classpath = scala2Classpath,
           scala2CompilerOptions = scala2CompilerOptions,
-          toolClasspath = toolClasspath,
           targetRoot = semanticdbTargetRoot,
           scala3Classpath = scala3Classpath,
           scala3CompilerOptions = scala3CompilerOptions,

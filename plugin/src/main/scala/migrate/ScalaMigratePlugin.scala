@@ -35,7 +35,6 @@ object ScalaMigratePlugin extends AutoPlugin {
   private[migrate] val migrationOn           = "-source:3.0-migration"
   private[migrate] val scalaBinaryVersion    = BuildInfo.scalaBinaryVersion
   private[migrate] val migrateVersion        = BuildInfo.version
-  private[migrate] val toolClasspath         = BuildInfo.toolClasspath.split(java.io.File.pathSeparator).toList
   private[migrate] val scala3Version         = BuildInfo.scala3Version
 
   object autoImport {
@@ -173,9 +172,6 @@ object ScalaMigratePlugin extends AutoPlugin {
       val scala3ClassDir    = scala3InputsValue.classDirectory
       if (!Files.exists(scala3ClassDir)) Files.createDirectory(scala3ClassDir)
 
-      // value from buildInfo
-      val toolCp = toolClasspath.map(Paths.get(_))
-
       val migrateAPI = Migrate.fetchAndClassloadInstance(migrateVersion, scalaBinaryVersion)
 
       Try {
@@ -185,7 +181,6 @@ object ScalaMigratePlugin extends AutoPlugin {
           targetRoot.toPath(),
           scala2Classpath.asJava,
           scala2CompilerOptions.asJava,
-          toolCp.asJava,
           scala3Classpath.asJava,
           scalac3Options.asJava,
           scala3ClassDir
