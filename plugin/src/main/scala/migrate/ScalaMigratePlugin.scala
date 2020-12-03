@@ -98,17 +98,7 @@ object ScalaMigratePlugin extends AutoPlugin {
     Seq(
       isScala213 := {
         if (scalaVersion.value.startsWith("2.13.")) true
-        else throw new Exception(s"""
-                                    |
-                                    |Error:
-                                    |
-                                    |you project must be in 2.13 and not in ${scalaVersion.value}
-                                    |please change the scalaVersion following this command
-                                    |set ${thisProject.value.id} / scalaVersion := "2.13.3"
-                                    |
-                                    |
-                                    |
-                                    |""".stripMargin)
+        else throw new Exception(Messages.notScala213(scalaVersion.value, thisProject.value.id))
 
       },
       semanticdbEnabled := {
@@ -172,9 +162,9 @@ object ScalaMigratePlugin extends AutoPlugin {
 
   def prepareMigrateImpl = Def.task {
     val log = streams.value.log
-    log.info("We are going to fix some syntax incompatibilities")
+    log.info(Messages.welcomePrepareMigration)
     val targetRoot = semanticdbTargetRoot.value
-
+    val projectId  = thisProject.value.id
     // computed values
     val scala2InputsValue     = state.value.attributes.get(scala2inputsAttirbute).get
     val unamangedSources      = scala2InputsValue.unmanagedSources
@@ -190,31 +180,16 @@ object ScalaMigratePlugin extends AutoPlugin {
       )
     } match {
       case Success(_) =>
-        log.info(s"""|
-                     |
-                     |We fixed the syntax of this ${thisProject.value.id} to be compatible with $scala3Version
-                     |You can now commit the change!
-                     |You can also execute the next command to try to migrate to $scala3Version
-                     |
-                     |migrate ${thisProject.value.id}
-                     |
-                     |
-                     |""".stripMargin)
+        log.info(Messages.successMessagePrepareMigration(projectId, scala3Version))
       case Failure(exception) =>
-        log.err(s"""|
-                    |
-                    |Failed fixing the syntax for ${thisProject.value.id}
-                    |${exception.getMessage()}
-                    |
-                    |
-                    |""".stripMargin)
+        log.err(Messages.errorMessagePrepareMigration(projectId, exception))
     }
   }
 
   def migrateImp =
     Def.task {
       val log = streams.value.log
-      log.info("We are going to migrate your project to scala 3")
+      log.info(Messages.welcomeMigration)
 
       val targetRoot = semanticdbTargetRoot.value
 
@@ -244,24 +219,10 @@ object ScalaMigratePlugin extends AutoPlugin {
         )
       } match {
         case Success(_) =>
-          log.info(s"""|
-                       |
-                       |${thisProject.value.id} has successfully been migrated to scala $scala3Version
-                       |You can now commit the change!
-                       |You can also execute the compile command:
-                       |
-                       |${thisProject.value.id} / compile
-                       |
-                       |
-                       |""".stripMargin)
+          log.info(Messages.successOfMigration(thisProject.value.id, scala3Version))
+
         case Failure(exception) =>
-          log.err(s"""|
-                      |
-                      |Migration has failed!
-                      |${exception.getMessage()}
-                      |
-                      |
-                      |""".stripMargin)
+          log.err(Messages.errorMesssageMigration(exception))
       }
     }
 
