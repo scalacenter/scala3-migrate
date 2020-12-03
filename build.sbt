@@ -32,11 +32,12 @@ lazy val migrate = project
   .settings(
     scalacOptions ++= Seq("-Wunused", "-P:semanticdb:synthetics:on", "-deprecation"),
     libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-compiler"      % scalaVersion.value,
-      "ch.epfl.scala"  % "scalafix-interfaces" % V.scalafix,
-      "com.outr"      %% "scribe"              % V.scribe,
-      "org.scalatest" %% "scalatest"           % V.scalatest % Test,
-      "ch.epfl.scala"  % "scalafix-testkit"    % V.scalafix  % Test cross CrossVersion.full
+      "org.scala-lang"   % "scala-compiler"      % scalaVersion.value,
+      "ch.epfl.scala"    % "scalafix-interfaces" % V.scalafix,
+      "com.outr"        %% "scribe"              % V.scribe,
+      "io.get-coursier" %% "coursier"            % V.coursierApi,
+      "org.scalatest"   %% "scalatest"           % V.scalatest % Test,
+      "ch.epfl.scala"    % "scalafix-testkit"    % V.scalafix  % Test cross CrossVersion.full
     ),
     Test / buildInfoPackage := "migrate.test",
     Test / buildInfoKeys := Seq(
@@ -177,4 +178,5 @@ lazy val V = new {
   val catsCore              = "2.3.0"
   val kindProjector         = "0.11.2"
   val coursierInterface     = "1.0.2"
+  val coursierApi           = "2.0.7"
 }

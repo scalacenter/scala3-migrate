@@ -1,9 +1,9 @@
 /*
-rule = [MigrationRule, ExplicitImplicits]
+rule = [InferTypes, ExplicitImplicits]
 */
 package migrate
 
-object Infertypes {
+object Simple {
   val valeur = "juste du text"
   val k = 1
   val int = 1

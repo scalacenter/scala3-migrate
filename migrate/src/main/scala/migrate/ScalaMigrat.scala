@@ -11,26 +11,22 @@ import migrate.utils.FileUtils
 import migrate.utils.ScalaExtensions._
 import migrate.utils.ScalafixService
 import migrate.utils.Timer._
+import scalafix.interfaces.{ ScalafixEvaluation }
 
-object Main {
+class ScalaMigrat(scalafixSrv: ScalafixService) {
 
   def previewMigration(
     unmanagedSources: Seq[AbsolutePath],
     managedSources: Seq[AbsolutePath],
-    scala2Classpath: Classpath,
-    scala2CompilerOptions: Seq[String],
-    targetRoot: AbsolutePath,
     scala3Classpath: Classpath,
     scala3CompilerOptions: Seq[String],
     scala3ClassDirectory: AbsolutePath
   ): Try[Map[AbsolutePath, FileMigrationState.FinalState]] = {
-    val migrationRules = Seq("MigrationRule", "ExplicitImplicits")
     unmanagedSources.foreach(f => scribe.info(s"Migrating $f"))
     for {
-      scalafixSrv <- ScalafixService.from(unmanagedSources, scala2CompilerOptions, scala2Classpath, targetRoot)
-      compiler    <- setupScala3Compiler(scala3Classpath, scala3ClassDirectory, scala3CompilerOptions)
+      compiler <- setupScala3Compiler(scala3Classpath, scala3ClassDirectory, scala3CompilerOptions)
       initialFileToMigrate <-
-        buildMigrationFiles(unmanagedSources, migrationRules, scalafixSrv)
+        buildMigrationFiles(unmanagedSources)
       _            <- compileInScala3(initialFileToMigrate, managedSources, compiler)
       migratedFiles = initialFileToMigrate.map(f => (f.source, f.migrate(compiler))).toMap
     } yield migratedFiles
@@ -39,24 +35,13 @@ object Main {
   def migrate(
     unmanagedSources: Seq[AbsolutePath],
     managedSources: Seq[AbsolutePath],
-    scala2Classpath: Classpath,
-    scala2CompilerOptions: Seq[String],
-    targetRoot: AbsolutePath,
     scala3Classpath: Classpath,
     scala3CompilerOptions: Seq[String],
     scala3ClassDirectory: AbsolutePath
   ): Try[Unit] =
     for {
-      migratedFiles <- previewMigration(
-                         unmanagedSources,
-                         managedSources,
-                         scala2Classpath,
-                         scala2CompilerOptions,
-                         targetRoot,
-                         scala3Classpath,
-                         scala3CompilerOptions,
-                         scala3ClassDirectory
-                       )
+      migratedFiles <-
+        previewMigration(unmanagedSources, managedSources, scala3Classpath, scala3CompilerOptions, scala3ClassDirectory)
       (success, failures) = migratedFiles.toSeq.partition { case (_, migrated) => migrated.isSuccess }
       _ <- success.map { case (file, migrated: FileMigrationState.Succeeded) =>
              migrated.newFileContent.flatMap(FileUtils.writeFile(file, _))
@@ -65,6 +50,26 @@ object Main {
       _ = failures.foreach { case (file, FileMigrationState.Failed(_, cause)) =>
             scribe.info(s"${file.value} has not been migrated because ${cause.getMessage()}")
           }
+    } yield ()
+
+  def previewPrepareMigration(unmanagedSources: Seq[AbsolutePath]): Try[ScalafixEvaluation] = {
+    unmanagedSources.foreach(f => scribe.info(s"Fixing syntax of $f"))
+    for {
+      //TODO: we should maybe try to reuse the same scalafixSrv
+      scalafixEval <- timeAndLog(scalafixSrv.fixSyntaxForScala3()) {
+                        case (finiteDuration, Success(_)) =>
+                          scribe.info(s"Successfully run fixSyntaxForScala3  in $finiteDuration")
+                        case (_, Failure(e)) =>
+                          scribe.info(s"""|Failed running scalafix to fix syntax for scala 3
+                                          |Cause: ${e.getMessage}""".stripMargin)
+                      }
+    } yield scalafixEval
+  }
+
+  def prepareMigration(unmanagedSources: Seq[AbsolutePath]): Try[Unit] =
+    for {
+      scalafixEval <- previewPrepareMigration(unmanagedSources)
+      _             = scalafixSrv.fixInPlace(scalafixEval)
     } yield ()
 
   private def setupScala3Compiler(
@@ -98,14 +103,10 @@ object Main {
 
     } yield ()
 
-  private def buildMigrationFiles(
-    unmanagedSources: Seq[AbsolutePath],
-    rules: Seq[String],
-    scalafixSrv: ScalafixService
-  ): Try[Seq[FileMigrationState.Initial]] =
+  private def buildMigrationFiles(unmanagedSources: Seq[AbsolutePath]): Try[Seq[FileMigrationState.Initial]] =
     for {
       fileEvaluations <-
-        timeAndLog(scalafixSrv.evaluate(rules)) {
+        timeAndLog(scalafixSrv.inferTypesAndImplicits()) {
           case (duration, Success(files)) =>
             val fileEvaluationsSeq = files.getFileEvaluations().toSeq
             val patchesCount       = fileEvaluationsSeq.map(_.getPatches().size).sum

@@ -1,2 +1,2 @@
-migrate.MigrationRule
+migrate.InferTypes
 migrate.ExplicitImplicitsRule

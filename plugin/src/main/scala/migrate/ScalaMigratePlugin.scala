@@ -1,6 +1,6 @@
 package migrate
 
-import java.nio.file.{ Files, Path, Paths }
+import java.nio.file.{ Files, Path }
 
 import buildinfo.BuildInfo
 import migrate.interfaces.Migrate
@@ -36,16 +36,17 @@ object ScalaMigratePlugin extends AutoPlugin {
   private[migrate] val scalaBinaryVersion    = BuildInfo.scalaBinaryVersion
   private[migrate] val migrateVersion        = BuildInfo.version
   private[migrate] val scala3Version         = BuildInfo.scala3Version
+  private[migrate] val migrateAPI            = Migrate.fetchAndClassloadInstance(migrateVersion, scalaBinaryVersion)
 
   object autoImport {
     val scala3InputComputed = taskKey[Scala3Inputs]("show scala 3 inputs if available")
     val scala2InputComputed = taskKey[Scala2Inputs]("show scala 2 inputs if available")
 
-    private[migrate] val storeScala3Inputs = taskKey[StateTransform]("store scala 3 inputs")
-    private[migrate] val storeScala2Inputs = taskKey[StateTransform]("store scala 2 inputs")
-    private[migrate] val internalMigrate   = taskKey[Unit]("migrate a specific project to scala 3")
-
-    private[migrate] val isScala213 = taskKey[Boolean]("is this project a scala 2.13 project")
+    private[migrate] val storeScala3Inputs        = taskKey[StateTransform]("store scala 3 inputs")
+    private[migrate] val storeScala2Inputs        = taskKey[StateTransform]("store scala 2 inputs")
+    private[migrate] val internalPrepareMigration = taskKey[Unit]("fix some syntax incompatibilities with scala 3")
+    private[migrate] val internalMigrate          = taskKey[Unit]("migrate a specific project to scala 3")
+    private[migrate] val isScala213               = taskKey[Boolean]("is this project a scala 2.13 project")
   }
 
   import autoImport._
@@ -57,7 +58,7 @@ object ScalaMigratePlugin extends AutoPlugin {
   override def projectSettings: Seq[Setting[_]] =
     inConfig(Compile)(configSettings) ++
       inConfig(Test)(configSettings) ++
-      Seq(commands ++= Seq(migrateCommand))
+      Seq(commands ++= Seq(prepapreMigrateCommand, migrateCommand))
 
   lazy val migrateCommand: Command =
     Command.single("migrate") { (state, projectId) =>
@@ -77,13 +78,29 @@ object ScalaMigratePlugin extends AutoPlugin {
       result
     }
 
+  lazy val prepapreMigrateCommand: Command =
+    Command.single("prepare-migration") { (state, projectId) =>
+      import sbt.BasicCommandStrings._
+
+      val result = List(
+        StashOnFailure,
+        s"${projectId} / isScala213",
+        s"$projectId / compile",
+        s"$projectId / storeScala2Inputs",
+        s"$projectId / internalPrepareMigration",
+        PopOnFailure,
+        FailureWall
+      ) ::: state
+      result
+    }
+
   val configSettings: Seq[Setting[_]] =
     Seq(
       isScala213 := {
         if (scalaVersion.value.startsWith("2.13.")) true
         else throw new Exception(s"""
                                     |
-                                    |Error: 
+                                    |Error:
                                     |
                                     |you project must be in 2.13 and not in ${scalaVersion.value}
                                     |please change the scalaVersion following this command
@@ -105,6 +122,7 @@ object ScalaMigratePlugin extends AutoPlugin {
           Seq(migrationOn)
         else Nil
       },
+      internalPrepareMigration := prepareMigrateImpl.value,
       internalMigrate := migrateImp.value,
       scala3InputComputed := {
         (for {
@@ -152,6 +170,47 @@ object ScalaMigratePlugin extends AutoPlugin {
       }
     )
 
+  def prepareMigrateImpl = Def.task {
+    val log = streams.value.log
+    log.info("We are going to fix some syntax incompatibilities")
+    val targetRoot = semanticdbTargetRoot.value
+
+    // computed values
+    val scala2InputsValue     = state.value.attributes.get(scala2inputsAttirbute).get
+    val unamangedSources      = scala2InputsValue.unmanagedSources
+    val scala2Classpath       = scala2InputsValue.classpath
+    val scala2CompilerOptions = scala2InputsValue.scalacOptions
+
+    Try {
+      migrateAPI.prepareMigration(
+        unamangedSources.asJava,
+        targetRoot.toPath,
+        scala2Classpath.asJava,
+        scala2CompilerOptions.asJava
+      )
+    } match {
+      case Success(_) =>
+        log.info(s"""|
+                     |
+                     |We fixed the syntax of this ${thisProject.value.id} to be compatible with $scala3Version
+                     |You can now commit the change!
+                     |You can also execute the next command to try to migrate to $scala3Version
+                     |
+                     |migrate ${thisProject.value.id}
+                     |
+                     |
+                     |""".stripMargin)
+      case Failure(exception) =>
+        log.err(s"""|
+                    |
+                    |Failed fixing the syntax for ${thisProject.value.id}
+                    |${exception.getMessage()}
+                    |
+                    |
+                    |""".stripMargin)
+    }
+  }
+
   def migrateImp =
     Def.task {
       val log = streams.value.log
@@ -172,8 +231,6 @@ object ScalaMigratePlugin extends AutoPlugin {
       val scala3ClassDir    = scala3InputsValue.classDirectory
       if (!Files.exists(scala3ClassDir)) Files.createDirectory(scala3ClassDir)
 
-      val migrateAPI = Migrate.fetchAndClassloadInstance(migrateVersion, scalaBinaryVersion)
-
       Try {
         migrateAPI.migrate(
           unamangedSources.asJava,
@@ -189,7 +246,7 @@ object ScalaMigratePlugin extends AutoPlugin {
         case Success(_) =>
           log.info(s"""|
                        |
-                       |${thisProject.value.id} has successfully been migrated to scala $scala3Version  
+                       |${thisProject.value.id} has successfully been migrated to scala $scala3Version
                        |You can now commit the change!
                        |You can also execute the compile command:
                        |
@@ -201,7 +258,7 @@ object ScalaMigratePlugin extends AutoPlugin {
           log.err(s"""|
                       |
                       |Migration has failed!
-                      |$exception
+                      |${exception.getMessage()}
                       |
                       |
                       |""".stripMargin)

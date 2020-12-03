@@ -3,8 +3,8 @@ package migrate
 import scala.util.Failure
 import scala.util.Try
 
+import migrate.Values._
 import migrate.internal.FileMigrationState
-import migrate.test.BuildInfo
 import migrate.utils.FileUtils._
 import migrate.utils.ScalaExtensions._
 import org.scalatest.funsuite.AnyFunSuiteLike
@@ -12,26 +12,13 @@ import scalafix.testkit.DiffAssertions
 
 class MigrationSuite extends AnyFunSuiteLike with DiffAssertions {
 
-  val managed: Seq[AbsolutePath]         = BuildInfo.unmanagedSources.map(AbsolutePath.from)
-  val unamanged: Seq[AbsolutePath]       = BuildInfo.managedSources.map(AbsolutePath.from)
-  val input: AbsolutePath                = AbsolutePath.from(BuildInfo.input)
-  val output: AbsolutePath               = AbsolutePath.from(BuildInfo.output)
-  val scala2Classpath: Classpath         = Classpath.from(BuildInfo.scala2Classpath).get
-  val semanticdbTargetRoot: AbsolutePath = AbsolutePath.from(BuildInfo.semanticdbPath)
-  val scala2CompilerOptions              = BuildInfo.scala2CompilerOptions
-  val scala3Classpath: Classpath         = Classpath.from(BuildInfo.scala3Classpath).get
-  val scala3CompilerOptions              = BuildInfo.scala3CompilerOptions
-  val scala3ClassDirectory: AbsolutePath = AbsolutePath.from(BuildInfo.scala3ClassDirectory)
-
-  managed.foreach { inputFile =>
+  val migrateFiles: Seq[AbsolutePath] = unmanaged.filter(_.value.contains(s"/migrate/"))
+  migrateFiles.foreach { inputFile =>
     test(s"${inputFile.getName}") {
-      val migrateResult = Main
+      val migrateResult = Values.scalaMigrat
         .previewMigration(
           unmanagedSources = Seq(inputFile),
-          managedSources = unamanged,
-          scala2Classpath = scala2Classpath,
-          scala2CompilerOptions = scala2CompilerOptions,
-          targetRoot = semanticdbTargetRoot,
+          managedSources = managed,
           scala3Classpath = scala3Classpath,
           scala3CompilerOptions = scala3CompilerOptions,
           scala3ClassDirectory = scala3ClassDirectory

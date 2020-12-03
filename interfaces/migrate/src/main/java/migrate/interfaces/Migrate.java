@@ -25,6 +25,12 @@ public interface Migrate {
                  List<String> scala3CompilerOptions,
                  Path scala3ClassDirectory);
 
+    void prepareMigration(List<Path> unmanagedSources,
+                 Path targetRoot,
+                 List<Path> scala2Classpath,
+                 List<String> scala2CompilerOptions);
+
+
     // Todo: Maybe using ServiceLoader could simplify this code a bit:
     // https://www.baeldung.com/java-spi
     static Migrate fetchAndClassloadInstance(String migrateVersion, String scalaVersion) throws Exception {

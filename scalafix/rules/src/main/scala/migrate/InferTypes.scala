@@ -18,7 +18,7 @@ import utils.CompilerService
 import utils.Pretty
 import utils.SyntheticHelper
 
-class MigrationRule(g: Global) extends SemanticRule("MigrationRule") {
+class InferTypes(g: Global) extends SemanticRule("InferTypes") {
   override def description: String = "infer types and typeApply"
 
   def this() = this(null)
@@ -30,7 +30,7 @@ class MigrationRule(g: Global) extends SemanticRule("MigrationRule") {
       val global = CompilerService.newGlobal(config.scalacClasspath, config.scalacOptions)
       global match {
         case Success(settings) =>
-          Configured.ok(new MigrationRule(new Global(settings, new StoreReporter, "scala-migrat3")))
+          Configured.ok(new InferTypes(new Global(settings, new StoreReporter, "scala-migrat3")))
         case Failure(exception) => Configured.error(exception.getMessage)
       }
     }
