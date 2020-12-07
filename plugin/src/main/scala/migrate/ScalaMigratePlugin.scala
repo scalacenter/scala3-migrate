@@ -32,6 +32,7 @@ object ScalaMigratePlugin extends AutoPlugin {
   private[migrate] val scala3inputsAttirbute = AttributeKey[Scala3Inputs]("scala3Inputs")
   private[migrate] val scala2inputsAttirbute = AttributeKey[Scala2Inputs]("scala2Inputs")
   private[migrate] val syntheticsOn          = "-P:semanticdb:synthetics:on"
+  private[migrate] val migrationOn           = "-source:3.0-migration"
   private[migrate] val scalaBinaryVersion    = BuildInfo.scalaBinaryVersion
   private[migrate] val migrateVersion        = BuildInfo.version
   private[migrate] val toolClasspath         = BuildInfo.toolClasspath.split(java.io.File.pathSeparator).toList
@@ -99,8 +100,10 @@ object ScalaMigratePlugin extends AutoPlugin {
         else semanticdbEnabled.value
       },
       scalacOptions ++= {
-        if (scalacOptions.value.contains(syntheticsOn)) Nil
-        else if (scalaVersion.value.startsWith("2.13.")) Seq(syntheticsOn)
+        if (scalaVersion.value.startsWith("2.13.") && !scalacOptions.value.contains(syntheticsOn))
+          Seq(syntheticsOn)
+        else if (scalaVersion.value.startsWith("3.") && !scalacOptions.value.contains(migrationOn))
+          Seq(migrationOn)
         else Nil
       },
       internalMigrate := migrateImp.value,
