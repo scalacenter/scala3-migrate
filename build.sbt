@@ -41,7 +41,8 @@ lazy val migrate = project
     Test / buildInfoPackage := "migrate.test",
     Test / buildInfoKeys := Seq(
       "input" -> (input / Compile / sourceDirectory).value,
-      fromSources("sources", (input / Compile / sources)),
+      fromSources("unmanagedSources", input / Compile / unmanagedSources),
+      fromSources("managedSources", input / Compile / managedSources),
       "output" -> (output / Compile / sourceDirectory).value,
       fromClasspath("scala2Classpath", input / Compile / fullClasspath),
       "semanticdbPath" -> (input / Compile / semanticdbTargetRoot).value,
@@ -120,8 +121,10 @@ lazy val `scalafix-input` = project
       "com.twitter"                   %% "bijection-core" % V.bijectionCore,
       "org.typelevel"                 %% "cats-core"      % V.catsCore,
       compilerPlugin(("org.typelevel" %% "kind-projector" % V.kindProjector).cross(CrossVersion.full))
-    )
+    ),
+    buildInfoKeys := Seq[BuildInfoKey](name)
   )
+  .enablePlugins(BuildInfoPlugin)
   .disablePlugins(ScalafixPlugin)
 
 lazy val `scalafix-output` = project
@@ -133,8 +136,10 @@ lazy val `scalafix-output` = project
       "com.twitter"                   %% "bijection-core" % V.bijectionCore,
       "org.typelevel"                 %% "cats-core"      % V.catsCore,
       compilerPlugin(("org.typelevel" %% "kind-projector" % V.kindProjector).cross(CrossVersion.full))
-    )
+    ),
+    buildInfoKeys := Seq[BuildInfoKey](name)
   )
+  .enablePlugins(BuildInfoPlugin)
   .disablePlugins(ScalafixPlugin)
 
 lazy val `scalafix-tests` = project
@@ -147,9 +152,9 @@ lazy val `scalafix-tests` = project
         V.scalafix %
         Test cross CrossVersion.full,
     scalafixTestkitOutputSourceDirectories :=
-      sourceDirectories.in(`scalafix-output`, Compile).value,
+      unmanagedSourceDirectories.in(`scalafix-output`, Compile).value,
     scalafixTestkitInputSourceDirectories :=
-      sourceDirectories.in(`scalafix-input`, Compile).value,
+      unmanagedSourceDirectories.in(`scalafix-input`, Compile).value,
     scalafixTestkitInputClasspath :=
       fullClasspath.in(`scalafix-input`, Compile).value,
     scalafixTestkitInputScalacOptions :=

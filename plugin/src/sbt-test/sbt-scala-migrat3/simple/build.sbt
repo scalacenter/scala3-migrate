@@ -14,8 +14,12 @@ lazy val main = project
     libraryDependencies ++= Seq(
       ("org.typelevel" %% "cats-core" % V.catsCore)
         .withDottyCompat(scalaVersion.value)
-    )
+    ),
+    buildInfoObject := "Simple",
+    buildInfoPackage := "simple",
+    buildInfoKeys := Seq[BuildInfoKey](name, "scalaVersion" -> V.scala213)
   )
+  .enablePlugins(BuildInfoPlugin)
 
 lazy val basic = project
   .in(file("basic"))
