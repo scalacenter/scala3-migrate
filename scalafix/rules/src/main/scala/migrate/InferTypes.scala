@@ -15,7 +15,6 @@ import scalafix.patch.Patch
 import scalafix.util.TokenOps
 import scalafix.v1._
 import utils.CompilerService
-import utils.Pretty
 import utils.SyntheticHelper
 
 class InferTypes(g: Global) extends SemanticRule("InferTypes") {
@@ -44,7 +43,7 @@ class InferTypes(g: Global) extends SemanticRule("InferTypes") {
     }
 
   override def fix(implicit doc: SemanticDocument): Patch = {
-    lazy implicit val unit = g.newCompilationUnit(doc.input.text, doc.input.syntax)
+    lazy implicit val compilerService: CompilerService[g.type] = new CompilerService(g, doc)
 
     val patchForExplicitResultTypes = addExplicitResultType()
     val patchForTypeApply           = addTypeApply()
@@ -52,7 +51,7 @@ class InferTypes(g: Global) extends SemanticRule("InferTypes") {
     patchForExplicitResultTypes + patchForTypeApply
   }
 
-  private def addTypeApply()(implicit doc: SemanticDocument, unit: g.CompilationUnit): Patch =
+  private def addTypeApply()(implicit doc: SemanticDocument, compilerSrv: CompilerService[g.type]): Patch =
     doc.synthetics.collect { case syn @ TypeApplyTree(function: SemanticTree, typeArguments: List[SemanticType]) =>
       (for {
         originalTree <- SyntheticHelper.getOriginalTree(syn)
@@ -70,14 +69,13 @@ class InferTypes(g: Global) extends SemanticRule("InferTypes") {
     // but when applying them, we need to apply in the reverse order.
     }.toList.reverse.asPatch
 
-  private def getTypeNameAsSeenByGlobal(
-    origin: Tree,
-    replace: String
-  )(implicit doc: SemanticDocument, unit: g.CompilationUnit): Option[List[g.Type]] =
+  private def getTypeNameAsSeenByGlobal(origin: Tree, replace: String)(
+    implicit compilerSrv: CompilerService[g.type]
+  ): Option[List[g.Type]] =
     for {
       term         <- SyntheticHelper.getTermName(origin)
       gterm         = if (replace.isEmpty) g.TermName(term.toString()) else g.TermName("apply")
-      globalTree   <- CompilerService.getGlobalTree(origin, g)
+      globalTree   <- compilerSrv.getGlobalTree(origin)
       filteredTree <- getTypeApplyTree(globalTree, gterm)
       types         = filteredTree.args.map(_.tpe.dealias)
     } yield types
@@ -89,7 +87,7 @@ class InferTypes(g: Global) extends SemanticRule("InferTypes") {
         t
     }.headOption
 
-  private def addExplicitResultType()(implicit doc: SemanticDocument, unit: g.CompilationUnit): Patch =
+  private def addExplicitResultType()(implicit doc: SemanticDocument, compilerSrv: CompilerService[g.type]): Patch =
     doc.tree.collect {
       case t @ Defn.Val(mods, Pat.Var(name) :: Nil, None, body) => {
         fixDefinition(t, name, body)
@@ -103,7 +101,7 @@ class InferTypes(g: Global) extends SemanticRule("InferTypes") {
 
   private def fixDefinition(defn: Defn, name: Term.Name, body: Term)(
     implicit doc: SemanticDocument,
-    unit: g.CompilationUnit
+    compilerSrv: CompilerService[g.type]
   ): Patch =
     (for {
       (replace, spaces) <- getReplaceAndSpaces(defn, body)
@@ -112,13 +110,11 @@ class InferTypes(g: Global) extends SemanticRule("InferTypes") {
       //      _ = println(s"filteredType.prefixString = ${filteredType.prefix}")
     } yield Patch.addRight(replace, s"$spaces: ${filteredType.toString()}")).getOrElse(Patch.empty)
 
-  private def getTypeAsSeenFromGlobal(
-    name: Term.Name
-  )(implicit doc: SemanticDocument, unit: g.CompilationUnit): Option[g.Type] =
+  private def getTypeAsSeenFromGlobal(name: Term.Name)(implicit compilerSrv: CompilerService[g.type]): Option[g.Type] =
     for {
-      context  <- CompilerService.getContext(name, g)
+      context  <- compilerSrv.getContext(name)
       finalType = context.tree.symbol.info
-    } yield finalType.asInstanceOf[g.Type]
+    } yield finalType.finalResultType
 
   private def filterType(finalType: g.Type): Option[g.Type] =
     finalType match {
@@ -149,8 +145,4 @@ class InferTypes(g: Global) extends SemanticRule("InferTypes") {
     } yield (replace, space)
   }
 
-  def getAbsoluteType(semanticTree: SemanticType): Option[String] = {
-    val prettyPrint = Pretty.pretty(semanticTree).render(250)
-    if (prettyPrint.nonEmpty) Some(prettyPrint) else None
-  }
 }
