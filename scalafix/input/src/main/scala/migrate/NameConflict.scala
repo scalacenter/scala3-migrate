@@ -4,6 +4,7 @@ rule = [InferTypes, ExplicitImplicits]
 package migrate
 
 object NameConflict {
-  def a = null.asInstanceOf[scala.reflect.io.File]
+  case object File
+  def a = File
   def b = null.asInstanceOf[java.io.File]
 }

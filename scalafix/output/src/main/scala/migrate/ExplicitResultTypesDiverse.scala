@@ -1,15 +1,9 @@
 package migrate
 
-import scala.reflect.runtime.universe._
 import scala.collection.{mutable => mut}
 
 object ExplicitResultTypesDiverse {
-
-  class MyMirror(owner: ClassMirror) {
-    val symbol: reflect.runtime.universe.MethodSymbol =
-      owner.symbol.info.decl(TermName("")).asMethod
-  }
-
+  
   val map: scala.collection.mutable.Map[Int,Int] = mut.Map.empty[Int, Int]
 
   object Ignored {

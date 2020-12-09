@@ -3,16 +3,10 @@ rule = [InferTypes, ExplicitImplicits]
 */
 package migrate
 
-import scala.reflect.runtime.universe._
 import scala.collection.{mutable => mut}
 
 object ExplicitResultTypesDiverse {
-
-  class MyMirror(owner: ClassMirror) {
-    val symbol =
-      owner.symbol.info.decl(TermName("")).asMethod
-  }
-
+  
   val map = mut.Map.empty[Int, Int]
 
   object Ignored {

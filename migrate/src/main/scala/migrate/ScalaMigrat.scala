@@ -56,7 +56,7 @@ class ScalaMigrat(scalafixSrv: ScalafixService) {
     unmanagedSources.foreach(f => scribe.info(s"Fixing syntax of $f"))
     for {
       //TODO: we should maybe try to reuse the same scalafixSrv
-      scalafixEval <- timeAndLog(scalafixSrv.fixSyntaxForScala3()) {
+      scalafixEval <- timeAndLog(scalafixSrv.fixSyntaxForScala3(unmanagedSources)) {
                         case (finiteDuration, Success(_)) =>
                           scribe.info(s"Successfully run fixSyntaxForScala3  in $finiteDuration")
                         case (_, Failure(e)) =>
@@ -106,7 +106,7 @@ class ScalaMigrat(scalafixSrv: ScalafixService) {
   private def buildMigrationFiles(unmanagedSources: Seq[AbsolutePath]): Try[Seq[FileMigrationState.Initial]] =
     for {
       fileEvaluations <-
-        timeAndLog(scalafixSrv.inferTypesAndImplicits()) {
+        timeAndLog(scalafixSrv.inferTypesAndImplicits(unmanagedSources)) {
           case (duration, Success(files)) =>
             val fileEvaluationsSeq = files.getFileEvaluations().toSeq
             val patchesCount       = fileEvaluationsSeq.map(_.getPatches().size).sum

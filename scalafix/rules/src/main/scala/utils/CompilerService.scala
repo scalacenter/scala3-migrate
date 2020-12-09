@@ -56,13 +56,14 @@ class CompilerService[G <: Global](val g: G, doc: SemanticDocument) {
     getContext(gpos)
   }
 
-  def getGlobalTree(tree: Tree): Option[G#Tree] = {
+  def getGlobalTree(tree: Tree): Option[(G#Tree, g.Context)] = {
     val gpos  = getPosAfter(tree.pos)
     val gtree = Try(GlobalProxyService.typedTreeAt(g, gpos)).toOption
     if (gtree.isDefined && gtree.get.isInstanceOf[g.Template]) {
-      val gpos = getPosBefore(tree.pos)
-      Try(GlobalProxyService.typedTreeAt(g, gpos)).toOption
-    } else gtree
+      val gpos  = getPosBefore(tree.pos)
+      val gtree = Try(GlobalProxyService.typedTreeAt(g, gpos)).toOption
+      gtree.flatMap(tree => getContext(gpos).map(context => (tree, context)))
+    } else gtree.flatMap(tree => getContext(gpos).map(context => (tree, context)))
   }
 
   private def getContext(gpos: ReflectPos): Option[g.Context] = {

@@ -1,6 +1,5 @@
 package migrate
 
-import com.twitter.bijection._
 import java.util.Base64
 import scala.language.existentials
 
@@ -88,9 +87,9 @@ object RscCompat {
     val typeRef4: List[Int] = ??? : List[Int]
     val typeRef5: Types.this.X = ??? : X
     val typeRef6: T = ??? : T
-    val typeRef7: () => T = ??? : () => T
-    val typeRef8: T => T = ??? : T => T
-    val typeRef9: (T, T) => T = ??? : (T, T) => T
+    val typeRef7: () => T = ??? : (() => T)
+    val typeRef8: T => T = ??? : (T => T)
+    val typeRef9: (T, T) => T = ??? : ((T, T) => T)
     val typeRef10: (T, T) = ??? : (T, T)
 
     val singleType1: migrate.RscCompat.TypesHelpers.c.type = ??? : c.type
@@ -107,12 +106,12 @@ object RscCompat {
     val compoundType4: AnyRef{def k: Int} = new { def k: Int = ??? }
     val compoundType5: migrate.RscCompat.TypesHelpers.A with migrate.RscCompat.TypesHelpers.B = new A with B
     val compoundType6: migrate.RscCompat.TypesHelpers.A with migrate.RscCompat.TypesHelpers.B{def k: Int} = new A with B { def k: Int = ??? }
-    val compoundType7: migrate.RscCompat.TypesHelpers.A with List[_] with migrate.RscCompat.TypesHelpers.B = ??? : A with (List[T] forSome { type T }) with B
+//    val compoundType7 = ??? : A with (List[T] forSome { type T }) with B
 
      val annType1: migrate.RscCompat.TypesHelpers.C @migrate.RscCompat.TypesHelpers.ann = ??? : C @ann
 
-    val existentialType1: Any = ??? : T forSome { type T }
-    val existentialType2: List[Any] = ??? : List[_]
+//    val existentialType1 = ??? : T forSome { type T }
+//    val existentialType2 = ??? : List[_]
 
     val byNameType: (=> Any) => Any = ??? : ((=> Any) => Any)
   }
@@ -122,8 +121,6 @@ object RscCompat {
   trait In
   trait Out1
   trait Out2
-  implicit val implicit_bijection1: ImplicitBijection[In, Out1] = ???
-  implicit val implicit_bijection2: ImplicitBijection[In, Out2] = ???
 
   class Bugs {
     val Either: util.Either.type = scala.util.Either
@@ -150,9 +147,7 @@ object RscCompat {
     val innerClass3: Bugs.this.ti.X = ti.x
     val innerClass4: java.util.Base64.Decoder = Base64.getMimeDecoder
 
-    implicit val crazy2: com.twitter.bijection.Bijection[migrate.RscCompat.In,migrate.RscCompat.Out1] = Bijection.connect[In, Out1](migrate.RscCompat.implicit_bijection1)
     val sane1: String = implicitly[String](migrate.RscCompat.implicit_y)
-    val sane2: com.twitter.bijection.Bijection[migrate.RscCompat.In,migrate.RscCompat.Out2] = Bijection.connect[In, Out2](migrate.RscCompat.implicit_bijection2)
 
     val t: migrate.foo.T = ??? : foo.T
 

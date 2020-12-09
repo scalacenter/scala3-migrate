@@ -3,7 +3,6 @@ rule = [InferTypes, ExplicitImplicits]
 */
 package migrate
 
-import com.twitter.bijection._
 import java.util.Base64
 import scala.language.existentials
 
@@ -91,9 +90,9 @@ object RscCompat {
     val typeRef4 = ??? : List[Int]
     val typeRef5 = ??? : X
     val typeRef6 = ??? : T
-    val typeRef7 = ??? : () => T
-    val typeRef8 = ??? : T => T
-    val typeRef9 = ??? : (T, T) => T
+    val typeRef7 = ??? : (() => T)
+    val typeRef8 = ??? : (T => T)
+    val typeRef9 = ??? : ((T, T) => T)
     val typeRef10 = ??? : (T, T)
 
     val singleType1 = ??? : c.type
@@ -110,12 +109,12 @@ object RscCompat {
     val compoundType4 = new { def k: Int = ??? }
     val compoundType5 = new A with B
     val compoundType6 = new A with B { def k: Int = ??? }
-    val compoundType7 = ??? : A with (List[T] forSome { type T }) with B
+//    val compoundType7 = ??? : A with (List[T] forSome { type T }) with B
 
      val annType1 = ??? : C @ann
 
-    val existentialType1 = ??? : T forSome { type T }
-    val existentialType2 = ??? : List[_]
+//    val existentialType1 = ??? : T forSome { type T }
+//    val existentialType2 = ??? : List[_]
 
     val byNameType = ??? : ((=> Any) => Any)
   }
@@ -125,8 +124,6 @@ object RscCompat {
   trait In
   trait Out1
   trait Out2
-  implicit val implicit_bijection1: ImplicitBijection[In, Out1] = ???
-  implicit val implicit_bijection2: ImplicitBijection[In, Out2] = ???
 
   class Bugs {
     val Either = scala.util.Either
@@ -153,9 +150,7 @@ object RscCompat {
     val innerClass3 = ti.x
     val innerClass4 = Base64.getMimeDecoder
 
-    implicit val crazy2 = Bijection.connect[In, Out1]
     val sane1 = implicitly[String]
-    val sane2 = Bijection.connect[In, Out2]
 
     val t = ??? : foo.T
 
