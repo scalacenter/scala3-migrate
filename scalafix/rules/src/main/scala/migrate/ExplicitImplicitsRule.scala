@@ -41,7 +41,7 @@ class ExplicitImplicitsRule(g: Global) extends SemanticRule("ExplicitImplicits")
     }
 
   override def fix(implicit doc: SemanticDocument): Patch = {
-    lazy implicit val unit: g.CompilationUnit = g.newCompilationUnit(doc.input.text, doc.input.syntax)
+    lazy implicit val compilerSrv: CompilerService[g.type] = new CompilerService[g.type](g, doc)
 
     val implicitParams = doc.synthetics.collect {
       case syn: ApplyTree if (syn.toString.startsWith("*")) =>
@@ -63,16 +63,16 @@ class ExplicitImplicitsRule(g: Global) extends SemanticRule("ExplicitImplicits")
     implicitParams + implicitConversion
   }
 
-  def getImplicitParams(originalTree: Tree)(implicit unit: g.CompilationUnit): Option[List[String]] =
+  def getImplicitParams(originalTree: Tree)(implicit compilerSrv: CompilerService[g.type]): Option[List[String]] =
     for {
-      context <- CompilerService.getContext(originalTree, g)
+      context <- compilerSrv.getContext(originalTree)
       symbols <- collectImplicit(context.tree)
       args    <- symbols.map(printSymbol).sequence
     } yield args
 
-  def getImplicitConversions(originalTree: Tree)(implicit unit: g.CompilationUnit): Option[String] =
+  def getImplicitConversions(originalTree: Tree)(implicit compilerSrv: CompilerService[g.type]): Option[String] =
     for {
-      tree     <- CompilerService.getGlobalTree(originalTree, g)
+      tree     <- compilerSrv.getGlobalTree(originalTree)
       function <- collectImplicitConversion(tree)
     } yield function
 
@@ -84,7 +84,7 @@ class ExplicitImplicitsRule(g: Global) extends SemanticRule("ExplicitImplicits")
       case t @ g.Apply(fun: g.TypeApply, _) if t.isInstanceOf[g.ApplyImplicitView] =>
         if (fun.symbol.isImplicit) Some(fun.symbol.fullName.toString)
         else Some(fun.symbol.name.toString)
-      case t @ g.Select(qualifier: g.ApplyImplicitView, _) =>
+      case _ @g.Select(qualifier: g.ApplyImplicitView, _) =>
         collectImplicitConversion(qualifier)
       case _ => None
     }
@@ -103,10 +103,10 @@ class ExplicitImplicitsRule(g: Global) extends SemanticRule("ExplicitImplicits")
       }
       case g.Apply(_, args) if args.nonEmpty && args.head.isInstanceOf[g.ApplyToImplicitArgs] => {
         val newArgs    = args.head.asInstanceOf[g.Apply].args
-        val listOfArgs = newArgs.map(_.symbol.asInstanceOf[g.Symbol])
+        val listOfArgs = newArgs.map(_.symbol)
         Some(listOfArgs)
       }
-      case t =>
+      case _ =>
         None
     }
 

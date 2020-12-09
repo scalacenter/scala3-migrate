@@ -16,6 +16,8 @@ import scala.meta.Tree
 import scala.meta.internal.proxy.GlobalProxyService
 import scala.meta.io.AbsolutePath
 
+import scalafix.v1.SemanticDocument
+
 object CompilerService {
 
   def newGlobal(cp: List[AbsolutePath], options: List[String]): Try[Settings] = {
@@ -39,38 +41,42 @@ object CompilerService {
         )
     }
   }
+}
 
-  def getContext(name: Term, g: Global)(implicit unit: g.CompilationUnit): Option[g.Context] = {
+class CompilerService[G <: Global](val g: G, doc: SemanticDocument) {
+  private lazy val unit: G#CompilationUnit = g.newCompilationUnit(doc.input.text, doc.input.syntax)
+
+  def getContext(name: Term): Option[g.Context] = {
     val gpos = unit.position(name.pos.start)
-    getContext(gpos, g)
+    getContext(gpos)
   }
 
-  def getContext(tree: Tree, g: Global)(implicit unit: g.CompilationUnit): Option[g.Context] = {
-    val gpos = getExactPos(tree.pos, g)
-    getContext(gpos, g)
+  def getContext(tree: Tree): Option[g.Context] = {
+    val gpos = getExactPos(tree.pos)
+    getContext(gpos)
   }
 
-  def getGlobalTree(tree: Tree, g: Global)(implicit unit: g.CompilationUnit): Option[g.Tree] = {
-    val gpos  = getPosAfter(tree.pos, g)
+  def getGlobalTree(tree: Tree): Option[G#Tree] = {
+    val gpos  = getPosAfter(tree.pos)
     val gtree = Try(GlobalProxyService.typedTreeAt(g, gpos)).toOption
     if (gtree.isDefined && gtree.get.isInstanceOf[g.Template]) {
-      val gpos = getPosBefore(tree.pos, g)
+      val gpos = getPosBefore(tree.pos)
       Try(GlobalProxyService.typedTreeAt(g, gpos)).toOption
     } else gtree
   }
 
-  private def getContext(gpos: ReflectPos, g: Global): Option[g.Context] = {
+  private def getContext(gpos: ReflectPos): Option[g.Context] = {
     val gtree = GlobalProxyService.typedTreeAt(g, gpos)
     Try(g.doLocateContext(gtree.pos)).toOption
   }
 
-  private def getPosAfter(scalaMetaPos: Position, g: Global)(implicit unit: g.CompilationUnit): ReflectPos =
+  private def getPosAfter(scalaMetaPos: Position): ReflectPos =
     ReflectPos.range(unit.source, scalaMetaPos.start, scalaMetaPos.start, scalaMetaPos.end + 1)
 
-  private def getPosBefore(scalaMetaPos: Position, g: Global)(implicit unit: g.CompilationUnit): ReflectPos =
+  private def getPosBefore(scalaMetaPos: Position): ReflectPos =
     ReflectPos.range(unit.source, scalaMetaPos.start - 1, scalaMetaPos.start, scalaMetaPos.end)
 
-  private def getExactPos(scalaMetaPos: Position, g: Global)(implicit unit: g.CompilationUnit): ReflectPos =
+  private def getExactPos(scalaMetaPos: Position): ReflectPos =
     ReflectPos.range(unit.source, scalaMetaPos.start, scalaMetaPos.start, scalaMetaPos.end)
 
 }
