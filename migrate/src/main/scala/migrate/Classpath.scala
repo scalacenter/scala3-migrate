@@ -16,10 +16,14 @@ case class Classpath(paths: AbsolutePath*) {
   }
 
   def :+(newPath: AbsolutePath): Classpath = Classpath((paths :+ newPath): _*)
+
+  def ++(other: Classpath): Classpath = Classpath((paths ++ other.paths): _*)
 }
 object Classpath {
   def from(value: String): Try[Classpath] = {
     val absolutePaths = value.split(java.io.File.pathSeparator).toList.map(AbsolutePath.from).sequence
     absolutePaths.map(paths => Classpath(paths: _*))
   }
+
+  val empty: Classpath = Classpath(Nil: _*)
 }

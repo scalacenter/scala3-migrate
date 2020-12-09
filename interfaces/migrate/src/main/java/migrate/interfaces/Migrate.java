@@ -21,10 +21,15 @@ public interface Migrate {
                  Path targetRoot,
                  List<Path> scala2Classpath,
                  List<String> scala2CompilerOptions,
-                 List<Path> toolClasspath,
                  List<Path> scala3Classpath,
                  List<String> scala3CompilerOptions,
                  Path scala3ClassDirectory);
+
+    void prepareMigration(List<Path> unmanagedSources,
+                 Path targetRoot,
+                 List<Path> scala2Classpath,
+                 List<String> scala2CompilerOptions);
+
 
     // Todo: Maybe using ServiceLoader could simplify this code a bit:
     // https://www.baeldung.com/java-spi
