@@ -43,7 +43,7 @@ object Messages {
         |You can now commit the change!
         |You can also execute the next command to try to migrate to $scala3
         |
-        |migrate projectId
+        |migrate $projectId
         |
         |
         |""".stripMargin
