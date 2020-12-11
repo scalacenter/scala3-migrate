@@ -94,7 +94,7 @@ private[migrate] class FileMigration(fileToMigrate: FileMigrationState.Initial, 
       def doesCompile(): Try[Boolean] =
         fileToMigrate.previewPatches(kept ++ necessaryPatches).map { source =>
           try {
-            compiler.compile(List(source))
+            compiler.quietCompile(List(source))
             true
           } catch {
             case NonFatal(_) =>
