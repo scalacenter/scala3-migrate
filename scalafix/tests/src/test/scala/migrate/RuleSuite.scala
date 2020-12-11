@@ -14,7 +14,6 @@ import scalafix.testkit._
 class RuleSuite extends AbstractSemanticRuleSuite with FunSuiteLike {
   val (passing, failing) = testsToRun.partition(!_.path.testName.contains("_fails"))
   passing.foreach(runOn)
-//  runSpecificTests("ManagedFile")
 
   //   for running only one test if using Intellij
   def runSpecificTests(name: String): Unit =
@@ -37,8 +36,8 @@ class RuleSuite extends AbstractSemanticRuleSuite with FunSuiteLike {
     // verify to verify that tokenPatchApply and fixed are the same
     val fixed =
       PatchInternals.tokenPatchApply(res.ruleCtx, res.semanticdbIndex, res.patches)
-    val tokens                = fixed.tokenize.get
-    val emptyLine :: obtained = SemanticRuleSuite.stripTestkitComments(tokens).linesIterator.toList
+    val tokens        = fixed.tokenize.get
+    val _ :: obtained = SemanticRuleSuite.stripTestkitComments(tokens).linesIterator.toList
     ruleTest.path.resolveOutput(props) match {
       case Right(file) => writeFile(file, obtained.mkString("\n"))
       case Left(err)   => throw new Exception(s"File not found $err")

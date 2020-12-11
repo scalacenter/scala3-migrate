@@ -17,6 +17,6 @@ object Values {
   val scala3ClassDirectory: AbsolutePath = AbsolutePath.from(BuildInfo.scala3ClassDirectory)
 
   lazy val scalafixSrv: ScalafixService =
-    ScalafixService.from(unmanaged, scala2CompilerOptions, scala2Classpath, semanticdbTargetRoot).get
+    ScalafixService.from(scala2CompilerOptions, scala2Classpath, semanticdbTargetRoot).get
   val scalaMigrat = new ScalaMigrat(scalafixSrv)
 }

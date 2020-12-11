@@ -1,6 +1,7 @@
 package migrate
 
 object NameConflict {
-  def a: scala.reflect.io.File = null.asInstanceOf[scala.reflect.io.File]
+  case object File
+  def a: migrate.NameConflict.File.type = File
   def b: java.io.File = null.asInstanceOf[java.io.File]
 }

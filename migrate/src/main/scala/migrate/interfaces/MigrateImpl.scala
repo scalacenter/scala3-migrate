@@ -33,7 +33,7 @@ final class MigrateImpl() extends Migrate {
       scala3Classpath          = Classpath(scala3CpAbs: _*)
       scala3ClassDirectoryAbs <- AbsolutePath.from(scala3ClassDirectory)
       configuredScalafixSrv <-
-        ScalafixService.from(unmanagedSourcesAbs, scala2CompilerOptions.asScala.toList, scala2Classpath, targetRootAbs)
+        ScalafixService.from(scala2CompilerOptions.asScala.toList, scala2Classpath, targetRootAbs)
       scalaMigrate = new ScalaMigrat(configuredScalafixSrv)
       _ <- scalaMigrate
              .migrate(
@@ -57,7 +57,7 @@ final class MigrateImpl() extends Migrate {
       scala2CpAbs         <- scala2Cp.asScala.toList.map(AbsolutePath.from).sequence
       scala2Classpath      = Classpath(scala2CpAbs: _*)
       configuredScalafixSrv <-
-        ScalafixService.from(unmanagedSourcesAbs, scala2CompilerOptions.asScala.toList, scala2Classpath, targetRootAbs)
+        ScalafixService.from(scala2CompilerOptions.asScala.toList, scala2Classpath, targetRootAbs)
       scalaMigrate = new ScalaMigrat(configuredScalafixSrv)
       _           <- scalaMigrate.prepareMigration(unmanagedSourcesAbs)
     } yield ()).get

@@ -72,8 +72,8 @@ class ExplicitImplicitsRule(g: Global) extends SemanticRule("ExplicitImplicits")
 
   def getImplicitConversions(originalTree: Tree)(implicit compilerSrv: CompilerService[g.type]): Option[String] =
     for {
-      tree     <- compilerSrv.getGlobalTree(originalTree)
-      function <- collectImplicitConversion(tree)
+      (tree, _) <- compilerSrv.getGlobalTree(originalTree)
+      function  <- collectImplicitConversion(tree)
     } yield function
 
   private def collectImplicitConversion(globalTree: g.Tree): Option[String] =
@@ -82,7 +82,7 @@ class ExplicitImplicitsRule(g: Global) extends SemanticRule("ExplicitImplicits")
         if (fun.qualifier.symbol.isStatic) Some(fun.name.toString)
         else Some(fun.toString)
       case t @ g.Apply(fun: g.TypeApply, _) if t.isInstanceOf[g.ApplyImplicitView] =>
-        if (fun.symbol.isImplicit) Some(fun.symbol.fullName.toString)
+        if (fun.symbol.isStatic) Some(fun.symbol.fullName.toString)
         else Some(fun.symbol.name.toString)
       case _ @g.Select(qualifier: g.ApplyImplicitView, _) =>
         collectImplicitConversion(qualifier)

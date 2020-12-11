@@ -8,6 +8,7 @@ import scala.util.control.NonFatal
 
 import scala.meta._
 import scala.meta.contrib.Trivia
+import scala.meta.internal.pc.PrettyPrinter
 import scala.meta.tokens.Token
 
 import metaconfig.Configured
@@ -15,6 +16,7 @@ import scalafix.patch.Patch
 import scalafix.util.TokenOps
 import scalafix.v1._
 import utils.CompilerService
+import utils.ScalaExtensions.TraversableOnceOptionExtension
 import utils.SyntheticHelper
 
 class InferTypes(g: Global) extends SemanticRule("InferTypes") {
@@ -73,15 +75,16 @@ class InferTypes(g: Global) extends SemanticRule("InferTypes") {
     implicit compilerSrv: CompilerService[g.type]
   ): Option[List[g.Type]] =
     for {
-      term         <- SyntheticHelper.getTermName(origin)
-      gterm         = if (replace.isEmpty) g.TermName(term.toString()) else g.TermName("apply")
-      globalTree   <- compilerSrv.getGlobalTree(origin)
-      filteredTree <- getTypeApplyTree(globalTree, gterm)
-      types         = filteredTree.args.map(_.tpe.dealias)
-    } yield types
+      term                  <- SyntheticHelper.getTermName(origin)
+      gterm                  = if (replace.isEmpty) g.TermName(term.toString()) else g.TermName("apply")
+      (globalTree, context) <- compilerSrv.getGlobalTree(origin)
+      tree                  <- getTypeApplyTree(globalTree, gterm)
+      types                  = tree.args.map(_.tpe.dealias)
+      pretty                 = new PrettyPrinter[g.type](g)
+      prettyTypes           <- types.map(t => pretty.print(t, context)).sequence
+    } yield prettyTypes
 
   private def getTypeApplyTree(gtree: g.Tree, termName: g.Name): Option[g.TypeApply] =
-    // TODO: Pattern match instead
     gtree.collect {
       case t @ g.TypeApply(fun, _) if fun.isInstanceOf[g.Select] && fun.asInstanceOf[g.Select].name == termName =>
         t
@@ -105,29 +108,11 @@ class InferTypes(g: Global) extends SemanticRule("InferTypes") {
   ): Patch =
     (for {
       (replace, spaces) <- getReplaceAndSpaces(defn, body)
-      explicitType      <- getTypeAsSeenFromGlobal(name)
-      filteredType      <- filterType(explicitType)
-      //      _ = println(s"filteredType.prefixString = ${filteredType.prefix}")
-    } yield Patch.addRight(replace, s"$spaces: ${filteredType.toString()}")).getOrElse(Patch.empty)
-
-  private def getTypeAsSeenFromGlobal(name: Term.Name)(implicit compilerSrv: CompilerService[g.type]): Option[g.Type] =
-    for {
-      context  <- compilerSrv.getContext(name)
-      finalType = context.tree.symbol.info
-    } yield finalType.finalResultType
-
-  private def filterType(finalType: g.Type): Option[g.Type] =
-    finalType match {
-      case g.ErrorType => None
-      case f if f.isInstanceOf[g.ConstantType] =>
-        None // don't annotate ConstantTypes
-      case f if f.toString().contains("#") && f.toString().contains(".type") =>
-        None // don't annotate types that look like fix.WidenSingleType#strings.type
-      //Todo: add a special case for structural type: remove implicit and replace lazy val by a def
-      //Todo: deal with the root prefix to avoid cyclical types
-      //Todo: remove super types: we don't infer them
-      case f => Some(f.finalResultType)
-    }
+      context           <- compilerSrv.getContext(name)
+      explicitType       = context.tree.symbol.info.finalResultType
+      pretty             = new PrettyPrinter[g.type](g)
+      prettType         <- pretty.print(explicitType, context)
+    } yield Patch.addRight(replace, s"$spaces: ${prettType.toString()}")).getOrElse(Patch.empty)
 
   private def getReplaceAndSpaces(defn: Defn, body: Term)(implicit doc: SemanticDocument): Option[(Token, String)] = {
     val tokens = doc.tokenList

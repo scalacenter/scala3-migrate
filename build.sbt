@@ -12,8 +12,8 @@ ThisBuild / version := "0.1.0-SNAPSHOT"
 lazy val `compiler-interfaces` = project
   .in(file("interfaces/compiler"))
   .settings(
-    scalaVersion := V.dotty,
-    libraryDependencies ++= Seq("org.scala-lang" %% "scala3-compiler" % V.dotty),
+    scalaVersion := V.scala3,
+    libraryDependencies ++= Seq("org.scala-lang" %% "scala3-compiler" % V.scala3),
     crossPaths := false,
     autoScalaLibrary := false
   )
@@ -85,7 +85,7 @@ lazy val `sbt-plugin` = project
     scriptedBufferLog := false,
     buildInfoKeys := Seq[BuildInfoKey](
       name,
-      "scala3Version"      -> V.dotty,
+      "scala3Version"      -> V.scala3,
       "scalaBinaryVersion" -> V.scala213BinaryVersion,
       version
     )
@@ -97,7 +97,7 @@ lazy val `sbt-plugin` = project
 lazy val output = project
   .in(file("output"))
   .settings(
-    scalaVersion := V.dotty,
+    scalaVersion := V.scala3,
     scalacOptions := Seq("-Ykind-projector"),
     libraryDependencies ++= Seq("org.typelevel" % "cats-core_2.13" % V.catsCore)
   )
@@ -108,7 +108,10 @@ lazy val `scalafix-rules` = project
   .settings(
     scalacOptions ++= List("-Wunused", "-P:semanticdb:synthetics:on"),
     moduleName := "scalafix",
-    libraryDependencies ++= Seq("ch.epfl.scala" %% "scalafix-core" % V.scalafix)
+    libraryDependencies ++= Seq(
+      "ch.epfl.scala" %% "scalafix-core"  % V.scalafix,
+      "ch.epfl.scala" %% "scalafix-rules" % V.scalafix
+    )
   )
 
 lazy val `scalafix-input` = project
@@ -117,8 +120,6 @@ lazy val `scalafix-input` = project
     scalacOptions ++= List("-P:semanticdb:synthetics:on"),
     skip in publish := true,
     libraryDependencies ++= Seq(
-      "org.scala-lang"                 % "scala-reflect"  % scalaVersion.value,
-      "com.twitter"                   %% "bijection-core" % V.bijectionCore,
       "org.typelevel"                 %% "cats-core"      % V.catsCore,
       compilerPlugin(("org.typelevel" %% "kind-projector" % V.kindProjector).cross(CrossVersion.full))
     ),
@@ -131,12 +132,17 @@ lazy val `scalafix-output` = project
   .in(file("scalafix/output"))
   .settings(
     skip in publish := true,
-    libraryDependencies ++= Seq(
-      "org.scala-lang"                 % "scala-reflect"  % scalaVersion.value,
-      "com.twitter"                   %% "bijection-core" % V.bijectionCore,
-      "org.typelevel"                 %% "cats-core"      % V.catsCore,
-      compilerPlugin(("org.typelevel" %% "kind-projector" % V.kindProjector).cross(CrossVersion.full))
-    ),
+    crossScalaVersions := List(V.scala213, V.scala3),
+    scalacOptions ++= (if (isDotty.value) Seq("-Ykind-projector") else Seq()),
+    libraryDependencies ++= {
+      if (isDotty.value) {
+        Seq("org.typelevel" % "cats-core_2.13" % V.catsCore)
+      } else
+        Seq(
+          "org.typelevel"                 %% "cats-core"      % V.catsCore,
+          compilerPlugin(("org.typelevel" %% "kind-projector" % V.kindProjector).cross(CrossVersion.full))
+        )
+    },
     buildInfoKeys := Seq[BuildInfoKey](name)
   )
   .enablePlugins(BuildInfoPlugin)
@@ -165,16 +171,18 @@ lazy val `scalafix-tests` = project
   .dependsOn(`scalafix-input`, `scalafix-rules`)
   .enablePlugins(ScalafixTestkitPlugin)
 
+// for CI
+addCommandAlias("compileScalafixOutputinScala3", s"""set `scalafix-output`/scalaVersion := "${V.scala3}" ; compile""")
+
 lazy val V = new {
   val scala213              = "2.13.4"
   val scala213BinaryVersion = "2.13"
   val scala212              = "2.12.11"
   val scalatest             = "3.2.3"
-  val dotty                 = "3.0.0-M1"
+  val scala3                = "3.0.0-M1"
   val scalafix              = "0.9.24"
   val scribe                = "3.0.4"
   val organizeImports       = "0.4.3"
-  val bijectionCore         = "0.9.7"
   val catsCore              = "2.3.0"
   val kindProjector         = "0.11.2"
   val coursierInterface     = "1.0.2"

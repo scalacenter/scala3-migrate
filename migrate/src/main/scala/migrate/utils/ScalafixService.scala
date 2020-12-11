@@ -13,7 +13,6 @@ import scalafix.interfaces.ScalafixEvaluation
 
 final case class ScalafixService(
   scalafix: Scalafix,
-  sources: Seq[AbsolutePath],
   compilerOptions: Seq[String],
   classpath: Classpath,
   targetRootSemantic: AbsolutePath,
@@ -22,10 +21,11 @@ final case class ScalafixService(
   import ScalafixService._
   lazy val scalafixClassLoader: ClassLoader = scalafix.getClass().getClassLoader()
 
-  def inferTypesAndImplicits(): Try[ScalafixEvaluation] = evaluate(addExplicitResultTypesAndImplicits)
+  def inferTypesAndImplicits(unmanagedSources: Seq[AbsolutePath]): Try[ScalafixEvaluation] =
+    evaluate(addExplicitResultTypesAndImplicits, unmanagedSources)
 
-  def fixSyntaxForScala3(): Try[ScalafixEvaluation] =
-    evaluate(fixSyntaxRules)
+  def fixSyntaxForScala3(unmanagedSources: Seq[AbsolutePath]): Try[ScalafixEvaluation] =
+    evaluate(fixSyntaxRules, unmanagedSources)
 
   def fixInPlace(eval: ScalafixEvaluation): Unit =
     if (eval.isSuccessful) {
@@ -51,7 +51,7 @@ final case class ScalafixService(
 
     }
 
-  private def evaluate(rules: Seq[String]): Try[ScalafixEvaluation] = Try {
+  private def evaluate(rules: Seq[String], sources: Seq[AbsolutePath]): Try[ScalafixEvaluation] = Try {
     val classpathWithTargetSemantic = classpath :+ targetRootSemantic
     val args = scalafix
       .newArguments()
@@ -80,24 +80,12 @@ object ScalafixService {
   )
   val addExplicitResultTypesAndImplicits: Seq[String] = Seq("InferTypes", "ExplicitImplicits")
 
-  def from(
-    sources: Seq[AbsolutePath],
-    compilerOptions: Seq[String],
-    classpath: Classpath,
-    targetRootSemantic: AbsolutePath
-  ): Try[ScalafixService] =
+  def from(compilerOptions: Seq[String], classpath: Classpath, targetRootSemantic: AbsolutePath): Try[ScalafixService] =
     for {
       scalafix      <- scalafix
       internalRules <- internalRules
       externalRules <- externalRules
-    } yield ScalafixService(
-      scalafix,
-      sources,
-      compilerOptions,
-      classpath,
-      targetRootSemantic,
-      internalRules ++ externalRules
-    )
+    } yield ScalafixService(scalafix, compilerOptions, classpath, targetRootSemantic, internalRules ++ externalRules)
 
   private def getClassPathforRewriteRules(): Try[Classpath] =
     Try {
