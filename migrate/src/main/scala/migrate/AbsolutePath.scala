@@ -1,7 +1,6 @@
 package migrate
 
 import java.io.File
-import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -26,6 +25,4 @@ object AbsolutePath {
   def from(value: String): Try[AbsolutePath] = Try(AbsolutePath(value))
   def from(path: Path): Try[AbsolutePath]    = Try(AbsolutePath(path.toString))
   def from(file: File): AbsolutePath         = AbsolutePath(file.toString)
-
-  def tempDir(): AbsolutePath = AbsolutePath(Files.createTempDirectory("scala-migrat3").toString)
 }
