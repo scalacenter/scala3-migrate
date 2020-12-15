@@ -29,9 +29,20 @@ public class Scala3Compiler {
     return Scala3Driver.setupCompiler(args);
   }
 
-  public void compile(List<CompilationUnit> units) throws CompilationException {
+  public void quietCompile(List<CompilationUnit> units) throws CompilationException {
     List<SourceFile> sources = units.map(toSourceFile);
     Reporter reporter = new QuietReporter();
+    Context freshContext = context.fresh().setReporter(reporter);
+    Run run = compiler.newRun(freshContext);
+    run.compileSources(sources);
+    if (reporter.hasErrors()) {
+      throw new CompilationException(reporter.allErrors().mkString("\n"));
+    }
+  }
+  
+  public void compileAndReport(List<CompilationUnit> units, Logger r) throws CompilationException {
+    List<SourceFile> sources = units.map(toSourceFile);
+    Reporter reporter = new MigrateReporter(r);
     Context freshContext = context.fresh().setReporter(reporter);
     Run run = compiler.newRun(freshContext);
     run.compileSources(sources);

@@ -9,11 +9,13 @@ import compiler.interfaces.Scala3Compiler
 import migrate.internal._
 import migrate.utils.FileUtils
 import migrate.utils.ScalaExtensions._
+import migrate.utils.ScalaMigrateLogger
 import migrate.utils.ScalafixService
 import migrate.utils.Timer._
-import scalafix.interfaces.{ ScalafixEvaluation }
+import scalafix.interfaces.ScalafixEvaluation
 
 class ScalaMigrat(scalafixSrv: ScalafixService) {
+  private val reporter = ScalaMigrateLogger
 
   def previewMigration(
     unmanagedSources: Seq[AbsolutePath],
@@ -55,7 +57,6 @@ class ScalaMigrat(scalafixSrv: ScalafixService) {
   def previewPrepareMigration(unmanagedSources: Seq[AbsolutePath]): Try[ScalafixEvaluation] = {
     unmanagedSources.foreach(f => scribe.info(s"Fixing syntax of $f"))
     for {
-      //TODO: we should maybe try to reuse the same scalafixSrv
       scalafixEval <- timeAndLog(scalafixSrv.fixSyntaxForScala3(unmanagedSources)) {
                         case (finiteDuration, Success(_)) =>
                           scribe.info(s"Successfully run fixSyntaxForScala3  in $finiteDuration")
@@ -93,12 +94,12 @@ class ScalaMigrat(scalafixSrv: ScalafixService) {
     for {
       cuUnmanagedSources <- migrationFiles.map(_.previewAllPatches()).sequence
       cuManagedSources    = managedSources.map(path => new CompilationUnit(path.value, FileUtils.read(path)))
-      _ <- timeAndLog(Try(compiler.compile(cuManagedSources.toList ++ cuUnmanagedSources.toList))) {
+      _ <- timeAndLog(Try(compiler.compileAndReport(cuManagedSources.toList ++ cuUnmanagedSources.toList, reporter))) {
              case (finiteDuration, Success(_)) =>
                scribe.info(s"Succefully compiled with scala 3 in $finiteDuration")
              case (_, Failure(e)) =>
-               scribe.info(s"""|Compilation with scala 3 failed because:
-                               |Cause: ${e.getMessage}""".stripMargin)
+               scribe.info(s"""|Compilation with scala 3 failed.
+                               |Please fix the errors above.""".stripMargin)
            }
 
     } yield ()
