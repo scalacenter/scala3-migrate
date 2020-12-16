@@ -1,4 +1,4 @@
-# scala-migrat3
+# scala3-migrate
 This project is a work-in progress tool to help migrating projects to Scala 3.
 The goal is to provide a tool that will find the minimum set of types required explicitly to make dotty compiling a project without changing its meaning.
 

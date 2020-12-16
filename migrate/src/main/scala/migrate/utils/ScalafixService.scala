@@ -34,7 +34,7 @@ final case class ScalafixService(
         val absPath = AbsolutePath.from(oneFile.getEvaluatedFile).get
         if (oneFile.isSuccessful) {
           oneFile.previewPatchesAsUnifiedDiff().asScala match {
-            case None => scribe.info(s"Nothing to fix in $absPath)")
+            case None => scribe.debug(s"Nothing to fix in $absPath)")
             case Some(_) => {
               oneFile.applyPatches()
               scribe.info(s"Syntax fixed for $absPath)")

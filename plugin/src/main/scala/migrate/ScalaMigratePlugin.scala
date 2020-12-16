@@ -83,7 +83,7 @@ object ScalaMigratePlugin extends AutoPlugin {
     }
 
   lazy val prepapreMigrateCommand: Command =
-    Command.single("prepare-migration") { (state, projectId) =>
+    Command.single("migrate-prepare") { (state, projectId) =>
       import sbt.BasicCommandStrings._
 
       val result = List(

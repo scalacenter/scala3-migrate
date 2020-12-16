@@ -1,5 +1,5 @@
 # verify that scala3Inputs succeeded
-> prepare-migration main
+> migrate-preprare main
 > migrate main
 
 # the project definition for `basic` project is not prepared for migration. it should fails

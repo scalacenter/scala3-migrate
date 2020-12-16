@@ -75,7 +75,7 @@ lazy val `sbt-plugin` = project
   .enablePlugins(SbtPlugin)
   .settings(
     scalaVersion := V.scala212,
-    name := "sbt-scala-migrat3",
+    name := "sbt-scala3-migrate",
     scriptedLaunchOpts ++= Seq(s"-Dplugin.version=${version.value}"),
     scriptedDependencies := {
       scriptedDependencies

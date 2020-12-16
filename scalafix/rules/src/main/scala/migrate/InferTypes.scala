@@ -31,7 +31,7 @@ class InferTypes(g: Global) extends SemanticRule("InferTypes") {
       val global = CompilerService.newGlobal(config.scalacClasspath, config.scalacOptions)
       global match {
         case Success(settings) =>
-          Configured.ok(new InferTypes(new Global(settings, new StoreReporter, "scala-migrat3")))
+          Configured.ok(new InferTypes(new Global(settings, new StoreReporter, "scala3-migrate")))
         case Failure(exception) => Configured.error(exception.getMessage)
       }
     }
