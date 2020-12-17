@@ -1,13 +1,16 @@
 package migrate
 
-import java.nio.file.{ Files, Path }
-
 import buildinfo.BuildInfo
+import migrate.CommandStrings._
 import migrate.interfaces.Migrate
 import sbt.Keys._
 import sbt._
+import sbt.internal.util.complete.Parser
+import sbt.internal.util.complete.Parser.token
+import sbt.internal.util.complete.Parsers.Space
 import sbt.plugins.JvmPlugin
 
+import java.nio.file.{ Files, Path }
 import scala.collection.JavaConverters._
 import scala.util.{ Failure, Success, Try }
 
@@ -62,10 +65,32 @@ object ScalaMigratePlugin extends AutoPlugin {
     }) ++
       inConfig(Compile)(configSettings) ++
       inConfig(Test)(configSettings) ++
-      Seq(commands ++= Seq(prepapreMigrateCommand, migrateCommand))
+      Seq(commands ++= Seq(migratePreprare, migrate))
 
-  lazy val migrateCommand: Command =
-    Command.single("migrate") { (state, projectId) =>
+  private def idParser(state: State): Parser[String] = {
+    val projects           = Project.extract(state).structure.allProjects.map(_.id)
+    val projectCompletions = projects.map(token(_)).reduce(_ | _)
+    Space ~> projectCompletions
+  }
+
+  lazy val migratePreprare: Command =
+    Command(migratePrepareCommand, migratePrepareBrief, migratePreprareDetailed)(idParser) { (state, projectId) =>
+      import sbt.BasicCommandStrings._
+
+      val result = List(
+        StashOnFailure,
+        s"${projectId} / isScala213",
+        s"$projectId / compile",
+        s"$projectId / storeScala2Inputs",
+        s"$projectId / internalPrepareMigration",
+        PopOnFailure,
+        FailureWall
+      ) ::: state
+      result
+    }
+
+  lazy val migrate: Command =
+    Command(migrateCommand, migrateBrief, migrateDetailed)(idParser) { (state, projectId) =>
       import sbt.BasicCommandStrings._
 
       val result = List(
@@ -76,22 +101,6 @@ object ScalaMigratePlugin extends AutoPlugin {
         s"""set $projectId / scalaVersion := "${scala3Version}"""",
         s"$projectId / storeScala3Inputs",
         s"$projectId / internalMigrate",
-        PopOnFailure,
-        FailureWall
-      ) ::: state
-      result
-    }
-
-  lazy val prepapreMigrateCommand: Command =
-    Command.single("migrate-prepare") { (state, projectId) =>
-      import sbt.BasicCommandStrings._
-
-      val result = List(
-        StashOnFailure,
-        s"${projectId} / isScala213",
-        s"$projectId / compile",
-        s"$projectId / storeScala2Inputs",
-        s"$projectId / internalPrepareMigration",
         PopOnFailure,
         FailureWall
       ) ::: state
