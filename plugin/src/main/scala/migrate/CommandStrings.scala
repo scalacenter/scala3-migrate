@@ -13,7 +13,7 @@ object CommandStrings {
 
   val migrateCommand = "migrate"
   val migrateBrief =
-    (migrateCommand, "Migrate the project to scala 3 by inferring necessary types or implicit of a specific project")
+    (migrateCommand, "Migrate the project to scala 3 by inferring necessary types or implicits of a specific project")
   val migrateDetailed =
     s"""|$migrateCommand <projectId>
         |
