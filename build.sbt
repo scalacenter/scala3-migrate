@@ -82,6 +82,7 @@ lazy val `sbt-plugin` = project
         .dependsOn(publishLocal in `migrate-interfaces`, publishLocal in `compiler-interfaces`, publishLocal in migrate)
         .value
     },
+    buildInfoPackage := "migrate",
     scriptedBufferLog := false,
     buildInfoKeys := Seq[BuildInfoKey](
       name,
