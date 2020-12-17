@@ -1,6 +1,5 @@
 package migrate
 
-import buildinfo.BuildInfo
 import migrate.CommandStrings._
 import migrate.interfaces.Migrate
 import sbt.Keys._
