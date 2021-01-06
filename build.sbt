@@ -187,5 +187,5 @@ lazy val V = new {
   val catsCore              = "2.3.0"
   val kindProjector         = "0.11.2"
   val coursierInterface     = "1.0.2"
-  val coursierApi           = "2.0.7"
+  val coursierApi           = "2.0.8"
 }
