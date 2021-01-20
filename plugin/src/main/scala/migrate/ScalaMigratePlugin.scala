@@ -2,6 +2,7 @@ package migrate
 
 import migrate.CommandStrings._
 import migrate.interfaces.Migrate
+import sbt.BasicCommandStrings._
 import sbt.Keys._
 import sbt._
 import sbt.internal.util.complete.Parser
@@ -20,6 +21,7 @@ case class Scala3Inputs(
   classpath: Seq[Path],
   classDirectory: Path
 )
+case class ScalacOption(value: String)
 
 case class Scala2Inputs(
   projectId: String,
@@ -44,11 +46,12 @@ object ScalaMigratePlugin extends AutoPlugin {
     val scala3InputComputed = taskKey[Scala3Inputs]("show scala 3 inputs if available")
     val scala2InputComputed = taskKey[Scala2Inputs]("show scala 2 inputs if available")
 
-    private[migrate] val storeScala3Inputs        = taskKey[StateTransform]("store scala 3 inputs")
-    private[migrate] val storeScala2Inputs        = taskKey[StateTransform]("store scala 2 inputs")
-    private[migrate] val internalPrepareMigration = taskKey[Unit]("fix some syntax incompatibilities with scala 3")
-    private[migrate] val internalMigrate          = taskKey[Unit]("migrate a specific project to scala 3")
-    private[migrate] val isScala213               = taskKey[Boolean]("is this project a scala 2.13 project")
+    private[migrate] val storeScala3Inputs            = taskKey[StateTransform]("store scala 3 inputs")
+    private[migrate] val storeScala2Inputs            = taskKey[StateTransform]("store scala 2 inputs")
+    private[migrate] val internalPrepareMigration     = taskKey[Unit]("fix some syntax incompatibilities with scala 3")
+    private[migrate] val internalMigrateScalacOptions = taskKey[Unit]("log information to migrate scalacOptions")
+    private[migrate] val internalMigrate              = taskKey[Unit]("migrate a specific project to scala 3")
+    private[migrate] val isScala213                   = taskKey[Boolean]("is this project a scala 2.13 project")
   }
 
   import autoImport._
@@ -64,7 +67,7 @@ object ScalaMigratePlugin extends AutoPlugin {
     }) ++
       inConfig(Compile)(configSettings) ++
       inConfig(Test)(configSettings) ++
-      Seq(commands ++= Seq(migratePreprare, migrate))
+      Seq(commands ++= Seq(migratePreprare, migrateScalacOptions, migrate))
 
   private def idParser(state: State): Parser[String] = {
     val projects           = Project.extract(state).structure.allProjects.map(_.id)
@@ -74,8 +77,6 @@ object ScalaMigratePlugin extends AutoPlugin {
 
   lazy val migratePreprare: Command =
     Command(migratePrepareCommand, migratePrepareBrief, migratePreprareDetailed)(idParser) { (state, projectId) =>
-      import sbt.BasicCommandStrings._
-
       val result = List(
         StashOnFailure,
         s"${projectId} / isScala213",
@@ -88,10 +89,20 @@ object ScalaMigratePlugin extends AutoPlugin {
       result
     }
 
+  lazy val migrateScalacOptions: Command =
+    Command(migrateScalacOptionsCommand, migrateScalacOptionsBrief, migrateScalacOptionsDetailed)(idParser) {
+      (state, projectId) =>
+        val result = List(
+          StashOnFailure,
+          s"${projectId} / isScala213",
+          s"$projectId / internalMigrateScalacOptions",
+          FailureWall
+        ) ::: state
+        result
+    }
+
   lazy val migrate: Command =
     Command(migrateCommand, migrateBrief, migrateDetailed)(idParser) { (state, projectId) =>
-      import sbt.BasicCommandStrings._
-
       val result = List(
         StashOnFailure,
         s"${projectId} / isScala213",
@@ -121,6 +132,7 @@ object ScalaMigratePlugin extends AutoPlugin {
         else Nil
       },
       internalPrepareMigration := prepareMigrateImpl.value,
+      internalMigrateScalacOptions := migrateScalacOptionsImp.value,
       internalMigrate := migrateImp.value,
       scala3InputComputed := {
         (for {
@@ -192,6 +204,24 @@ object ScalaMigratePlugin extends AutoPlugin {
       case Failure(exception) =>
         log.err(Messages.errorMessagePrepareMigration(projectId, exception))
     }
+  }
+
+  def migrateScalacOptionsImp = Def.task {
+    val log       = streams.value.log
+    val projectId = thisProject.value.id
+    log.info(Messages.migrationScalacOptionsStarting(projectId))
+
+    val scalacOptions2      = scalacOptions.value
+    val migrated            = migrateAPI.migrateScalacOption(scalacOptions2.asJava)
+    val notParsed           = migrated.getNotParsed.toSeq
+    val specific2           = migrated.getSpecificScala2.toSeq
+    val scala3ScalacOptions = migrated.getMigrated.toSeq
+
+    // logging notParsed, specific to Scala 2 and the new scala 3 settings
+    Messages.notParsed(notParsed).foreach(log.info(_))
+    Messages.specificToScala2(specific2).foreach(log.info(_))
+    log.info(Messages.migrated(scala3ScalacOptions))
+
   }
 
   def migrateImp =
