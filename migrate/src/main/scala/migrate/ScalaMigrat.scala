@@ -6,6 +6,7 @@ import scala.util.Try
 
 import compiler.interfaces.CompilationUnit
 import compiler.interfaces.Scala3Compiler
+import migrate.interfaces.MigratedScalacOptions
 import migrate.internal._
 import migrate.utils.FileUtils
 import migrate.utils.ScalaExtensions._
@@ -125,5 +126,20 @@ class ScalaMigrat(scalafixSrv: ScalafixService) {
       fileToMigrate <-
         unmanagedSources.map(src => fileEvaluationMap.get(src).map(FileMigrationState.Initial).toTry).sequence
     } yield fileToMigrate
+
+}
+object ScalaMigrat {
+  def migrateScalacOptions(scalacOptions: Seq[String]): MigratedScalacOptions = {
+    val sanitized                              = ScalacOption.sanitizeScalacOption(scalacOptions)
+    val scalaSettings                          = sanitized.map(ScalacOption.from)
+    val notParsed: Seq[ScalacOption.NotParsed] = scalaSettings.collect { case x: ScalacOption.NotParsed => x }
+    val scala3cOption: Seq[Scala3cOption] = scalaSettings.collect {
+      case x: ScalacOption.Specific3 => x;
+      case x: ScalacOption.Shared    => x
+    }
+    val renamed   = scalaSettings.collect { case x: ScalacOption.Renamed => x }
+    val specific2 = scalaSettings.collect { case x: ScalacOption.Specific2 => x }
+    MigratedScalacOptions(notParsed, specific2, scala3cOption ++ renamed)
+  }
 
 }

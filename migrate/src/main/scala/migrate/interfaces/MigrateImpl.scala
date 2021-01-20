@@ -45,6 +45,11 @@ final class MigrateImpl() extends Migrate {
              )
     } yield ()).get
 
+  override def migrateScalacOption(scala3CompilerOptions: jutil.List[String]): ScalacOptions = {
+    val s = scala3CompilerOptions.asScala.toList // .mkString(" ")
+    ScalaMigrat.migrateScalacOptions(s)
+  }
+
   override def prepareMigration(
     unmanagedSources: jutil.List[Path],
     targetRoot: Path,

@@ -21,4 +21,14 @@ object CommandStrings {
         |If the command succeeded, the project is compiling successfully in scala 3
         |
         |""".stripMargin
+
+  val migrateScalacOptionsCommand = "migrate-scalacOptions"
+  val migrateScalacOptionsBrief   = (migrateScalacOptionsCommand, "Print scalacOptions that should be used for scala 3")
+  val migrateScalacOptionsDetailed =
+    s"""|$migrateScalacOptionsCommand <projectId>
+        |
+        | Print the migrated scalacOptions for Scala 3 so you can update you scalacOptions
+        | 
+        |
+        |""".stripMargin
 }

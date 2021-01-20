@@ -56,4 +56,49 @@ object Messages {
         |
         |
         |""".stripMargin
+
+  def migrationScalacOptionsStarting(projectId: String) =
+    s"""|
+        |
+        |Starting to migrate ScalacOptions for $projectId
+        |""".stripMargin
+
+  def notParsed(s: Seq[String]): Option[String] =
+    if (s.nonEmpty)
+      Some(s"""|
+               |We were not able to parse the following ScalacOptions:
+               |${format(s)}
+               |
+               |""".stripMargin)
+    else None
+
+  def specificToScala2(s: Seq[String]): Option[String] =
+    if (s.nonEmpty)
+      Some(s"""|
+               |The Following scalacOptions are specific to scala 2 and don't have an equivalent in Scala 3
+               |${format(s)}
+               |
+               |""".stripMargin)
+    else None
+
+  def migrated(s: Seq[String]): String =
+    if (s.nonEmpty)
+      s"""|
+          |You can update your scalacOptions for Scala 3 with the following settings.
+          |${format(s)}
+          |
+          |
+          |
+          |""".stripMargin
+    else
+      """|
+         |The ScalacOptions for Scala 3 is empty. 
+         |
+         |
+         |
+         |""".stripMargin
+
+  private def format(l: Seq[String]): String =
+    l.mkString("Seq(\n\"", "\",\n\"", "\"\n)")
+
 }
