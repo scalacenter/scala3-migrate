@@ -134,9 +134,9 @@ lazy val `scalafix-output` = project
   .settings(
     skip in publish := true,
     crossScalaVersions := List(V.scala213, V.scala3),
-    scalacOptions ++= (if (isDotty.value) Seq("-Ykind-projector") else Seq()),
+    scalacOptions ++= (if (ScalaArtifacts.isScala3(scalaVersion.value)) Seq("-Ykind-projector") else Seq()),
     libraryDependencies ++= {
-      if (isDotty.value) {
+      if (ScalaArtifacts.isScala3(scalaVersion.value)) {
         Seq("org.typelevel" % "cats-core_2.13" % V.catsCore)
       } else
         Seq(
@@ -180,7 +180,7 @@ lazy val V = new {
   val scala213BinaryVersion = "2.13"
   val scala212              = "2.12.11"
   val scalatest             = "3.2.3"
-  val scala3                = "3.0.0-M1"
+  val scala3                = "3.0.0-M3"
   val scalafix              = "0.9.24"
   val scribe                = "3.1.9"
   val organizeImports       = "0.4.3"
