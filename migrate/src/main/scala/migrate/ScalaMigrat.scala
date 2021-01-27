@@ -79,7 +79,7 @@ class ScalaMigrat(scalafixSrv: ScalafixService) {
     scala3CompilerOptions: Seq[String]
   ): Try[Scala3Compiler] = {
     // It's easier no to deal with semanticdb option, since we don't need semanticdb files
-    val modified           = scala3CompilerOptions.filterNot(_ == "-Ysemanticdb")
+    val modified           = scala3CompilerOptions.filterNot(_ == "-Xsemanticdb")
     val scala3CompilerArgs = modified.toArray ++ Array("-classpath", classpath.value, "-d", classDirectory.value)
     Try {
       Scala3Compiler.setup(scala3CompilerArgs)
@@ -96,7 +96,7 @@ class ScalaMigrat(scalafixSrv: ScalafixService) {
       cuManagedSources    = managedSources.map(path => new CompilationUnit(path.value, FileUtils.read(path)))
       _ <- timeAndLog(Try(compiler.compileAndReport(cuManagedSources.toList ++ cuUnmanagedSources.toList, reporter))) {
              case (finiteDuration, Success(_)) =>
-               scribe.info(s"Succefully compiled with scala 3 in $finiteDuration")
+               scribe.info(s"Successfully compiled with scala 3 in $finiteDuration")
              case (_, Failure(e)) =>
                scribe.info(s"""|Compilation with scala 3 failed.
                                |Please fix the errors above.""".stripMargin)
