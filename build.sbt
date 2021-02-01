@@ -185,7 +185,7 @@ lazy val V = new {
   val scribe                = "3.1.9"
   val organizeImports       = "0.4.3"
   val catsCore              = "2.3.1"
-  val kindProjector         = "0.11.2"
+  val kindProjector         = "0.11.3"
   val coursierInterface     = "1.0.2"
   val coursierApi           = "2.0.8"
 }
