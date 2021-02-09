@@ -50,6 +50,21 @@ class PrettyPrinter[G <: Global](val g: G) {
     }
   }
 
+  def print(gsymbol: g.Symbol, context: g.Context): Option[String] = {
+    val top = topPackage(gsymbol)
+    val to  = context.lookupSymbol(top.name.toTermName, _ => true)
+    val inScope = to match {
+      case LookupSucceeded(qual, _) => !qual.isEmpty
+      case _                        => false
+    }
+    if (inScope && top.isStatic) {
+      Some(s"${top.owner.nameSyntax}.${gsymbol.fullName}")
+    } else if (gsymbol.isLocalToBlock && !gsymbol.name.startsWith("evidence$"))
+      Some(gsymbol.name.toString())
+    else if (gsymbol.isStatic) Some(gsymbol.fullName)
+    else None
+  }
+
   private def filterType(finalType: g.Type): Boolean =
     finalType match {
       case g.ErrorType => true
