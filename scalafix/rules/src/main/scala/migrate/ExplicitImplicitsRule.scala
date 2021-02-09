@@ -7,6 +7,7 @@ import scala.util.Success
 import scala.util.control.NonFatal
 
 import scala.meta.Tree
+import scala.meta.internal.pc.PrettyPrinter
 
 import metaconfig.Configured
 import scalafix.patch.Patch
@@ -67,7 +68,8 @@ class ExplicitImplicitsRule(g: Global) extends SemanticRule("ExplicitImplicits")
     for {
       context <- compilerSrv.getContext(originalTree)
       symbols <- collectImplicit(context.tree)
-      args    <- symbols.map(printSymbol).sequence
+      pretty   = new PrettyPrinter[g.type](g)
+      args    <- symbols.map(gsym => pretty.print(gsym, context)).sequence
     } yield args
 
   def getImplicitConversions(originalTree: Tree)(implicit compilerSrv: CompilerService[g.type]): Option[String] =
@@ -88,12 +90,6 @@ class ExplicitImplicitsRule(g: Global) extends SemanticRule("ExplicitImplicits")
         collectImplicitConversion(qualifier)
       case _ => None
     }
-
-  private def printSymbol(symbol: g.Symbol): Option[String] =
-    if (symbol.isLocalToBlock && !symbol.name.startsWith("evidence$"))
-      Some(symbol.name.toString())
-    else if (symbol.isStatic) Some(symbol.fullName)
-    else None
 
   private def collectImplicit(globalTree: g.Tree): Option[List[g.Symbol]] =
     globalTree match {
