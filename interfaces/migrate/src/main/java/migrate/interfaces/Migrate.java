@@ -12,6 +12,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Map;
 import java.util.List;
 
 public interface Migrate {
@@ -26,6 +27,7 @@ public interface Migrate {
                  Path scala3ClassDirectory);
     
     ScalacOptions migrateScalacOption(List<String> scala3CompilerOptions);
+    Map<Lib, List<Lib>> migrateLibs(List<Lib> libs);
 
     void prepareMigration(List<Path> unmanagedSources,
                  Path targetRoot,
