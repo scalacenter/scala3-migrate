@@ -1,7 +1,8 @@
 package migrate
 
+import interfaceImpl.LibImpl
 import migrate.CommandStrings._
-import migrate.interfaces.Migrate
+import migrate.interfaces.{ Lib, Migrate }
 import sbt.BasicCommandStrings._
 import sbt.Keys._
 import sbt._
@@ -50,6 +51,7 @@ object ScalaMigratePlugin extends AutoPlugin {
     private[migrate] val storeScala2Inputs            = taskKey[StateTransform]("store scala 2 inputs")
     private[migrate] val internalPrepareMigration     = taskKey[Unit]("fix some syntax incompatibilities with scala 3")
     private[migrate] val internalMigrateScalacOptions = taskKey[Unit]("log information to migrate scalacOptions")
+    private[migrate] val internalMigrateLibs          = taskKey[Unit]("log information to migrate libDependencies")
     private[migrate] val internalMigrate              = taskKey[Unit]("migrate a specific project to scala 3")
     private[migrate] val isScala213                   = taskKey[Boolean]("is this project a scala 2.13 project")
   }
@@ -67,7 +69,7 @@ object ScalaMigratePlugin extends AutoPlugin {
     }) ++
       inConfig(Compile)(configSettings) ++
       inConfig(Test)(configSettings) ++
-      Seq(commands ++= Seq(migratePreprare, migrateScalacOptions, migrate))
+      Seq(commands ++= Seq(migratePreprare, migrateScalacOptions, migrateLibDependencies, migrate))
 
   private def idParser(state: State): Parser[String] = {
     val projects           = Project.extract(state).structure.allProjects.map(_.id)
@@ -99,6 +101,13 @@ object ScalaMigratePlugin extends AutoPlugin {
           FailureWall
         ) ::: state
         result
+    }
+
+  lazy val migrateLibDependencies: Command =
+    Command(migrateLibs, migrateLibsBrief, migrateLibsDetailed)(idParser) { (state, projectId) =>
+      val result =
+        List(StashOnFailure, s"${projectId} / isScala213", s"$projectId / internalMigrateLibs", FailureWall) ::: state
+      result
     }
 
   lazy val migrate: Command =
@@ -133,6 +142,7 @@ object ScalaMigratePlugin extends AutoPlugin {
       },
       internalPrepareMigration := prepareMigrateImpl.value,
       internalMigrateScalacOptions := migrateScalacOptionsImp.value,
+      internalMigrateLibs := internalMigrateLibsImp.value,
       internalMigrate := migrateImp.value,
       scala3InputComputed := {
         (for {
@@ -222,6 +232,25 @@ object ScalaMigratePlugin extends AutoPlugin {
     Messages.specificToScala2(specific2).foreach(log.info(_))
     log.info(Messages.migrated(scala3ScalacOptions))
 
+  }
+
+  def internalMigrateLibsImp = Def.task {
+    val log       = streams.value.log
+    val projectId = thisProject.value.id
+    log.info(Messages.migrateLibsStarting(projectId))
+
+    val libDependencies: Seq[ModuleID] = libraryDependencies.value
+    val libs                           = libDependencies.map(LibImpl)
+    val migratedLibs                   = migrateAPI.migrateLibs(libs.map(_.asInstanceOf[Lib]).asJava)
+    // to scala Seq
+    val migrateLibsScala: Map[Lib, Seq[Lib]] = migratedLibs.asScala.toMap.map { case (lib, migrated) =>
+      lib -> migrated.asScala.toSeq
+    }
+    val (notMigrated, migrated) = migrateLibsScala.partition { case (_, migrated) => migrated.isEmpty }
+
+    // logging
+    if (notMigrated.nonEmpty) log.info(Messages.notMigratedLibs(notMigrated.keys.toSeq))
+    log.info(Messages.migratedLib(migrated))
   }
 
   def migrateImp =

@@ -1,5 +1,7 @@
 package migrate
 
+import migrate.interfaces.Lib
+
 object Messages {
   def welcomeMigration: String        = "We are going to migrate your project to scala 3"
   def welcomePrepareMigration: String = "We are going to fix some syntax incompatibilities"
@@ -96,6 +98,38 @@ object Messages {
          |
          |
          |""".stripMargin
+
+  def migrateLibsStarting(projectId: String): String =
+    s"""|
+        |
+        |Starting to migrate libDependencies for $projectId
+        |""".stripMargin
+
+  def notMigratedLibs(libs: Seq[Lib]): String =
+    s"""|
+        |
+        |The following list of libs cannot be migrated.
+        |Please check the migration guide for more information. 
+        |${libs.map(_.toString).mkString("\n")}
+        |
+        |""".stripMargin
+
+  def migratedLib(libs: Map[Lib, Seq[Lib]]): String =
+    s"""|
+        |
+        |You can update your libs with the following versions: 
+        |
+        |${format(libs)}
+        |
+        |
+        |
+        |""".stripMargin
+
+  private def format(libs: Map[Lib, Seq[Lib]]): String =
+    libs.map(format).mkString("\n")
+
+  private def format(l: (Lib, Seq[Lib])): String =
+    s"""\"${l._1}\" -> ${l._2.mkString("\"", "\", ", "\"")}"""
 
   private def format(l: Seq[String]): String =
     l.mkString("Seq(\n\"", "\",\n\"", "\"\n)")

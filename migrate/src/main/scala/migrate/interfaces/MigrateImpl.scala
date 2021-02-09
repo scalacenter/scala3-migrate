@@ -50,6 +50,15 @@ final class MigrateImpl() extends Migrate {
     ScalaMigrat.migrateScalacOptions(s)
   }
 
+  override def migrateLibs(libs: jutil.List[Lib]): jutil.Map[Lib, jutil.List[Lib]] = {
+    val initialLibs = libs.asScala.toList
+    val res         = ScalaMigrat.migrateLibs(initialLibs)
+    // to Java ^^
+    res.map { case (initial, compatible) =>
+      initial.asInstanceOf[Lib] -> compatible.map(_.asInstanceOf[Lib]).asJava
+    }.asJava
+  }
+
   override def prepareMigration(
     unmanagedSources: jutil.List[Path],
     targetRoot: Path,

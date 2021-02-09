@@ -27,7 +27,18 @@ object CommandStrings {
   val migrateScalacOptionsDetailed =
     s"""|$migrateScalacOptionsCommand <projectId>
         |
-        | Print the migrated scalacOptions for Scala 3 so you can update you scalacOptions
+        |Print the migrated scalacOptions for Scala 3 so you can update you scalacOptions
+        | 
+        |
+        |""".stripMargin
+
+  val migrateLibs      = "migrate-libs"
+  val migrateLibsBrief = (migrateLibs, "Find and show the new versions of libs in order to migrate to Scala 3")
+  val migrateLibsDetailed =
+    s"""|$migrateLibs <projectId>
+        |
+        |Coursier is used to find, for each dependency, a Scala 3 version.
+        |If the lib is not published for Scala 3 yet, versions compatible with 2.13 are reported, in case the lib does not contain macros.
         | 
         |
         |""".stripMargin
