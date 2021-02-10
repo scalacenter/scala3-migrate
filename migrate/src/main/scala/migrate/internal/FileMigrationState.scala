@@ -22,7 +22,9 @@ sealed trait FileMigrationState {
         new CompilationUnit(source.value, content)
       }
       .asScala
-      .toTry(new ScalafixException(s"Cannot apply patch on file $source"))
+      .toTry(new ScalafixException(s"""Cannot apply patch on file $source because: 
+                                      |${evaluation.getErrorMessage.asScala
+        .getOrElse("Unexpected error")}""".stripMargin))
 
   def previewPatches(patches: Seq[ScalafixPatch]): Try[CompilationUnit] =
     evaluation
@@ -31,7 +33,9 @@ sealed trait FileMigrationState {
         new CompilationUnit(source.value, content)
       }
       .asScala
-      .toTry(new ScalafixException(s"Cannot apply patch on file $source"))
+      .toTry(new ScalafixException(s"""Cannot apply patch on file $source because:
+                                      |${evaluation.getErrorMessage.asScala
+        .getOrElse("Unexpected error")}""".stripMargin))
 
 }
 
