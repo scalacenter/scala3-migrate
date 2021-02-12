@@ -67,7 +67,7 @@ class ExplicitImplicitsRule(g: Global) extends SemanticRule("ExplicitImplicits")
   def getImplicitParams(originalTree: Tree)(implicit compilerSrv: CompilerService[g.type]): Option[List[String]] =
     for {
       context <- compilerSrv.getContext(originalTree)
-      symbols <- collectImplicit(context.tree)
+      symbols <- collectImplicit(context.tree, originalTree)
       pretty   = new PrettyPrinter[g.type](g)
       args    <- symbols.map(gsym => pretty.print(gsym, context)).sequence
     } yield args
@@ -75,35 +75,42 @@ class ExplicitImplicitsRule(g: Global) extends SemanticRule("ExplicitImplicits")
   def getImplicitConversions(originalTree: Tree)(implicit compilerSrv: CompilerService[g.type]): Option[String] =
     for {
       (tree, _) <- compilerSrv.getGlobalTree(originalTree)
-      function  <- collectImplicitConversion(tree)
+      function  <- collectImplicitConversion(tree, originalTree)
     } yield function
 
-  private def collectImplicitConversion(globalTree: g.Tree): Option[String] =
-    globalTree match {
-      case t @ g.Apply(fun: g.Select, _) if t.isInstanceOf[g.ApplyImplicitView] =>
-        if (fun.qualifier.symbol.isStatic) Some(fun.name.toString)
-        else Some(fun.toString)
-      case t @ g.Apply(fun: g.TypeApply, _) if t.isInstanceOf[g.ApplyImplicitView] =>
-        if (fun.symbol.isStatic) Some(fun.symbol.fullName.toString)
-        else Some(fun.symbol.name.toString)
-      case _ @g.Select(qualifier: g.ApplyImplicitView, _) =>
-        collectImplicitConversion(qualifier)
-      case _ => None
+  private def collectImplicitConversion(globalTree: g.Tree, original: Tree): Option[String] = {
+    val collectedTree: Seq[g.Tree] =
+      globalTree.collect {
+        case t if CompilerService.equalForPositions(t.pos, original.pos) => t
+      }.filter(_.isInstanceOf[g.ApplyImplicitView])
+
+    collectedTree.collectFirst {
+      case t @ g.Apply(fun: g.Select, _) =>
+        if (fun.qualifier.symbol.isStatic) fun.name.toString
+        else fun.toString
+      case t @ g.Apply(fun: g.TypeApply, _) =>
+        if (fun.symbol.isStatic) fun.symbol.fullName.toString
+        else fun.symbol.name.toString
     }
 
-  private def collectImplicit(globalTree: g.Tree): Option[List[g.Symbol]] =
-    globalTree match {
-      case g.Apply(_, args) if globalTree.isInstanceOf[g.ApplyToImplicitArgs] => {
+  }
+
+  private def collectImplicit(globalTree: g.Tree, original: Tree): Option[List[g.Symbol]] = {
+    val collectedTree: Seq[g.Tree] =
+      globalTree.collect {
+        case t if CompilerService.equalForPositions(t.pos, original.pos) => t
+      }.filter(_.isInstanceOf[g.ApplyToImplicitArgs])
+
+    collectedTree.collectFirst {
+      // at the same position we are supposed to have maximum one ApplyToImplicitArgs
+      // except it there is also an implicit conversion that takes implicits.
+      // See Mix.scala example
+      case g.Apply(fun, args) if !fun.isInstanceOf[g.ApplyImplicitView] => {
         val listOfArgs = args.map(_.symbol.asInstanceOf[g.Symbol])
-        Some(listOfArgs)
+        listOfArgs
       }
-      case g.Apply(_, args) if args.nonEmpty && args.head.isInstanceOf[g.ApplyToImplicitArgs] => {
-        val newArgs    = args.head.asInstanceOf[g.Apply].args
-        val listOfArgs = newArgs.map(_.symbol)
-        Some(listOfArgs)
-      }
-      case _ =>
-        None
     }
+
+  }
 
 }
