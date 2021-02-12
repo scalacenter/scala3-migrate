@@ -201,7 +201,7 @@ trait ApplicativeError[F[_], E] extends Applicative[F] {
   def catchNonFatal[A](a: => A)(implicit ev: Throwable <:< E): F[A] =
     try pure[A](a)
     catch {
-      case NonFatal(e) => raiseError[A](e)
+      case NonFatal(e) => raiseError[A](ev.apply(e))
     }
 
   /**
@@ -211,7 +211,7 @@ trait ApplicativeError[F[_], E] extends Applicative[F] {
   def catchNonFatalEval[A](a: Eval[A])(implicit ev: Throwable <:< E): F[A] =
     try pure[A](a.value)
     catch {
-      case NonFatal(e) => raiseError[A](e)
+      case NonFatal(e) => raiseError[A](ev.apply(e))
     }
 
   /**
@@ -226,7 +226,7 @@ trait ApplicativeError[F[_], E] extends Applicative[F] {
   def fromTry[A](t: Try[A])(implicit ev: Throwable <:< E): F[A] =
     t match {
       case Success(a) => pure[A](a)
-      case Failure(e) => raiseError[A](e)
+      case Failure(e) => raiseError[A](ev.apply(e))
     }
 
   /**
@@ -312,7 +312,7 @@ object ApplicativeError {
         F.pure[A](f)
       } catch {
         case t if CT.runtimeClass.isInstance(t) =>
-          F.raiseError[A](t)
+          F.raiseError[A](ev.apply(t))
       }
   }
 

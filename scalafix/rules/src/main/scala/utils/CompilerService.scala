@@ -41,6 +41,10 @@ object CompilerService {
         )
     }
   }
+  def equalForPositions(gpos: ReflectPos, scalaMetaPos: Position): Boolean =
+    if (gpos == scala.reflect.internal.util.NoPosition) false
+    else gpos.start == scalaMetaPos.start && gpos.end == scalaMetaPos.end
+
 }
 
 class CompilerService[G <: Global](val g: G, doc: SemanticDocument) {
