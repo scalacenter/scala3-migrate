@@ -4,6 +4,7 @@ import scala.tools.nsc.interactive.Global
 import scala.tools.nsc.reporters.StoreReporter
 import scala.util.Failure
 import scala.util.Success
+import scala.util.Try
 import scala.util.control.NonFatal
 
 import scala.meta.Tree
@@ -46,20 +47,23 @@ class ExplicitImplicitsRule(g: Global) extends SemanticRule("ExplicitImplicits")
 
     val implicitParams = doc.synthetics.collect {
       case syn: ApplyTree if (syn.toString.startsWith("*")) =>
-        (for {
-          originalTree <- SyntheticHelper.getOriginalTree(syn)
-          args         <- getImplicitParams(originalTree)
-        } yield Patch.addRight(originalTree, "(" + args.mkString(", ") + ")")).getOrElse(Patch.empty)
-    }.toList.asPatch
+        Try {
+          for {
+            originalTree <- SyntheticHelper.getOriginalTree(syn)
+            args         <- getImplicitParams(originalTree)
+          } yield Patch.addRight(originalTree, "(" + args.mkString(", ") + ")")
+        }.toOption.flatten
+    }.flatten.toList.asPatch
 
     val implicitConversion = doc.synthetics.collect {
       case syn: ApplyTree if syn.toString().contains("(*)") =>
-        (for {
-          originalTree <- SyntheticHelper.getOriginalTree(syn)
-          args         <- getImplicitConversions(originalTree)
-//              .orElse(syn.toString.split('(').headOption)
-        } yield Patch.addAround(originalTree, args + "(", ")")).getOrElse(Patch.empty)
-    }.toList.asPatch
+        Try {
+          for {
+            originalTree <- SyntheticHelper.getOriginalTree(syn)
+            args         <- getImplicitConversions(originalTree)
+          } yield Patch.addAround(originalTree, args + "(", ")")
+        }.toOption.flatten
+    }.flatten.toList.asPatch
 
     implicitParams + implicitConversion
   }

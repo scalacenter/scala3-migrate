@@ -4,6 +4,7 @@ import scala.tools.nsc.interactive.Global
 import scala.tools.nsc.reporters.StoreReporter
 import scala.util.Failure
 import scala.util.Success
+import scala.util.Try
 import scala.util.control.NonFatal
 
 import scala.meta._
@@ -55,21 +56,23 @@ class InferTypes(g: Global) extends SemanticRule("InferTypes") {
 
   private def addTypeApply()(implicit doc: SemanticDocument, compilerSrv: CompilerService[g.type]): Patch =
     doc.synthetics.collect { case syn @ TypeApplyTree(function: SemanticTree, typeArguments: List[SemanticType]) =>
-      (for {
-        originalTree <- SyntheticHelper.getOriginalTree(syn)
-        if (!originalTree.isInstanceOf[Term.ApplyInfix])
-        if (!(originalTree.isInstanceOf[Pat] && !originalTree
-          .isInstanceOf[Term])) // Never add types on elements that are on the right side of "="
-        replace <- if (syn.toString.startsWith("*.apply")) Some(".apply")
-                   else if (syn.toString.startsWith("*[")) Some("")
-                   else None
-        types <- getTypeNameAsSeenByGlobal(originalTree, replace).map(_.map(_.toString()))
-        // if we don't know how to express a type, we don't create a patch
-      } yield Patch.addRight(originalTree, s"${replace}[${types.mkString(", ")}]")).getOrElse(Patch.empty)
+      Try {
+        for {
+          originalTree <- SyntheticHelper.getOriginalTree(syn)
+          if (!originalTree.isInstanceOf[Term.ApplyInfix])
+          if (!(originalTree.isInstanceOf[Pat] && !originalTree
+            .isInstanceOf[Term])) // Never add types on elements that are on the right side of "="
+          replace <- if (syn.toString.startsWith("*.apply")) Some(".apply")
+                     else if (syn.toString.startsWith("*[")) Some("")
+                     else None
+          types <- getTypeNameAsSeenByGlobal(originalTree, replace).map(_.map(_.toString()))
+          // if we don't know how to express a type, we don't create a patch
+        } yield Patch.addRight(originalTree, s"${replace}[${types.mkString(", ")}]")
+      }.toOption.flatten
     // if we have two patches on the same originalTree, ex: a[Type1].apply[Type2]
     // since synthetics traverse the file from top to bottom, we create the patches in the same order
     // but when applying them, we need to apply in the reverse order.
-    }.toList.reverse.asPatch
+    }.flatten.toList.reverse.asPatch
 
   private def getTypeNameAsSeenByGlobal(origin: Tree, replace: String)(
     implicit compilerSrv: CompilerService[g.type]
@@ -100,19 +103,21 @@ class InferTypes(g: Global) extends SemanticRule("InferTypes") {
 
       case t @ Defn.Def(mods, name, _, _, None, body) =>
         fixDefinition(t, name, body)
-    }.asPatch
+    }.flatten.asPatch
 
   private def fixDefinition(defn: Defn, name: Term.Name, body: Term)(
     implicit doc: SemanticDocument,
     compilerSrv: CompilerService[g.type]
-  ): Patch =
-    (for {
-      (replace, spaces) <- getReplaceAndSpaces(defn, body)
-      context           <- compilerSrv.getContext(name)
-      explicitType       = context.tree.symbol.info.finalResultType
-      pretty             = new PrettyPrinter[g.type](g)
-      prettType         <- pretty.print(explicitType, context)
-    } yield Patch.addRight(replace, s"$spaces: ${prettType.toString()}")).getOrElse(Patch.empty)
+  ): Option[Patch] =
+    Try {
+      for {
+        (replace, spaces) <- getReplaceAndSpaces(defn, body)
+        context           <- compilerSrv.getContext(name)
+        explicitType       = context.tree.symbol.info.finalResultType
+        pretty             = new PrettyPrinter[g.type](g)
+        prettType         <- pretty.print(explicitType, context)
+      } yield Patch.addRight(replace, s"$spaces: ${prettType.toString()}")
+    }.toOption.flatten
 
   private def getReplaceAndSpaces(defn: Defn, body: Term)(implicit doc: SemanticDocument): Option[(Token, String)] = {
     val tokens = doc.tokenList
