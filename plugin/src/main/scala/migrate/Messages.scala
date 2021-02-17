@@ -27,11 +27,10 @@ object Messages {
         |
         |""".stripMargin
 
-  def errorMesssageMigration(ex: Throwable) =
+  def errorMesssageMigration() =
     s"""|
         |
         |Migration has failed!
-        |${ex.getMessage}
         |
         |
         |""".stripMargin
