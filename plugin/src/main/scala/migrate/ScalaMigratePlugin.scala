@@ -260,7 +260,7 @@ object ScalaMigratePlugin extends AutoPlugin {
           log.info(Messages.successOfMigration(thisProject.value.id, scala3Version))
 
         case Failure(exception) =>
-          log.err(Messages.errorMesssageMigration(exception))
+          log.err(Messages.errorMesssageMigration())
       }
     }
 
