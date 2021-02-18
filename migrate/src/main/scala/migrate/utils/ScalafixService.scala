@@ -2,14 +2,12 @@ package migrate.utils
 
 import scala.jdk.CollectionConverters._
 import scala.util.Try
-
 import buildinfo.BuildInfo
 import coursier._
 import migrate.AbsolutePath
 import migrate.Classpath
 import migrate.utils.ScalaExtensions.OptionalExtension
-import scalafix.interfaces.Scalafix
-import scalafix.interfaces.ScalafixEvaluation
+import scalafix.interfaces.{Scalafix, ScalafixEvaluation, ScalafixFileEvaluation}
 
 final case class ScalafixService(
   scalafix: Scalafix,
@@ -21,8 +19,8 @@ final case class ScalafixService(
   import ScalafixService._
   lazy val scalafixClassLoader: ClassLoader = scalafix.getClass().getClassLoader()
 
-  def inferTypesAndImplicits(unmanagedSources: Seq[AbsolutePath]): Try[ScalafixEvaluation] =
-    evaluate(addExplicitResultTypesAndImplicits, unmanagedSources)
+  def inferTypesAndImplicits(unmanagedSources: AbsolutePath): Try[ScalafixFileEvaluation] =
+    evaluateTest(addExplicitResultTypesAndImplicits, unmanagedSources)
 
   def fixSyntaxForScala3(unmanagedSources: Seq[AbsolutePath]): Try[ScalafixEvaluation] =
     evaluate(fixSyntaxRules, unmanagedSources)
@@ -62,6 +60,17 @@ final case class ScalafixService(
       .withToolClasspath(toolClasspath.toUrlClassLoader(scalafixClassLoader))
     args.evaluate()
   }
+  private def evaluateTest(rules: Seq[String], source: AbsolutePath): Try[ScalafixFileEvaluation] = Try {
+    val classpathWithTargetSemantic = classpath :+ targetRootSemantic
+    val args = scalafix
+      .newArguments()
+      .withRules(rules.asJava)
+      .withPaths(Seq(source.toNio).asJava)
+      .withClasspath(classpathWithTargetSemantic.paths.map(_.toNio).asJava)
+      .withScalacOptions(compilerOptions.asJava)
+      .withToolClasspath(toolClasspath.toUrlClassLoader(scalafixClassLoader))
+    args.evaluate().getFileEvaluations.head
+  }
 
 }
 
@@ -78,7 +87,7 @@ object ScalafixService {
     "fix.scala213.ExplicitNonNullaryApply",
     "fix.scala213.Any2StringAdd"
   )
-  val addExplicitResultTypesAndImplicits: Seq[String] = Seq("InferTypes", "ExplicitImplicits")
+  val addExplicitResultTypesAndImplicits: Seq[String] = Seq("InferTypes")
 
   def from(compilerOptions: Seq[String], classpath: Classpath, targetRootSemantic: AbsolutePath): Try[ScalafixService] =
     for {

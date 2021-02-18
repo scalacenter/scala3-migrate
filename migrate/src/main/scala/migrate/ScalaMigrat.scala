@@ -28,9 +28,10 @@ class ScalaMigrat(scalafixSrv: ScalafixService) {
     unmanagedSources.foreach(f => scribe.info(s"Migrating $f"))
     for {
       compiler <- setupScala3Compiler(scala3Classpath, scala3ClassDirectory, scala3CompilerOptions)
+      (scala, java) = unmanagedSources.partition(_.value.endsWith("scala"))
       initialFileToMigrate <-
-        buildMigrationFiles(unmanagedSources)
-      _            <- compileInScala3(initialFileToMigrate, managedSources, compiler)
+        buildMigrationFiles(scala)
+      _            <- compileInScala3(initialFileToMigrate, java ++ managedSources, compiler)
       migratedFiles = initialFileToMigrate.map(f => (f.source, f.migrate(compiler))).toMap
     } yield migratedFiles
   }
@@ -108,9 +109,9 @@ class ScalaMigrat(scalafixSrv: ScalafixService) {
   private def buildMigrationFiles(unmanagedSources: Seq[AbsolutePath]): Try[Seq[FileMigrationState.Initial]] =
     for {
       fileEvaluations <-
-        timeAndLog(scalafixSrv.inferTypesAndImplicits(unmanagedSources)) {
+        timeAndLog(unmanagedSources.map(scalafixSrv.inferTypesAndImplicits(_)).sequence) {
           case (duration, Success(files)) =>
-            val fileEvaluationsSeq = files.getFileEvaluations().toSeq
+            val fileEvaluationsSeq = files
             val patchesCount       = fileEvaluationsSeq.map(_.getPatches().size).sum
             scribe.info(s"Found ${patchesCount} patch candidate(s) in ${unmanagedSources.size} file(s)after $duration")
           case (_, Failure(e)) =>
@@ -118,8 +119,6 @@ class ScalaMigrat(scalafixSrv: ScalafixService) {
                             |Cause ${e.getMessage()}""".stripMargin)
         }
       fileEvaluationMap <- fileEvaluations
-                             .getFileEvaluations()
-                             .toSeq
                              .map(e => AbsolutePath.from(e.getEvaluatedFile()).map(file => file -> e))
                              .sequence
                              .map(_.toMap)

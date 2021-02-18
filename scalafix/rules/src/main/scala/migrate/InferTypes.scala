@@ -29,6 +29,7 @@ class InferTypes(g: Global) extends SemanticRule("InferTypes") {
     if (config.scalacClasspath.isEmpty) {
       Configured.error(s"config.scalacClasspath should not be empty")
     } else {
+      println(s"new global")
       val global = CompilerService.newGlobal(config.scalacClasspath, config.scalacOptions)
       global match {
         case Success(settings) =>
@@ -49,9 +50,9 @@ class InferTypes(g: Global) extends SemanticRule("InferTypes") {
     lazy implicit val compilerService: CompilerService[g.type] = new CompilerService(g, doc)
 
     val patchForExplicitResultTypes = addExplicitResultType()
-    val patchForTypeApply           = addTypeApply()
-
-    patchForExplicitResultTypes + patchForTypeApply
+//    val patchForTypeApply           = addTypeApply()
+    afterComplete()
+    patchForExplicitResultTypes //+ patchForTypeApply
   }
 
   private def addTypeApply()(implicit doc: SemanticDocument, compilerSrv: CompilerService[g.type]): Patch =
