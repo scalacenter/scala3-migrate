@@ -27,7 +27,11 @@ class ScalaMigrat(scalafixSrv: ScalafixService) {
   ): Try[Map[AbsolutePath, FileMigrationState.FinalState]] = {
     unmanagedSources.foreach(f => scribe.info(s"Migrating $f"))
     for {
-      compiler <- setupScala3Compiler(scala3Classpath, scala3ClassDirectory, scala3CompilerOptions)
+      compiler               <- setupScala3Compiler(scala3Classpath, scala3ClassDirectory, scala3CompilerOptions)
+      (scalaFiles, javaFiles) = unmanagedSources.partition(_.value.endsWith("scala"))
+      initialFileToMigrate <-
+        buildMigrationFiles(scalaFiles)
+      _ <- compileInScala3(initialFileToMigrate, javaFiles ++ managedSources, compiler)
       initialFileToMigrate <-
         buildMigrationFiles(unmanagedSources)
       _            <- compileInScala3(initialFileToMigrate, managedSources, compiler)
