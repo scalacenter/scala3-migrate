@@ -57,14 +57,19 @@ class PrettyPrinter[G <: Global](val g: G) {
       case LookupSucceeded(qual, _) => !qual.isEmpty
       case _                        => false
     }
-    if (inScope && top.isStatic) {
-      Some(s"${top.owner.nameSyntax}.${gsymbol.fullName}")
-    } else if (gsymbol.isLocalToBlock && !gsymbol.name.startsWith("evidence$"))
+
+    if (isPrivateMaybeWithin(gsymbol)) None
+    else if (gsymbol.name.startsWith("evidence$")) None
+    else if (gsymbol.isLocalToBlock)
       Some(gsymbol.name.toString())
-    else if (gsymbol.isStatic) Some(gsymbol.fullName)
+    else if (inScope && top.isStatic) {
+      Some(s"${top.owner.nameSyntax}.${gsymbol.fullName}")
+    } else if (gsymbol.isStatic) Some(gsymbol.fullName)
     else None
   }
 
+  private def isPrivateMaybeWithin(gsymbol: g.Symbol): Boolean =
+    gsymbol.isPrivate || (gsymbol.hasAccessBoundary && !gsymbol.isProtected)
   private def filterType(finalType: g.Type): Boolean =
     finalType match {
       case g.ErrorType => true

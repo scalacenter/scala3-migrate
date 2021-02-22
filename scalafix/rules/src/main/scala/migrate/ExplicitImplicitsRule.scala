@@ -3,6 +3,7 @@ package migrate
 import scala.tools.nsc.interactive.Global
 import scala.util.Try
 
+import scala.meta.Term.ApplyInfix
 import scala.meta.Tree
 import scala.meta.internal.pc.PrettyPrinter
 
@@ -21,7 +22,8 @@ class ExplicitImplicitsRule[G <: Global](g: G) {
           for {
             originalTree <- SyntheticHelper.getOriginalTree(syn)
             args         <- getImplicitParams(originalTree)
-          } yield Patch.addRight(originalTree, "(" + args.mkString(", ") + ")")
+            toAdd         = "(" + args.mkString(", ") + ")"
+          } yield Patch.addRight(originalTree, toAdd)
         }.toOption.flatten
     }.flatten.toList.asPatch
 
@@ -39,12 +41,17 @@ class ExplicitImplicitsRule[G <: Global](g: G) {
   }
 
   def getImplicitParams(originalTree: Tree)(implicit compilerSrv: CompilerService[g.type]): Option[List[String]] =
-    for {
-      context <- compilerSrv.getContext(originalTree)
-      symbols <- collectImplicit(context.tree, originalTree)
-      pretty   = new PrettyPrinter[g.type](g)
-      args    <- symbols.map(gsym => pretty.print(gsym, context)).sequence
-    } yield args
+    // for infix methods, we need to rewrite it
+    // example a ++ b needs to be rewritten to a.++(b)(implicit)
+    // right now the code would produce a ++ b(implicit) which doesn't compile
+    if (originalTree.isInstanceOf[ApplyInfix]) None
+    else
+      for {
+        context <- compilerSrv.getContext(originalTree)
+        symbols <- collectImplicit(context.tree, originalTree)
+        pretty   = new PrettyPrinter[g.type](g)
+        args    <- symbols.map(gsym => pretty.print(gsym, context)).sequence
+      } yield args
 
   def getImplicitConversions(originalTree: Tree)(implicit compilerSrv: CompilerService[g.type]): Option[String] =
     for {
@@ -75,6 +82,7 @@ class ExplicitImplicitsRule[G <: Global](g: G) {
         case t if CompilerService.equalForPositions(t.pos, original.pos) => t
       }.filter(_.isInstanceOf[g.ApplyToImplicitArgs])
 
+    collectedTree.head.asInstanceOf[g.Apply].fun.isTerm
     collectedTree.collectFirst {
       // at the same position we are supposed to have maximum one ApplyToImplicitArgs
       // except it there is also an implicit conversion that takes implicits.
