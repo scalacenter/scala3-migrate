@@ -2,10 +2,12 @@ package utils
 
 import java.io.File
 
+import scala.reflect.internal.util.SourceFile
 import scala.reflect.internal.util.{ Position => ReflectPos }
 import scala.reflect.io.VirtualDirectory
 import scala.tools.nsc.Settings
 import scala.tools.nsc.interactive.Global
+import scala.tools.nsc.interactive.GlobalProxyService
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -13,7 +15,6 @@ import scala.util.Try
 import scala.meta.Position
 import scala.meta.Term
 import scala.meta.Tree
-import scala.meta.internal.proxy.GlobalProxyService
 import scala.meta.io.AbsolutePath
 
 import scalafix.v1.SemanticDocument
@@ -48,7 +49,9 @@ object CompilerService {
 }
 
 class CompilerService[G <: Global](val g: G, doc: SemanticDocument) {
-  private lazy val unit: G#CompilationUnit = g.newCompilationUnit(doc.input.text, doc.input.syntax)
+  private val unit: G#CompilationUnit = g.newCompilationUnit(doc.input.text, doc.input.syntax)
+  private val sourceFile: SourceFile  = unit.source
+  private val globalService           = new GlobalProxyService(g, sourceFile)
 
   def getContext(name: Term): Option[g.Context] = {
     val gpos = unit.position(name.pos.start)
@@ -62,26 +65,26 @@ class CompilerService[G <: Global](val g: G, doc: SemanticDocument) {
 
   def getGlobalTree(tree: Tree): Option[(G#Tree, g.Context)] = {
     val gpos  = getPosAfter(tree.pos)
-    val gtree = Try(GlobalProxyService.typedTreeAt(g, gpos)).toOption
+    val gtree = Try(globalService.typedTreeAt(gpos)).toOption
     if (gtree.isDefined && gtree.get.isInstanceOf[g.Template]) {
       val gpos  = getPosBefore(tree.pos)
-      val gtree = Try(GlobalProxyService.typedTreeAt(g, gpos)).toOption
+      val gtree = Try(globalService.typedTreeAt(gpos)).toOption
       gtree.flatMap(tree => getContext(gpos).map(context => (tree, context)))
     } else gtree.flatMap(tree => getContext(gpos).map(context => (tree, context)))
   }
 
   private def getContext(gpos: ReflectPos): Option[g.Context] = {
-    val gtree = GlobalProxyService.typedTreeAt(g, gpos)
+    val gtree = globalService.typedTreeAt(gpos)
     Try(g.doLocateContext(gtree.pos)).toOption
   }
 
   private def getPosAfter(scalaMetaPos: Position): ReflectPos =
-    ReflectPos.range(unit.source, scalaMetaPos.start, scalaMetaPos.start, scalaMetaPos.end + 1)
+    ReflectPos.range(sourceFile, scalaMetaPos.start, scalaMetaPos.start, scalaMetaPos.end + 1)
 
   private def getPosBefore(scalaMetaPos: Position): ReflectPos =
-    ReflectPos.range(unit.source, scalaMetaPos.start - 1, scalaMetaPos.start, scalaMetaPos.end)
+    ReflectPos.range(sourceFile, scalaMetaPos.start - 1, scalaMetaPos.start, scalaMetaPos.end)
 
   private def getExactPos(scalaMetaPos: Position): ReflectPos =
-    ReflectPos.range(unit.source, scalaMetaPos.start, scalaMetaPos.start, scalaMetaPos.end)
+    ReflectPos.range(sourceFile, scalaMetaPos.start, scalaMetaPos.start, scalaMetaPos.end)
 
 }

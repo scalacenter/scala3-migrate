@@ -1,5 +1,5 @@
 /*
-rules = [InferTypes, ExplicitImplicits]
+rules = [MigrationRule]
 */
 
 package types

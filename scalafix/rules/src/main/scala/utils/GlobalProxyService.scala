@@ -1,14 +1,15 @@
-package scala.meta.internal.proxy
+package scala.tools.nsc.interactive
 
 import scala.reflect.internal.util.Position
-import scala.tools.nsc.interactive.Global
+import scala.reflect.internal.util.SourceFile
 
-object GlobalProxyService {
-  def typedTreeAt(g: Global, pos: Position): g.Tree = {
-    // NOTE(olafur) clearing `unitOfFile` fixes a bug where `typedTreeAt` would
-    // produce symbols with erroneous `.info` signatures.
-    g.unitOfFile.clear()
-    g.typedTreeAt(pos)
-  }
+class GlobalProxyService[G <: Global](g: G, sourceFile: SourceFile) {
+  // load only once the source and type it
+  // It's expensive since it load caches and create a RichCompilationUnit
+  private val _ = g.reloadSource(sourceFile)
+  private val _ = g.typedTree(sourceFile, true)
+
+  def typedTreeAt(pos: Position): G#Tree =
+    g.locateTree(pos)
 
 }

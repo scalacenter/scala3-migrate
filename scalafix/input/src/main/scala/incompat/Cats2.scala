@@ -1,5 +1,5 @@
 /*
-rule = [InferTypes, ExplicitImplicits]
+rule = [MigrationRule]
 */
 package cats
 

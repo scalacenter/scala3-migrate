@@ -1,50 +1,20 @@
 package migrate
 
 import scala.tools.nsc.interactive.Global
-import scala.tools.nsc.reporters.StoreReporter
-import scala.util.Failure
-import scala.util.Success
 import scala.util.Try
-import scala.util.control.NonFatal
 
 import scala.meta.Tree
 import scala.meta.internal.pc.PrettyPrinter
 
-import metaconfig.Configured
 import scalafix.patch.Patch
 import scalafix.v1._
 import utils.CompilerService
 import utils.ScalaExtensions._
 import utils.SyntheticHelper
 
-class ExplicitImplicitsRule(g: Global) extends SemanticRule("ExplicitImplicits") {
-  override def description: String = "Show implicit parameters and conversions"
+class ExplicitImplicitsRule[G <: Global](g: G) {
 
-  def this() = this(null)
-
-  override def withConfiguration(config: Configuration): Configured[Rule] =
-    if (config.scalacClasspath.isEmpty) {
-      Configured.error(s"config.scalacClasspath should not be empty")
-    } else {
-      val global = CompilerService.newGlobal(config.scalacClasspath, config.scalacOptions)
-      global match {
-        case Success(settings) =>
-          Configured.ok(new ExplicitImplicitsRule(new Global(settings, new StoreReporter, "ExplicitImplicit Rule")))
-        case Failure(exception) => Configured.error(exception.getMessage)
-      }
-    }
-
-  override def afterComplete(): Unit =
-    try {
-      g.askShutdown()
-      g.close()
-    } catch {
-      case NonFatal(_) =>
-    }
-
-  override def fix(implicit doc: SemanticDocument): Patch = {
-    lazy implicit val compilerSrv: CompilerService[g.type] = new CompilerService[g.type](g, doc)
-
+  def fix(implicit doc: SemanticDocument, compilerService: CompilerService[g.type]): Patch = {
     val implicitParams = doc.synthetics.collect {
       case syn: ApplyTree if (syn.toString.startsWith("*")) =>
         Try {
