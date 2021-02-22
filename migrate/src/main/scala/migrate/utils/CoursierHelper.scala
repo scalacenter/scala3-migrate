@@ -37,7 +37,7 @@ object CoursierHelper {
     getNewerRevision(lib, all)
   }
 
-  private[utils] def searchRevisionsFor(lib: Lib213, scalaV: String): Seq[Revision] = {
+  private def searchRevisionsFor(lib: Lib213, scalaV: String): Seq[Revision] = {
     val libString = s"${lib.organization.value}:${lib.name.value}_$scalaV:"
     val res = coursier.complete
       .Complete()
@@ -53,10 +53,14 @@ object CoursierHelper {
     revisions.map(Revision(_))
   }
 
+  // Rely on coursier order
   private def getNewerRevision(
     lib: Lib213,
     compatibleLibs: Seq[CompatibleWithScala3Lib]
-  ): Seq[CompatibleWithScala3Lib] =
-    compatibleLibs.filter(l => l.revision >= lib.revision)
+  ): Seq[CompatibleWithScala3Lib] = {
+    val possibleRevisions = compatibleLibs.map(_.revision).zipWithIndex.toMap
+    val index             = possibleRevisions.get(lib.revision)
+    index.map(compatibleLibs.drop).getOrElse(Nil)
+  }
 
 }
