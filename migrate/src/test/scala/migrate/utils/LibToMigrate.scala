@@ -1,7 +1,5 @@
 package migrate.utils
 
-import scala.util.Random
-
 import migrate.Lib213
 import migrate.LibToMigrate.CrossVersion
 import migrate.LibToMigrate.Revision
@@ -9,18 +7,30 @@ import org.scalatest.funsuite.AnyFunSuiteLike
 import scalafix.testkit.DiffAssertions
 
 class LibToMigrate() extends AnyFunSuiteLike with DiffAssertions {
-  val binary: CrossVersion.Binary = CrossVersion.Binary("", "")
-  val scalafix: Lib213            = Lib213.from("ch.epfl.scala:scalafix-core:0.9.24", binary).get
-
+  val binary: CrossVersion.Binary         = CrossVersion.Binary("", "")
+  val scalafix: Lib213                    = Lib213.from("ch.epfl.scala:scalafix-core:0.9.24", binary).get
+  val zioTests: Lib213                    = Lib213.from("dev.zio:zio-test:1.0.0-RC20", binary).get
+  val zioTestsNonExistingRevision: Lib213 = Lib213.from("dev.zio:zio-test:2.0.5", binary).get
   test("revision ordering") {
-    val revisions213 = CoursierHelper.searchRevisionsFor(scalafix, "2.13")
-    val shuffled     = Random.shuffle(revisions213)
-    assert(revisions213 == shuffled.sorted)
+    val libs      = CoursierHelper.getCompatibleForBinary213(scalafix)
+    val revisions = libs.map(_.revision).take(2)
+    val expected  = Seq(Revision("0.9.24"), Revision("0.9.25"))
+    assert(expected == revisions)
   }
-  //TODO FIX - Wrong revision
   test("wrong revision ordering") {
-    Revision("1.0.0-RC21-2")
-    Revision("1.0.0")
-//   assert(Seq(revision1, revision2) ==  Seq(revision1, revision2).sorted)
+    val libs      = CoursierHelper.getCompatibleForBinary213(zioTests)
+    val revisions = libs.map(_.revision).take(5)
+    val expected = List(
+      Revision("1.0.0-RC20"),
+      Revision("1.0.0-RC21"),
+      Revision("1.0.0-RC21-1"),
+      Revision("1.0.0-RC21-2"),
+      Revision("1.0.0")
+    )
+    assert(expected == revisions)
+  }
+  test("empty revision") {
+    val libs = CoursierHelper.getCompatibleForBinary213(zioTestsNonExistingRevision)
+    assert(libs == Nil)
   }
 }

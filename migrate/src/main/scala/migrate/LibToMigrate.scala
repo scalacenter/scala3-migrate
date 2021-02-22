@@ -60,21 +60,13 @@ case class CompatibleWithScala3Lib(
 object LibToMigrate {
   case class Organization(value: String)
   case class Name(value: String)
-  case class Revision(value: String) extends Ordered[Revision] {
-    override def compare(that: Revision): Int =
-      Revision.ordering.compare(this, that)
+  case class Revision(value: String) {
     private val version: Seq[String] = value.split('.')
     val major: Option[Int]           = version.headOption.flatMap(v => Try(v.toInt).toOption)
     val minor: Option[Int]           = Try(version(1).toInt).toOption
     val patch: Option[Int]           = Try(version(2).split("-")(0).toInt).toOption
     val beta: Option[String]         = Try(version(2).split("-")(1)).toOption
 
-  }
-  object Revision {
-    implicit val ordering: Ordering[Revision] =
-      Ordering.by[Revision, (Option[Int], Option[Int], Option[Int], Option[String])] { x: Revision =>
-        (x.major, x.minor, x.patch, x.beta)
-      }
   }
   sealed trait CrossVersion {
     override def toString: String = this match {
