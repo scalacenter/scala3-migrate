@@ -1,18 +1,13 @@
 package migrate
 
 import scala.tools.nsc.interactive.Global
-import scala.tools.nsc.reporters.StoreReporter
-import scala.util.Failure
-import scala.util.Success
 import scala.util.Try
-import scala.util.control.NonFatal
 
 import scala.meta._
 import scala.meta.contrib.Trivia
 import scala.meta.internal.pc.PrettyPrinter
 import scala.meta.tokens.Token
 
-import metaconfig.Configured
 import scalafix.patch.Patch
 import scalafix.util.TokenOps
 import scalafix.v1._
@@ -20,39 +15,26 @@ import utils.CompilerService
 import utils.ScalaExtensions.TraversableOnceOptionExtension
 import utils.SyntheticHelper
 
-class InferTypes(g: Global) extends SemanticRule("InferTypes") {
-  override def description: String = "infer types and typeApply"
-
-  def this() = this(null)
-
-  override def withConfiguration(config: Configuration): Configured[Rule] =
-    if (config.scalacClasspath.isEmpty) {
-      Configured.error(s"config.scalacClasspath should not be empty")
-    } else {
-      val global = CompilerService.newGlobal(config.scalacClasspath, config.scalacOptions)
-      global match {
-        case Success(settings) =>
-          Configured.ok(new InferTypes(new Global(settings, new StoreReporter, "scala3-migrate")))
-        case Failure(exception) => Configured.error(exception.getMessage)
-      }
-    }
-
-  override def afterComplete(): Unit =
-    try {
-      g.askShutdown()
-      g.close()
-    } catch {
-      case NonFatal(_) =>
-    }
-
-  override def fix(implicit doc: SemanticDocument): Patch = {
-    lazy implicit val compilerService: CompilerService[g.type] = new CompilerService(g, doc)
+class InferTypes[G <: Global](g: G) {
+  def fix(implicit doc: SemanticDocument, compilerService: CompilerService[g.type]): Patch = {
 
     val patchForExplicitResultTypes = addExplicitResultType()
     val patchForTypeApply           = addTypeApply()
 
     patchForExplicitResultTypes + patchForTypeApply
   }
+
+  private def addExplicitResultType()(implicit doc: SemanticDocument, compilerSrv: CompilerService[g.type]): Patch =
+    doc.tree.collect {
+      case t @ Defn.Val(mods, Pat.Var(name) :: Nil, None, body) => {
+        fixDefinition(t, name, body)
+      }
+      case t @ Defn.Var(mods, Pat.Var(name) :: Nil, None, Some(body)) =>
+        fixDefinition(t, name, body)
+
+      case t @ Defn.Def(mods, name, _, _, None, body) =>
+        fixDefinition(t, name, body)
+    }.flatten.asPatch
 
   private def addTypeApply()(implicit doc: SemanticDocument, compilerSrv: CompilerService[g.type]): Patch =
     doc.synthetics.collect { case syn @ TypeApplyTree(function: SemanticTree, typeArguments: List[SemanticType]) =>
@@ -92,18 +74,6 @@ class InferTypes(g: Global) extends SemanticRule("InferTypes") {
       case t @ g.TypeApply(fun, _) if fun.isInstanceOf[g.Select] && fun.asInstanceOf[g.Select].name == termName =>
         t
     }.headOption
-
-  private def addExplicitResultType()(implicit doc: SemanticDocument, compilerSrv: CompilerService[g.type]): Patch =
-    doc.tree.collect {
-      case t @ Defn.Val(mods, Pat.Var(name) :: Nil, None, body) => {
-        fixDefinition(t, name, body)
-      }
-      case t @ Defn.Var(mods, Pat.Var(name) :: Nil, None, Some(body)) =>
-        fixDefinition(t, name, body)
-
-      case t @ Defn.Def(mods, name, _, _, None, body) =>
-        fixDefinition(t, name, body)
-    }.flatten.asPatch
 
   private def fixDefinition(defn: Defn, name: Term.Name, body: Term)(
     implicit doc: SemanticDocument,

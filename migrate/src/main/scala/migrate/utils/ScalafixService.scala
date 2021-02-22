@@ -78,7 +78,7 @@ object ScalafixService {
     "fix.scala213.ExplicitNonNullaryApply",
     "fix.scala213.Any2StringAdd"
   )
-  val addExplicitResultTypesAndImplicits: Seq[String] = Seq("InferTypes", "ExplicitImplicits")
+  val addExplicitResultTypesAndImplicits: Seq[String] = Seq("MigrationRule")
 
   def from(compilerOptions: Seq[String], classpath: Classpath, targetRootSemantic: AbsolutePath): Try[ScalafixService] =
     for {
