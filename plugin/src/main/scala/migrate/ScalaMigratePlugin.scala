@@ -172,7 +172,7 @@ object ScalaMigratePlugin extends AutoPlugin {
         val projectId            = thisProject.value.id
         val scalaVersion         = Keys.scalaVersion.value
         val sOptions             = scalacOptions.value
-        val classpath            = managedClasspath.value.map(_.data.toPath())
+        val classpath            = dependencyClasspath.value.map(_.data.toPath())
         val scala3ClassDirectory = (compile / classDirectory).value.toPath
         val scalac3Options       = sanitazeScala3Options(sOptions)
         val scala3Inputs         = Scala3Inputs(projectId, scalaVersion, scalac3Options, classpath, scala3ClassDirectory)
