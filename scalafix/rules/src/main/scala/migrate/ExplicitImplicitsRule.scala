@@ -22,10 +22,9 @@ class ExplicitImplicitsRule[G <: Global](g: G) {
       case syn: ApplyTree if (syn.toString.startsWith("*")) =>
         Try {
           for {
-            originalTree           <- SyntheticHelper.getOriginalTree(syn)
-            (args, isEtaExpansion) <- getImplicitParams(originalTree)
-            toAdd                   = toAddImplicit(originalTree, args, isEtaExpansion)
-          } yield toAdd
+            originalTree <- SyntheticHelper.getOriginalTree(syn)
+            patch        <- getImplicitParams(originalTree)
+          } yield patch
         }.toOption.flatten
     }.flatten.toList.asPatch
 
@@ -42,20 +41,19 @@ class ExplicitImplicitsRule[G <: Global](g: G) {
     implicitParams + implicitConversion
   }
 
-  def getImplicitParams(originalTree: Tree)(
-    implicit compilerSrv: CompilerService[g.type]
-  ): Option[(List[String], Boolean)] =
+  def getImplicitParams(originalTree: Tree)(implicit compilerSrv: CompilerService[g.type]): Option[Patch] =
     // for infix methods, we need to rewrite it
     // example a ++ b needs to be rewritten to a.++(b)(implicit)
     // right now the code would produce a ++ b(implicit) which doesn't compile
     if (originalTree.isInstanceOf[ApplyInfix]) None
     else
       for {
-        context                   <- compilerSrv.getContext(originalTree)
-        (symbols, isEtaExpansion) <- collectImplicit(context.tree, originalTree)
-        pretty                     = new PrettyPrinter[g.type](g)
-        args                      <- symbols.map(gsym => pretty.print(gsym, context)).sequence
-      } yield (args, isEtaExpansion)
+        context             <- compilerSrv.getContext(originalTree)
+        (funcTree, symbols) <- collectImplicit(context.tree, originalTree)
+        pretty               = new PrettyPrinter[g.type](g)
+        args                <- symbols.map(gsym => pretty.print(gsym, context)).sequence
+        patch               <- implicitParamsPatch(funcTree, originalTree, args)
+      } yield patch
 
   def getImplicitConversions(originalTree: Tree)(implicit compilerSrv: CompilerService[g.type]): Option[String] =
     for {
@@ -80,7 +78,7 @@ class ExplicitImplicitsRule[G <: Global](g: G) {
 
   }
 
-  private def collectImplicit(globalTree: g.Tree, original: Tree): Option[(List[g.Symbol], Boolean)] = {
+  private def collectImplicit(globalTree: g.Tree, original: Tree): Option[(G#Tree, List[g.Symbol])] = {
     val collectedTree: Seq[g.Tree] =
       globalTree.collect {
         case t if CompilerService.equalForPositions(t.pos, original.pos) => t
@@ -92,22 +90,37 @@ class ExplicitImplicitsRule[G <: Global](g: G) {
       // See Mix.scala example
       case g.Apply(fun, args) if !fun.isInstanceOf[g.ApplyImplicitView] => {
         val listOfArgs = args.map(_.symbol.asInstanceOf[g.Symbol])
-        (listOfArgs, isEtaExpansion(fun, original))
+        (fun, listOfArgs)
       }
     }
 
   }
 
-  private def toAddImplicit(originalTree: Tree, args: List[String], isEtaExpansion: Boolean): Patch =
-    if (isEtaExpansion) Patch.addRight(originalTree, "(_)" + "(" + args.mkString(", ") + ")")
-    else Patch.addRight(originalTree, "(" + args.mkString(", ") + ")")
-
-  // if eta expansion, we need to rewrite to (_)(implicits)
-  private def isEtaExpansion(fun: G#Tree, original: Tree): Boolean =
-    fun match {
-      case _: g.Name                                                                                    => false
-      case g.Apply(fun, List(arg)) if original.isInstanceOf[Name] || original.isInstanceOf[Term.Select] => true
-      case _                                                                                            => false
+  private def implicitParamsPatch(globalTree: G#Tree, original: Tree, implicitsParams: List[String]): Option[Patch] =
+    globalTree match {
+      //  def foo2(a: Int)(b: Int)(implicit value: Int): Int = a + b
+      //  def bar(f: Int => Int => Int): Int = ???
+      //  need a rewrite like this bar(a => b =>  foo(a)(b)(implicit))
+      // we don't wont to handle this rewrite.
+      case g.Apply(g.Apply(_, _), _) if original.isInstanceOf[Name] || original.isInstanceOf[Term.Select] =>
+        None
+      case g.Apply(_, args) if original.isInstanceOf[Name] || original.isInstanceOf[Term.Select] => {
+        val isTermEta        = original.parent.exists(_.isInstanceOf[Term.Eta])
+        val etaExpansionArgs = (1 to args.size).map(_ => "_")
+        if (isTermEta) {
+          original.parent.map { parent =>
+            (Patch.replaceTree(parent, original.toString()) + Patch
+              .addRight(
+                parent,
+                s"(${etaExpansionArgs.mkString(", ")})" + "(" + implicitsParams.mkString(", ") + ")"
+              )).atomic
+          }
+        } else
+          Some(
+            Patch
+              .addRight(original, s"(${etaExpansionArgs.mkString(", ")})" + "(" + implicitsParams.mkString(", ") + ")")
+          )
+      }
+      case _ => Some(Patch.addRight(original, "(" + implicitsParams.mkString(", ") + ")"))
     }
-
 }
