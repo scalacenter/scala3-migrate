@@ -3,7 +3,7 @@ object PrivateLocalImplicitWithoutType {
 
   def foo[T]()(implicit ev: MyImplicit[T]): Unit = ()
 
-  private implicit val intImplicit: PrivateLocalImplicitWithoutType.MyImplicit[Int] = new MyImplicit[Int]
+  private implicit val intImplicit: MyImplicit[Int] = new MyImplicit[Int]
 
   def test(): Unit = {
     foo[Int]()

@@ -1,6 +1,8 @@
 package scala.meta.internal.pc
 
+import scala.collection.mutable.ListBuffer
 import scala.tools.nsc.interactive.Global
+import scala.{ meta => m }
 
 import utils.ScalaExtensions.TraversableOnceOptionExtension
 
@@ -14,33 +16,47 @@ class PrettyPrinter[G <: Global](val g: G) {
       else {
         t match {
           case TypeRef(pre, sym, args) => {
-            val top = topPackage(pre.typeSymbol)
-            val to  = context.lookupSymbol(top.name.toTermName, _ => true)
-            val inScope = to match {
-              case LookupSucceeded(qual, _) => !qual.isEmpty
-              case _                        => false
-            }
+            val lookUp  = context.lookupSymbol(sym.name, _ => true)
             val argsOpt = args.map(loop).sequence
-            if (inScope && top.isStatic) {
-              argsOpt.map(a =>
-                TypeRef(new PrettyType(s"${top.owner.nameSyntax}.${pre.termSymbol.fullNameSyntax}"), sym, a)
-              )
-            } else argsOpt.map(a => TypeRef(pre, sym, a))
+            if (isTheSameSymbol(sym, lookUp, pre)) {
+              argsOpt.map(a => TypeRef(g.NoPrefix, sym, a))
+            } else argsOpt.map(a => TypeRef(loop(pre).get, sym, a))
           }
-          case SingleType(pre, sym)                    => Some(t)
-          case ThisType(sym)                           => Some(t)
+          case SingleType(pre, sym) => {
+            val lookUp = context.lookupSymbol(sym.name, _ => true)
+            if (isTheSameSymbol(sym, lookUp, pre))
+              Some(SingleType(NoPrefix, sym))
+            else Some(SingleType(loop(pre).get, sym))
+
+          }
+          case ThisType(sym) => {
+            val lookUp = context.lookupSymbol(sym.name.toTermName, _ => true)
+            if (isTheSameSymbol(sym, lookUp))
+              Some(new PrettyType(sym.name.toTermName.toString))
+            else Some(lookUpName(sym, context))
+          }
           case ConstantType(Constant(sym: TermSymbol)) => Some(t)
           case ConstantType(Constant(tpe: Type))       => Some(t)
           case SuperType(thistpe, supertpe)            => Some(t)
-          case RefinedType(parents, decls)             => Some(t)
-          case AnnotatedType(annotations, underlying)  => Some(t)
-          case ExistentialType(quantified, underlying) => Some(t)
-          case PolyType(tparams, resultType)           => Some(t)
-          case NullaryMethodType(resultType)           => Some(t)
-          case TypeBounds(lo, hi)                      => Some(t)
-          case MethodType(params, resultType)          => Some(t)
-          case ErrorType                               => Some(definitions.AnyTpe)
-          case t                                       => Some(t)
+          case RefinedType(parents, decls) =>
+            val parentOp = parents.map(loop).sequence
+            parentOp.map(p => RefinedType(p, decls))
+          case AnnotatedType(annotations, underlying) => Some(t)
+          case ExistentialType(quantified, underlying) =>
+            scala.util
+              .Try(ExistentialType(quantified.map(sym => sym.setInfo(loop(sym.info).get)), loop(underlying).get))
+              .toOption
+          case PolyType(tparams, resultType) => Some(t)
+          case NullaryMethodType(resultType) =>
+            loop(resultType)
+          case TypeBounds(lo, hi) =>
+            (loop(lo), loop(hi)) match {
+              case (Some(lo), Some(hi)) => Some(TypeBounds(lo, hi))
+              case _                    => None
+            }
+          case MethodType(params, resultType) => Some(t)
+          case ErrorType                      => Some(definitions.AnyTpe)
+          case t                              => Some(t)
         }
       }
 
@@ -67,6 +83,50 @@ class PrettyPrinter[G <: Global](val g: G) {
     } else if (gsymbol.isStatic) Some(gsymbol.fullName)
     else None
   }
+
+  private def lookUpName(sym: g.Symbol, context: g.Context): g.Type = {
+    // first get all owners
+    val owners = getOwnersFor(sym)
+    val necessaryOwners = owners.iterator.takeWhile {
+      case sym => {
+        val lookUp = context.lookupSymbol(sym.name.toTermName, _ => true)
+        !isTheSameSymbol(sym, lookUp)
+      }
+    }.toSeq
+
+    val size = necessaryOwners.size
+    necessaryOwners match {
+      case Nil => g.NoPrefix
+      case _ if size < owners.size - 1 =>
+        val names = owners.take(size + 1).reverse.map(s => m.Term.Name(s.nameSyntax))
+        val ref = names.tail.foldLeft(names.head: m.Term.Ref) { case (qual, name) =>
+          m.Term.Select(qual, name)
+        }
+        new PrettyType(ref.syntax)
+      case _ if size >= owners.size - 1 =>
+        val top = owners.last
+        val to  = context.lookupSymbol(top.name.toTermName, _ => true)
+        val inScope = to match {
+          case LookupSucceeded(qual, _) => !qual.isEmpty
+          case _                        => false
+        }
+        if (inScope && top.isStatic) {
+          new PrettyType(s"${top.owner.nameSyntax}.${sym.fullNameSyntax}")
+        } else new PrettyType(sym.fullNameSyntax)
+    }
+  }
+
+  private def isTheSameSymbol(sym: g.Symbol, nameLookup: NameLookup, prefix: Type = NoPrefix): Boolean =
+    nameLookup match {
+      case LookupSucceeded(qual, symbol) =>
+        symbol.isKindaTheSameAs(sym) && {
+          prefix == NoPrefix ||
+          prefix.isInstanceOf[PrettyType] ||
+          qual.tpe.computeMemberType(symbol) <:<
+            prefix.computeMemberType(sym)
+        }
+      case _ => false
+    }
 
   private def isPrivateMaybeWithin(gsymbol: g.Symbol): Boolean =
     gsymbol.isPrivate || (gsymbol.hasAccessBoundary && !gsymbol.isProtected)
@@ -95,8 +155,20 @@ class PrettyPrinter[G <: Global](val g: G) {
       topPackage(owner)
     }
   }
+  def getOwnersFor(symbol: Symbol): Seq[Symbol] = {
+    def loop(symbol: Symbol, b: ListBuffer[Symbol]): ListBuffer[Symbol] =
+      symbol match {
+        case _
+            if symbol.isRoot || symbol.isRootPackage || symbol == NoSymbol || symbol.owner.isEffectiveRoot || symbol == symbol.owner =>
+          b += symbol
+        case _ =>
+          b += symbol
+          loop(symbol.owner, b)
+      }
+    loop(symbol, ListBuffer.empty[Symbol]).toSeq
+  }
 
-  implicit class XtensionSymbolMetals(sym: Symbol) {
+  implicit class XtensionSymbol(sym: Symbol) {
     def nameSyntax: String =
       if (sym.isEmptyPackage || sym.isEmptyPackageClass) "_empty_"
       else if (sym.isRootPackage || sym.isRoot) "_root_"
@@ -116,6 +188,33 @@ class PrettyPrinter[G <: Global](val g: G) {
       loop(sym)
       out.toString
     }
+
+    def isKindaTheSameAs(other: Symbol): Boolean =
+      if (sym.fullName == other.fullName) true
+      else if (other == NoSymbol) sym == NoSymbol
+      else if (sym == NoSymbol) false
+      else if (sym.hasPackageFlag) {
+        // NOTE(olafur) hacky workaround for comparing module symbol with package symbol
+        other.fullName == sym.fullName
+      } else {
+        sym.dealiased == other.dealiased ||
+        sym.companion == other.dealiased
+      }
+
+    def dealiasedSingleType: Symbol =
+      if (sym.isValue) {
+        sym.info.resultType match {
+          case SingleType(_, dealias) => dealias
+          case _                      => sym
+        }
+      } else {
+        sym
+      }
+
+    def dealiased: Symbol =
+      if (sym.isAliasType) sym.info.dealias.typeSymbol
+      else if (sym.isValue) dealiasedSingleType
+      else sym
   }
 
   class PrettyType(override val prefixString: String, override val safeToString: String) extends Type {

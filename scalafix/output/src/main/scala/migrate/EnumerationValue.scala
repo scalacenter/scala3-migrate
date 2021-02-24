@@ -11,11 +11,11 @@ object EnumerationValue {
   }
   import Bool._
   def day(d: Day.Value): Unit = ???
-  val d: migrate.EnumerationValue.Day.Value =
+  val d: Day.Value =
     if (true) Day.Weekday
     else Day.Weekend
   day(d)
-  val b: migrate.EnumerationValue.Bool.Value =
+  val b: Value =
     if (true) True
     else False
 }

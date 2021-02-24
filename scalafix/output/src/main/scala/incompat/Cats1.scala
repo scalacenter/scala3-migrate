@@ -67,9 +67,9 @@ trait ApplicativeError[F[_], E] extends Applicative[F] {
    * All non-fatal errors should be handled by this method.
    */
   def attempt[A](fa: F[A]): F[Either[E, A]] =
-    handleErrorWith[scala.util.Either[E,A]](
-      map[A, scala.util.Either[E,A]](fa)(Right.apply[Nothing, A](_): Either[E, A])
-    )(e => pure[scala.util.Either[E,A]](Left.apply[E, Nothing](e)))
+    handleErrorWith[Either[E,A]](
+      map[A, Either[E,A]](fa)(Right.apply[Nothing, A](_): Either[E, A])
+    )(e => pure[Either[E,A]](Left.apply[E, Nothing](e)))
 
   /**
    * Similar to [[attempt]], but wraps the result in a [[cats.data.EitherT]] for
@@ -81,7 +81,7 @@ trait ApplicativeError[F[_], E] extends Applicative[F] {
    * Similar to [[attempt]], but it only handles errors of type `EE`.
    */
   def attemptNarrow[EE, A](fa: F[A])(implicit tag: ClassTag[EE], ev: EE <:< E): F[Either[EE, A]] =
-    recover[scala.util.Either[EE,A]](map[A, scala.util.Either[EE,A]](fa)(Right[EE, A](_): Either[EE, A])) { case e: EE => Left[EE, A](e) }
+    recover[Either[EE,A]](map[A, Either[EE,A]](fa)(Right[EE, A](_): Either[EE, A])) { case e: EE => Left[EE, A](e) }
 
   /**
    * Recover from certain errors by mapping them to an `A` value.

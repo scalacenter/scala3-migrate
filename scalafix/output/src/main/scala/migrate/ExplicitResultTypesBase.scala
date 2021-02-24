@@ -36,16 +36,16 @@ object ExplicitResultTypesBase {
     def `x `: Int = "abc".length
   }
   locally[Unit] {
-    implicit val Implicit: scala.concurrent.Future[Int] = scala.concurrent.Future.successful[Int](2)
-    val Var: scala.concurrent.Future[Int] = scala.concurrent.Future.successful[Int](2)
-    val Val: scala.concurrent.Future[Int] = scala.concurrent.Future.successful[Int](2)
-    def Def: scala.concurrent.Future[Int] = scala.concurrent.Future.successful[Int](2)
+    implicit val Implicit: concurrent.Future[Int] = scala.concurrent.Future.successful[Int](2)
+    val Var: concurrent.Future[Int] = scala.concurrent.Future.successful[Int](2)
+    val Val: concurrent.Future[Int] = scala.concurrent.Future.successful[Int](2)
+    def Def: concurrent.Future[Int] = scala.concurrent.Future.successful[Int](2)
   }
   object unicode {
     object `->` {
       def unapply[S](in: (S, S)): Option[(S, S)] = Some.apply[(S, S)](in)
     }
-    val `→`: migrate.ExplicitResultTypesBase.unicode.->.type = `->`
+    val `→`: ->.type = `->`
   }
   def tuple: ((Int, String)) => String = null.asInstanceOf[((Int, String)) => String]
 }

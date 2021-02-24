@@ -64,8 +64,8 @@ object RscCompat {
       class C
       val c: C = ???
     }
-    val p: migrate.RscCompat.TypesHelpers.P = new P
-    val c: migrate.RscCompat.TypesHelpers.p.C = p.c
+    val p: P = new P
+    val c: p.C = p.c
     trait A
     trait B
     class ann extends scala.annotation.StaticAnnotation
@@ -81,19 +81,19 @@ object RscCompat {
     import TypesHelpers._
     override val x: X = new X
 
-    val typeRef1: migrate.RscCompat.TypesHelpers.C = ??? : C
-    val typeRef2: migrate.RscCompat.TypesHelpers.p.C = ??? : p.C
-    val typeRef3: migrate.RscCompat.TypesHelpers.E#C = ??? : E#C
+    val typeRef1: C = ??? : C
+    val typeRef2: p.C = ??? : p.C
+    val typeRef3: E#C = ??? : E#C
     val typeRef4: List[Int] = ??? : List[Int]
-    val typeRef5: Types.this.X = ??? : X
+    val typeRef5: X = ??? : X
     val typeRef6: T = ??? : T
     val typeRef7: () => T = ??? : (() => T)
     val typeRef8: T => T = ??? : (T => T)
     val typeRef9: (T, T) => T = ??? : ((T, T) => T)
     val typeRef10: (T, T) = ??? : (T, T)
 
-    val singleType1: migrate.RscCompat.TypesHelpers.c.type = ??? : c.type
-    val singleType2: migrate.RscCompat.TypesHelpers.p.c.type = ??? : p.c.type
+    val singleType1: c.type = ??? : c.type
+    val singleType2: p.c.type = ??? : p.c.type
 
     val Either: util.Either.type = ??? : scala.util.Either.type
 
@@ -101,11 +101,11 @@ object RscCompat {
      val thisType2: Types.this.type = ??? : Types.this.type
 
     val compoundType1: AnyRef{def k: Int} = ??? : { def k: Int }
-    val compoundType2: migrate.RscCompat.TypesHelpers.A with migrate.RscCompat.TypesHelpers.B = ??? : A with B
-    val compoundType3: migrate.RscCompat.TypesHelpers.A with migrate.RscCompat.TypesHelpers.B{def k: Int} = ??? : A with B { def k: Int }
+    val compoundType2: A with B = ??? : A with B
+    val compoundType3: A with B{def k: Int} = ??? : A with B { def k: Int }
     val compoundType4: AnyRef{def k: Int} = new { def k: Int = ??? }
-    val compoundType5: migrate.RscCompat.TypesHelpers.A with migrate.RscCompat.TypesHelpers.B = new A with B
-    val compoundType6: migrate.RscCompat.TypesHelpers.A with migrate.RscCompat.TypesHelpers.B{def k: Int} = new A with B { def k: Int = ??? }
+    val compoundType5: A with B = new A with B
+    val compoundType6: A with B{def k: Int} = new A with B { def k: Int = ??? }
 //    val compoundType7 = ??? : A with (List[T] forSome { type T }) with B
 
      val annType1: migrate.RscCompat.TypesHelpers.C @migrate.RscCompat.TypesHelpers.ann = ??? : C @ann
@@ -135,21 +135,21 @@ object RscCompat {
       List.apply[Int](local1, local2)
     }
 
-     val clazz: Class[_] = Class.forName("foo.Bar")
+     val clazz: Class[_ <: Object] = Class.forName("foo.Bar")
 
     val compound: AnyRef{def m(x: Int): Int} = ??? : { def m(x: Int): Int }
 
     val loaded: List[Class[_]] = List[Class[_]]()
 
     val ti: Types[Int] = ???
-    val innerClass1: migrate.RscCompat.Types[String]#X = new Types[String]().x
-    val innerClass2: migrate.RscCompat.Types[Int]#X = ??? : Types[Int]#X
-    val innerClass3: Bugs.this.ti.X = ti.x
-    val innerClass4: java.util.Base64.Decoder = Base64.getMimeDecoder
+    val innerClass1: Types[String]#X = new Types[String]().x
+    val innerClass2: Types[Int]#X = ??? : Types[Int]#X
+    val innerClass3: ti.X = ti.x
+    val innerClass4: Base64.Decoder = Base64.getMimeDecoder
 
     val sane1: String = implicitly[String](migrate.RscCompat.implicit_y)
 
-    val t: migrate.foo.T = ??? : foo.T
+    val t: foo.T = ??? : foo.T
 
     val (a: String, b: String, c) = ("foo", "bar", "baz")
   }

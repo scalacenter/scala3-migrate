@@ -4,27 +4,27 @@ import java.io.Serializable
 import scala.language.reflectiveCalls
 
 object ExplicitResultTypesRefinement {
-  val field: java.io.Serializable{val results: List[Int]} = new Serializable {
+  val field: Serializable{val results: List[Int]} = new Serializable {
     val results: List[Int] = List.apply[Int](1)
   }
-  val conflict: java.io.Serializable{val results: List[Int]} = new Serializable {
+  val conflict: Serializable{val results: List[Int]} = new Serializable {
     val results: List[Int] = List.apply[Int](1)
   }
   class conflict
   class conflict1
-  def method(param: Int): java.io.Serializable{val results: List[Int]} = new Serializable {
+  def method(param: Int): Serializable{val results: List[Int]} = new Serializable {
     val results: List[Int] = List.apply[Int](param)
   }
-  def method(param: String): java.io.Serializable{val results: List[String]} = new Serializable {
+  def method(param: String): Serializable{val results: List[String]} = new Serializable {
     val results: List[String] = List.apply[String](param)
   }
-  def curried(param: Int)(param2: Int, param3: String): java.io.Serializable{val results: List[Int]} = new Serializable {
+  def curried(param: Int)(param2: Int, param3: String): Serializable{val results: List[Int]} = new Serializable {
     val results: List[Int] = List.apply[Int](param2, param3.length(), param)
   }
-  def tparam[T <: CharSequence](e: T): java.io.Serializable{val results: List[Int]} = new Serializable {
+  def tparam[T <: CharSequence](e: T): Serializable{val results: List[Int]} = new Serializable {
     val results: List[Int] = List.apply[Int](e.length())
   }
-  val access: java.io.Serializable = new Serializable {
+  val access: Serializable = new Serializable {
     private val results: List[Int] = List.empty[Nothing]
     protected val results2: List[Int] = List.empty[Nothing]
   }
@@ -33,18 +33,18 @@ object ExplicitResultTypesRefinement {
     override def productElement(n: Int): Any = ???
     override def canEqual(that: Any): Boolean = ???
   }
-  val productWithSerializable: Product with java.io.Serializable = new Product with Serializable {
+  val productWithSerializable: Product with Serializable = new Product with Serializable {
     override def productArity: Int = ???
     override def productElement(n: Int): Any = ???
     override def canEqual(that: Any): Boolean = ???
   }
-  val test: migrate.ExplicitResultTypesRefinement.conflict with Product with java.io.Serializable = new conflict with Product with Serializable {
+  val test: conflict with Product with Serializable = new conflict with Product with Serializable {
     override def productArity: Int = ???
     override def productElement(n: Int): Any = ???
     override def canEqual(that: Any): Boolean = ???
   }
   trait Chars { def chars: CharSequence }
-  val chars: migrate.ExplicitResultTypesRefinement.Chars{val chars: String} = new Chars {
+  val chars: Chars{val chars: String} = new Chars {
     val chars: String = 42.toString()
   }
   def app(): Unit = {

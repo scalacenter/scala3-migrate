@@ -17,7 +17,7 @@ object ScalafixIncompat3 {
   object Test {
     def from[M[_], T](m: M[T])(implicit ctx: Context[M]): Unit = ???
 
-    from[incompat.ScalafixIncompat3.Foo, Int](Fizz)(incompat.ScalafixIncompat3.Foo.ctx)
+    from[Foo, Int](Fizz)(incompat.ScalafixIncompat3.Foo.ctx)
   }
 
 }
