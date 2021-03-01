@@ -79,7 +79,7 @@ lazy val `sbt-plugin` = project
     scriptedLaunchOpts ++= Seq(s"-Dplugin.version=${version.value}"),
     scriptedDependencies := {
       scriptedDependencies
-        .dependsOn(publishLocal in `migrate-interfaces`, publishLocal in `compiler-interfaces`, publishLocal in migrate)
+        .dependsOn(`migrate-interfaces` / publishLocal, `compiler-interfaces` / publishLocal, migrate / publishLocal)
         .value
     },
     buildInfoPackage := "migrate",
@@ -119,7 +119,7 @@ lazy val `scalafix-input` = project
   .in(file("scalafix/input"))
   .settings(
     scalacOptions ++= List("-P:semanticdb:synthetics:on"),
-    skip in publish := true,
+    publish / skip := true,
     libraryDependencies ++= Seq(
       "org.typelevel"                 %% "cats-core"      % V.catsCore,
       "dev.zio"                       %% "zio"            % "1.0.4-2",
@@ -133,7 +133,7 @@ lazy val `scalafix-input` = project
 lazy val `scalafix-output` = project
   .in(file("scalafix/output"))
   .settings(
-    skip in publish := true,
+    publish / skip := true,
     crossScalaVersions := List(V.scala213, V.scala3),
     scalacOptions ++= (if (ScalaArtifacts.isScala3(scalaVersion.value)) Seq("-Ykind-projector") else Seq()),
     libraryDependencies ++= {
@@ -160,15 +160,15 @@ lazy val `scalafix-tests` = project
         V.scalafix %
         Test cross CrossVersion.full,
     scalafixTestkitOutputSourceDirectories :=
-      unmanagedSourceDirectories.in(`scalafix-output`, Compile).value,
+      (`scalafix-output` / Compile / unmanagedSourceDirectories).value,
     scalafixTestkitInputSourceDirectories :=
-      unmanagedSourceDirectories.in(`scalafix-input`, Compile).value,
+      (`scalafix-input` / Compile / unmanagedSourceDirectories).value,
     scalafixTestkitInputClasspath :=
-      fullClasspath.in(`scalafix-input`, Compile).value,
+      (`scalafix-input` / Compile / fullClasspath).value,
     scalafixTestkitInputScalacOptions :=
-      scalacOptions.in(`scalafix-input`, Compile).value,
+      (`scalafix-input` / Compile / scalacOptions).value,
     scalafixTestkitInputScalaVersion :=
-      scalaVersion.in(`scalafix-input`, Compile).value
+      (`scalafix-input` / Compile / scalaVersion).value
   )
   .dependsOn(`scalafix-input`, `scalafix-rules`)
   .enablePlugins(ScalafixTestkitPlugin)
