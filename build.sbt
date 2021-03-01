@@ -122,7 +122,7 @@ lazy val `scalafix-input` = project
     skip in publish := true,
     libraryDependencies ++= Seq(
       "org.typelevel"                 %% "cats-core"      % V.catsCore,
-      "dev.zio"                       %% "zio"            % "1.0.4",
+      "dev.zio"                       %% "zio"            % "1.0.4-2",
       compilerPlugin(("org.typelevel" %% "kind-projector" % V.kindProjector).cross(CrossVersion.full))
     ),
     buildInfoKeys := Seq[BuildInfoKey](name)
@@ -137,7 +137,7 @@ lazy val `scalafix-output` = project
     crossScalaVersions := List(V.scala213, V.scala3),
     scalacOptions ++= (if (ScalaArtifacts.isScala3(scalaVersion.value)) Seq("-Ykind-projector") else Seq()),
     libraryDependencies ++= {
-      Seq("org.typelevel" % "cats-core_2.13" % V.catsCore, "dev.zio" %% "zio" % "1.0.4") ++
+      Seq("org.typelevel" % "cats-core_2.13" % V.catsCore, "dev.zio" %% "zio" % "1.0.4-2") ++
         (CrossVersion.partialVersion(scalaVersion.value) match {
           case Some((2, 13)) =>
             Seq(compilerPlugin(("org.typelevel" %% "kind-projector" % V.kindProjector).cross(CrossVersion.full)))
