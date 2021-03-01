@@ -122,7 +122,7 @@ lazy val `scalafix-input` = project
     skip in publish := true,
     libraryDependencies ++= Seq(
       "org.typelevel"                 %% "cats-core"      % V.catsCore,
-      "dev.zio"                       %% "zio"            % "1.0.4",
+      "dev.zio"                       %% "zio"            % "1.0.4-2",
       compilerPlugin(("org.typelevel" %% "kind-projector" % V.kindProjector).cross(CrossVersion.full))
     ),
     buildInfoKeys := Seq[BuildInfoKey](name)
@@ -137,7 +137,7 @@ lazy val `scalafix-output` = project
     crossScalaVersions := List(V.scala213, V.scala3),
     scalacOptions ++= (if (ScalaArtifacts.isScala3(scalaVersion.value)) Seq("-Ykind-projector") else Seq()),
     libraryDependencies ++= {
-      Seq("org.typelevel" % "cats-core_2.13" % V.catsCore, "dev.zio" %% "zio" % "1.0.4") ++
+      Seq("org.typelevel" % "cats-core_2.13" % V.catsCore, "dev.zio" %% "zio" % "1.0.4-2") ++
         (CrossVersion.partialVersion(scalaVersion.value) match {
           case Some((2, 13)) =>
             Seq(compilerPlugin(("org.typelevel" %% "kind-projector" % V.kindProjector).cross(CrossVersion.full)))
@@ -179,14 +179,14 @@ addCommandAlias("compileScalafixOutputinScala3", s"""set `scalafix-output`/scala
 lazy val V = new {
   val scala213              = "2.13.4"
   val scala213BinaryVersion = "2.13"
-  val scala212              = "2.12.11"
-  val scalatest             = "3.2.3"
+  val scala212              = "2.12.13"
+  val scalatest             = "3.2.5"
   val scala3                = "3.0.0-M3"
   val scalafix              = "0.9.25"
-  val scribe                = "3.3.3"
+  val scribe                = "3.4.0"
   val organizeImports       = "0.4.3"
-  val catsCore              = "2.4.1"
+  val catsCore              = "2.4.2"
   val kindProjector         = "0.11.3"
-  val coursierInterface     = "1.0.2"
   val coursierApi           = "2.0.12"
+  val coursierInterface     = "1.0.3"
 }
