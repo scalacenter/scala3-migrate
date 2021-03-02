@@ -12,6 +12,6 @@ object Incompat3 {
   object Test {
     def from[M[_], T](m: M[T])(implicit ctx: Context[M]): Unit = ???
 
-    from[Incompat3.Foo, Int](Fizz)
+    from[Foo, Int](Fizz)
   }
 }

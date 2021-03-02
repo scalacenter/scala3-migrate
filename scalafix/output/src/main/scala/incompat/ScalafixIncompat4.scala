@@ -9,6 +9,6 @@ object ScalafixIncompat4 {
 
     def fizz[A, B](foo: Foo[A]): Option[Foo[B]] = ???
 
-    def buzz[A, B](foo: Foo[A]): Option[Bar[B]] = fizz[A, B](foo).map[incompat.ScalafixIncompat4.Bar[B]](toBar[B])
+    def buzz[A, B](foo: Foo[A]): Option[Bar[B]] = fizz[A, B](foo).map[Bar[B]](toBar[B])
   }
 }

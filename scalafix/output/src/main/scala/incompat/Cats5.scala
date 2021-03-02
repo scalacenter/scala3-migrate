@@ -25,15 +25,15 @@ trait MapInstances extends cats.kernel.instances.MapInstances {
       def unorderedTraverse[G[_], A, B](
                                          fa: Map[K, A]
                                        )(f: A => G[B])(implicit G: CommutativeApplicative[G]): G[Map[K, B]] = {
-        val gba: Eval[G[Map[K, B]]] = Always.apply[G[Map[K,B]]](G.pure[scala.collection.immutable.Map[K,B]](Map.empty[K, Nothing]))
+        val gba: Eval[G[Map[K, B]]] = Always.apply[G[Map[K,B]]](G.pure[Map[K,B]](Map.empty[K, Nothing]))
         val gbb: G[Map[K,B]] = Foldable
           .iterateRight[(K, A), G[Map[K,B]]](fa, gba) { (kv, lbuf) =>
-            G.map2Eval[B, scala.collection.immutable.Map[K,B], scala.collection.immutable.Map[K,B]](f(kv._2), lbuf)({ (b, buf) =>
+            G.map2Eval[B, Map[K,B], Map[K,B]](f(kv._2), lbuf)({ (b, buf) =>
               buf + (scala.Predef.ArrowAssoc(kv._1) -> b)
             })
           }
           .value
-        G.map[scala.collection.immutable.Map[K,B], scala.collection.immutable.Map[K,B]](gbb)(_.toMap[K, B](scala.$less$colon$less.refl))
+        G.map[Map[K,B], Map[K,B]](gbb)(_.toMap[K, B](scala.$less$colon$less.refl))
       }
 
       override def map[A, B](fa: Map[K, A])(f: A => B): Map[K, B] =
@@ -44,8 +44,8 @@ trait MapInstances extends cats.kernel.instances.MapInstances {
         else fa.flatMap[K, Z] { case (k, a) => fb.get(k).map[(K, Z)](b => (k, f(a, b))) }
 
       override def map2Eval[A, B, Z](fa: Map[K, A], fb: Eval[Map[K, B]])(f: (A, B) => Z): Eval[Map[K, Z]] =
-        if (fa.isEmpty) Eval.now[scala.collection.immutable.Map[K,Nothing]](Map.empty[K, Nothing]) // no need to evaluate fb
-        else fb.map[scala.collection.immutable.Map[K,Z]](fb => map2[A, B, Z](fa, fb)(f))
+        if (fa.isEmpty) Eval.now[Map[K,Nothing]](Map.empty[K, Nothing]) // no need to evaluate fb
+        else fb.map[Map[K,Z]](fb => map2[A, B, Z](fa, fb)(f))
 
       override def ap[A, B](ff: Map[K, A => B])(fa: Map[K, A]): Map[K, B] =
         fa.flatMap[K, B] { case (k, a) => ff.get(k).map[(K, B)](f => (k, f(a))) }
@@ -63,7 +63,7 @@ trait MapInstances extends cats.kernel.instances.MapInstances {
         fa.foldLeft[B](Monoid[B].empty) { case (b, (k, a)) => Monoid[B].combine(b, f(a)) }
 
       def tailRecM[A, B](a: A)(f: A => Map[K, Either[A, B]]): Map[K, B] = {
-        val bldr: scala.collection.mutable.Builder[(K, B),scala.collection.immutable.Map[K,B]] = Map.newBuilder[K, B]
+        val bldr: collection.mutable.Builder[(K, B),Map[K,B]] = Map.newBuilder[K, B]
 
         @tailrec def descend(k: K, either: Either[A, B]): Unit =
           either match {
@@ -93,14 +93,14 @@ trait MapInstances extends cats.kernel.instances.MapInstances {
       def functor: Functor[Map[K, *]] = this
 
       def align[A, B](fa: Map[K, A], fb: Map[K, B]): Map[K, A Ior B] =
-        alignWith[A, B, cats.data.Ior[A,B]](fa, fb)(identity[cats.data.Ior[A,B]])
+        alignWith[A, B, Ior[A,B]](fa, fb)(identity[Ior[A,B]])
 
       override def alignWith[A, B, C](fa: Map[K, A], fb: Map[K, B])(f: Ior[A, B] => C): Map[K, C] = {
-        val keys: scala.collection.immutable.Set[K] = fa.keySet ++ fb.keySet
-        val builder: scala.collection.mutable.Builder[(K, C),scala.collection.immutable.Map[K,C]] = Map.newBuilder[K, C]
+        val keys: Set[K] = fa.keySet ++ fb.keySet
+        val builder: collection.mutable.Builder[(K, C),Map[K,C]] = Map.newBuilder[K, C]
         builder.sizeHint(keys.size)
         keys
-          .foldLeft[scala.collection.mutable.Builder[(K, C),scala.collection.immutable.Map[K,C]]](builder) { (builder, k) =>
+          .foldLeft[collection.mutable.Builder[(K, C),Map[K,C]]](builder) { (builder, k) =>
             (fa.get(k), fb.get(k)) match {
               case (Some(a), Some(b)) => builder += scala.Predef.ArrowAssoc(k) -> f(Ior.both[A, B](a, b))
               case (Some(a), None)    => builder += scala.Predef.ArrowAssoc(k) -> f(Ior.left[A, Nothing](a))
@@ -131,7 +131,7 @@ private[instances] trait MapInstancesBinCompat0 {
      * }}}
      */
     def compose[A, B, C](f: Map[B, C], g: Map[A, B]): Map[A, C] =
-      g.foldLeft[scala.collection.immutable.Map[A,C]](Map.empty[A, C]) {
+      g.foldLeft[Map[A,C]](Map.empty[A, C]) {
         case (acc, (key, value)) =>
           f.get(value) match {
             case Some(other) => acc + (scala.Predef.ArrowAssoc(key) -> other)
@@ -145,16 +145,16 @@ private[instances] trait MapInstancesBinCompat0 {
 
       val functor: Functor[Map[K, *]] = cats.instances.map.catsStdInstancesForMap[K]
 
-      def mapFilter[A, B](fa: Map[K, A])(f: A => Option[B]): scala.collection.immutable.Map[K,B] =
+      def mapFilter[A, B](fa: Map[K, A])(f: A => Option[B]): Map[K,B] =
         fa.collect[K, B](scala.Function.unlift[(K, A), (K, B)](t => f(t._2).map[(K, B)](scala.Predef.ArrowAssoc(t._1) -> _)))
 
-      override def collect[A, B](fa: Map[K, A])(f: PartialFunction[A, B]): scala.collection.immutable.Map[K,B] =
+      override def collect[A, B](fa: Map[K, A])(f: PartialFunction[A, B]): Map[K,B] =
         fa.collect[K, B](scala.Function.unlift[(K, A), (K, B)](t => f.lift(t._2).map[(K, B)](scala.Predef.ArrowAssoc(t._1) -> _)))
 
-      override def flattenOption[A](fa: Map[K, Option[A]]): scala.collection.immutable.Map[K,A] =
+      override def flattenOption[A](fa: Map[K, Option[A]]): Map[K,A] =
         fa.collect[K, A](scala.Function.unlift[(K, Option[A]), (K, A)](t => t._2.map[(K, A)](scala.Predef.ArrowAssoc(t._1) -> _)))
 
-      override def filter[A](fa: Map[K, A])(f: A => Boolean): scala.collection.immutable.Map[K,A] =
+      override def filter[A](fa: Map[K, A])(f: A => Boolean): Map[K,A] =
         fa.filter { case (_, v) => f(v) }
 
     }

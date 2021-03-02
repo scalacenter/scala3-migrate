@@ -2,7 +2,7 @@ package migrate
 
 object Basic {
   val name: String = "String"
-  val people: List[scala.collection.immutable.Map[Int,Int]] = List.apply[Int](1).map[Int](_ + 1).map[scala.collection.immutable.Map[Int,Int]](elm => Map.apply[Int, Int](scala.Predef.ArrowAssoc(elm) -> elm))
+  val people: List[Map[Int,Int]] = List.apply[Int](1).map[Int](_ + 1).map[Map[Int,Int]](elm => Map.apply[Int, Int](scala.Predef.ArrowAssoc(elm) -> elm))
   
   for {
     a <- List.apply[Int](1)
@@ -13,7 +13,7 @@ object Basic {
     (a, b) <- List.apply[(Int, Int)](scala.Predef.ArrowAssoc(1) -> 2) // pattern
   } yield a + b
   
-  val listOfTEst: List[migrate.Other.Test] = List.apply[migrate.Other.Test](Other.Test(1))
+  val listOfTEst: List[Other.Test] = List.apply[Other.Test](Other.Test(1))
   def a[A](in: A): List[A] = List.apply[A](in)
 }
 
@@ -23,5 +23,5 @@ object Other {
 
 class Test {
   case class Ok(s: String)
-  val list: List[Test.this.Ok] = List.apply[Test.this.Ok](Ok("ok"))
+  val list: List[Ok] = List.apply[Ok](Ok("ok"))
 }

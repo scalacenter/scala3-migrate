@@ -11,5 +11,5 @@ object Incompat11 {
   implicit class RichFuture[T](future: Future[T]) {
     def await(implicit duration: Duration = DurationInt(10).seconds): T = Await.result[T](future, duration)
   }
-  def test: Int = incompat.Incompat11.RichFuture(Future.apply[incompat.Incompat11.Foo](new Foo())(scala.concurrent.ExecutionContext.Implicits.global)).await.status
+  def test: Int = incompat.Incompat11.RichFuture(Future.apply[Foo](new Foo())(scala.concurrent.ExecutionContext.Implicits.global)).await.status
 }

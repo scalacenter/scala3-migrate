@@ -4,7 +4,7 @@ import scala.collection.{mutable => mut}
 
 object ExplicitResultTypesDiverse {
   
-  val map: scala.collection.mutable.Map[Int,Int] = mut.Map.empty[Int, Int]
+  val map: collection.mutable.Map[Int,Int] = mut.Map.empty[Int, Int]
 
   object Ignored {
     import java.{util => ju}
@@ -12,7 +12,7 @@ object ExplicitResultTypesDiverse {
   }
   val missingImport: java.util.List[Int] = java.util.Collections.emptyList[Int]()
 
-  def o3: migrate.testpkg.O3 = new testpkg.O3()
+  def o3: testpkg.O3 = new testpkg.O3()
 
   def overload(a: Int): Int = a
   def overload(a: String): String = a
@@ -33,6 +33,6 @@ object ExplicitResultTypesDiverse {
     def get(e: Int): Int = e
   }
 
-  val o4: List[migrate.testpkg.O4] = null.asInstanceOf[List[testpkg.O4]]
+  val o4: List[testpkg.O4] = null.asInstanceOf[List[testpkg.O4]]
 
 }

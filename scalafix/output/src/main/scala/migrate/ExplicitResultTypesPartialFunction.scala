@@ -1,5 +1,5 @@
 package migrate
 
 object PartialFunction {
-  def empty[A, B]: PartialFunction[A,B] = scala.PartialFunction.empty[A, B]
+  def empty[A, B]: scala.PartialFunction[A,B] = scala.PartialFunction.empty[A, B]
 }

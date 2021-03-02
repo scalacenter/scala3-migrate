@@ -16,7 +16,7 @@ trait SortedMapInstances extends SortedMapInstances2 {
     cats.kernel.instances.sortedMap.catsKernelStdHashForSortedMap[K, V]
 
   @deprecated("Use cats.kernel.instances.sortedMap.catsKernelStdCommutativeMonoidForSortedMap", "2.0.0-RC2")
-  def catsStdCommutativeMonoidForSortedMap[K: Order, V: CommutativeSemigroup]: cats.kernel.CommutativeMonoid[scala.collection.immutable.SortedMap[K,V]] =
+  def catsStdCommutativeMonoidForSortedMap[K: Order, V: CommutativeSemigroup]: cats.kernel.CommutativeMonoid[collection.immutable.SortedMap[K,V]] =
     cats.kernel.instances.sortedMap.catsKernelStdCommutativeMonoidForSortedMap[K, V]
 
   implicit def catsStdShowForSortedMap[A: Order, B](implicit showA: Show[A], showB: Show[B]): Show[SortedMap[A, B]] =
@@ -35,10 +35,10 @@ trait SortedMapInstances extends SortedMapInstances2 {
       implicit val orderingK: Ordering[K] = Order[K].toOrdering
 
       def traverse[G[_], A, B](fa: SortedMap[K, A])(f: A => G[B])(implicit G: Applicative[G]): G[SortedMap[K, B]] = {
-        val gba: Eval[G[SortedMap[K, B]]] = Always.apply[G[scala.collection.immutable.SortedMap[K,B]]](G.pure[scala.collection.immutable.SortedMap[K,B]](SortedMap.empty[K, Nothing](Order[K].toOrdering)))
+        val gba: Eval[G[SortedMap[K, B]]] = Always.apply[G[SortedMap[K,B]]](G.pure[SortedMap[K,B]](SortedMap.empty[K, Nothing](Order[K].toOrdering)))
         Foldable
-          .iterateRight[(K, A), G[scala.collection.immutable.SortedMap[K,B]]](fa, gba) { (kv, lbuf) =>
-            G.map2Eval[B, scala.collection.immutable.SortedMap[K,B], scala.collection.immutable.SortedMap[K,B]](f(kv._2), lbuf)({ (b, buf) =>
+          .iterateRight[(K, A), G[SortedMap[K,B]]](fa, gba) { (kv, lbuf) =>
+            G.map2Eval[B, SortedMap[K,B], SortedMap[K,B]](f(kv._2), lbuf)({ (b, buf) =>
               buf + (scala.Predef.ArrowAssoc(kv._1) -> b)
             })
           }
@@ -53,8 +53,8 @@ trait SortedMapInstances extends SortedMapInstances2 {
 
       override def map2Eval[A, B, Z](fa: SortedMap[K, A],
                                      fb: Eval[SortedMap[K, B]])(f: (A, B) => Z): Eval[SortedMap[K, Z]] =
-        if (fa.isEmpty) Eval.now[scala.collection.immutable.SortedMap[K,Nothing]](SortedMap.empty[K, Nothing](Order[K].toOrdering)) // no need to evaluate fb
-        else fb.map[scala.collection.immutable.SortedMap[K,Z]](fb => map2[A, B, Z](fa, fb)(f))
+        if (fa.isEmpty) Eval.now[SortedMap[K,Nothing]](SortedMap.empty[K, Nothing](Order[K].toOrdering)) // no need to evaluate fb
+        else fb.map[SortedMap[K,Z]](fb => map2[A, B, Z](fa, fb)(f))
 
       override def ap2[A, B, Z](f: SortedMap[K, (A, B) => Z])(fa: SortedMap[K, A],
                                                               fb: SortedMap[K, B]): SortedMap[K, Z] =
@@ -70,7 +70,7 @@ trait SortedMapInstances extends SortedMapInstances2 {
         Foldable.iterateRight[A, B](fa.values, lb)(f)
 
       def tailRecM[A, B](a: A)(f: A => SortedMap[K, Either[A, B]]): SortedMap[K, B] = {
-        val bldr: scala.collection.mutable.Builder[(K, B),scala.collection.immutable.SortedMap[K,B]] = SortedMap.newBuilder[K, B](Order[K].toOrdering)
+        val bldr: collection.mutable.Builder[(K, B),SortedMap[K,B]] = SortedMap.newBuilder[K, B](Order[K].toOrdering)
 
         @tailrec def descend(k: K, either: Either[A, B]): Unit =
           either match {
@@ -117,14 +117,14 @@ trait SortedMapInstances extends SortedMapInstances2 {
       def functor: Functor[SortedMap[K, *]] = this
 
       def align[A, B](fa: SortedMap[K, A], fb: SortedMap[K, B]): SortedMap[K, Ior[A, B]] =
-        alignWith[A, B, cats.data.Ior[A,B]](fa, fb)(identity[cats.data.Ior[A,B]])
+        alignWith[A, B, Ior[A,B]](fa, fb)(identity[Ior[A,B]])
 
       override def alignWith[A, B, C](fa: SortedMap[K, A], fb: SortedMap[K, B])(f: Ior[A, B] => C): SortedMap[K, C] = {
-        val keys: scala.collection.immutable.SortedSet[K] = fa.keySet ++ fb.keySet
-        val builder: scala.collection.mutable.Builder[(K, C),scala.collection.immutable.SortedMap[K,C]] = SortedMap.newBuilder[K, C]
+        val keys: collection.immutable.SortedSet[K] = fa.keySet ++ fb.keySet
+        val builder: collection.mutable.Builder[(K, C),SortedMap[K,C]] = SortedMap.newBuilder[K, C]
         builder.sizeHint(keys.size)
         keys
-          .foldLeft[scala.collection.mutable.Builder[(K, C),scala.collection.immutable.SortedMap[K,C]]](builder) { (builder, k) =>
+          .foldLeft[collection.mutable.Builder[(K, C),SortedMap[K,C]]](builder) { (builder, k) =>
             (fa.get(k), fb.get(k)) match {
               case (Some(a), Some(b)) => builder += scala.Predef.ArrowAssoc(k) -> f(Ior.both[A, B](a, b))
               case (Some(a), None)    => builder += scala.Predef.ArrowAssoc(k) -> f(Ior.left[A, Nothing](a))
@@ -183,11 +183,11 @@ private[instances] trait SortedMapInstancesBinCompat0 {
       override def traverseFilter[G[_], A, B](
                                                fa: SortedMap[K, A]
                                              )(f: A => G[Option[B]])(implicit G: Applicative[G]): G[SortedMap[K, B]] = {
-        val gba: Eval[G[SortedMap[K, B]]] = Always.apply[G[scala.collection.immutable.SortedMap[K,B]]](G.pure[scala.collection.immutable.SortedMap[K,B]](SortedMap.empty[K, Nothing]))
+        val gba: Eval[G[SortedMap[K, B]]] = Always.apply[G[SortedMap[K,B]]](G.pure[SortedMap[K,B]](SortedMap.empty[K, Nothing]))
         Foldable
-          .iterateRight[(K, A), G[scala.collection.immutable.SortedMap[K,B]]](fa, gba) { (kv, lbuf) =>
-            G.map2Eval[Option[B], scala.collection.immutable.SortedMap[K,B], scala.collection.immutable.SortedMap[K,B]](f(kv._2), lbuf)({ (ob, buf) =>
-              ob.fold[scala.collection.immutable.SortedMap[K,B]](buf)(b => buf + (scala.Predef.ArrowAssoc(kv._1) -> b))
+          .iterateRight[(K, A), G[SortedMap[K,B]]](fa, gba) { (kv, lbuf) =>
+            G.map2Eval[Option[B], SortedMap[K,B], SortedMap[K,B]](f(kv._2), lbuf)({ (ob, buf) =>
+              ob.fold[SortedMap[K,B]](buf)(b => buf + (scala.Predef.ArrowAssoc(kv._1) -> b))
             })
           }
           .value

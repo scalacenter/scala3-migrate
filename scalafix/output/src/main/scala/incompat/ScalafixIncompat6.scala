@@ -5,6 +5,6 @@ class ScalafixIncompat6 {
 
   object Test {
     def foo[F[_], A](f: F[A]): F[A] = ???
-    def bar[A: Show, B: Show]: Show[A] = foo[ScalafixIncompat6.this.Show, A](implicitly[ScalafixIncompat6.this.Show[A]])
+    def bar[A: Show, B: Show]: Show[A] = foo[Show, A](implicitly[Show[A]])
   }
 }
