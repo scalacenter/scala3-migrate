@@ -177,7 +177,7 @@ lazy val `scalafix-tests` = project
 addCommandAlias("compileScalafixOutputinScala3", s"""set `scalafix-output`/scalaVersion := "${V.scala3}" ; compile""")
 
 lazy val V = new {
-  val scala213              = "2.13.4"
+  val scala213              = "2.13.5"
   val scala213BinaryVersion = "2.13"
   val scala212              = "2.12.13"
   val scalatest             = "3.2.5"
