@@ -8,7 +8,7 @@ import scalafix.testkit.DiffAssertions
 class MigrateLibsSuite extends AnyFunSuiteLike with DiffAssertions {
   val binary: CrossVersion.Binary = CrossVersion.Binary("", "")
 
-  val zioTests: Lib213      = Lib213.from("dev.zio:zio-test:1.0.4", binary, false).get
+  val cats: Lib213          = Lib213.from("org.typelevel:cats-core:2.4.0", binary, false).get
   val opentelemetry: Lib213 = Lib213.from("io.opentelemetry:opentelemetry-api:0.7.1", CrossVersion.Disabled, false).get
   val collection: Lib213    = Lib213.from("org.scala-lang.modules:scala-collection-compat:2.4.0", binary, false).get
   val kind: Lib213          = Lib213.from("org.typelevel:kind-projector:0.11.3", binary, true).get
@@ -26,10 +26,9 @@ class MigrateLibsSuite extends AnyFunSuiteLike with DiffAssertions {
     assert(isTheSame(opentelemetry, res))
   }
   test("Available in scala 3") {
-    val migrated = ScalaMigrat.migrateLibs(Seq(zioTests))
-    val res      = migrated(zioTests)
+    val migrated = ScalaMigrat.migrateLibs(Seq(cats))
+    val res      = migrated(cats)
     assert(res.nonEmpty)
-    println(s"res.map(_.crossVersion) = ${res.map(_.crossVersion)}")
     assert(res.forall(_.crossVersion.isInstanceOf[CrossVersion.For2_13Use3]))
   }
   test("Don't show older version") {

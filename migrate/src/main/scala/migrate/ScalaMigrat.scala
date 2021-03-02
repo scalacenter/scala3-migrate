@@ -156,10 +156,8 @@ object ScalaMigrat {
     libsCompatibleWith213.collect { case (lib, None) =>
       scribe.info(s"Not able to parse the crossVersion of ${lib}: ${lib.getCrossVersion}")
     }
-    migrate213Libs(libsCompatibleWith213.values.flatten.toSeq)
+    val allParsedLibs = libsCompatibleWith213.values.flatten.toSeq
+    allParsedLibs.map(lib => (lib, lib.toCompatible)).toMap
   }
-
-  private def migrate213Libs(libs: Seq[Lib213]): Map[Lib213, Seq[CompatibleWithScala3Lib]] =
-    libs.map(lib => (lib, lib.toCompatible)).toMap
 
 }
