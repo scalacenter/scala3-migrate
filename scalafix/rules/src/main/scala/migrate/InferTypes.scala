@@ -63,17 +63,21 @@ class InferTypes[G <: Global](g: G) {
       term                  <- SyntheticHelper.getTermName(origin)
       gterm                  = if (replace.isEmpty) g.TermName(term.toString()) else g.TermName("apply")
       (globalTree, context) <- compilerSrv.getGlobalTree(origin)
-      tree                  <- getTypeApplyTree(globalTree, gterm)
-      types                  = tree.args.map(_.tpe.dealias)
+      types                 <- getTypeApplyTree(globalTree, origin, gterm)
       pretty                 = new PrettyPrinter[g.type](g)
       prettyTypes           <- types.map(t => pretty.print(t, context)).sequence
     } yield prettyTypes
 
-  private def getTypeApplyTree(gtree: g.Tree, termName: g.Name): Option[g.TypeApply] =
-    gtree.collect {
-      case t @ g.TypeApply(fun, _) if fun.isInstanceOf[g.Select] && fun.asInstanceOf[g.Select].name == termName =>
-        t
-    }.headOption
+  private def getTypeApplyTree(gtree: g.Tree, original: Tree, termName: g.Name): Option[List[g.Type]] = {
+    val treeAtTheRightPos = gtree.collect {
+      case t if CompilerService.equalForPositions(t.pos, original.pos) => t
+    }.filter(_.isInstanceOf[g.TypeApply])
+
+    treeAtTheRightPos.collectFirst {
+      case t @ g.TypeApply(fun, args) if fun.isInstanceOf[g.Select] && fun.asInstanceOf[g.Select].name == termName =>
+        args.map(_.tpe.dealias)
+    }
+  }
 
   private def fixDefinition(defn: Defn, name: Term.Name, body: Term)(
     implicit doc: SemanticDocument,

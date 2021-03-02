@@ -66,11 +66,7 @@ class CompilerService[G <: Global](val g: G, doc: SemanticDocument) {
   def getGlobalTree(tree: Tree): Option[(G#Tree, g.Context)] = {
     val gpos  = getPosAfter(tree.pos)
     val gtree = Try(globalService.typedTreeAt(gpos)).toOption
-    if (gtree.isDefined && gtree.get.isInstanceOf[g.Template]) {
-      val gpos  = getPosBefore(tree.pos)
-      val gtree = Try(globalService.typedTreeAt(gpos)).toOption
-      gtree.flatMap(tree => getContext(gpos).map(context => (tree, context)))
-    } else gtree.flatMap(tree => getContext(gpos).map(context => (tree, context)))
+    gtree.flatMap(tree => getContext(gpos).map(context => (tree, context)))
   }
 
   private def getContext(gpos: ReflectPos): Option[g.Context] = {
@@ -80,9 +76,6 @@ class CompilerService[G <: Global](val g: G, doc: SemanticDocument) {
 
   private def getPosAfter(scalaMetaPos: Position): ReflectPos =
     ReflectPos.range(sourceFile, scalaMetaPos.start, scalaMetaPos.start, scalaMetaPos.end + 1)
-
-  private def getPosBefore(scalaMetaPos: Position): ReflectPos =
-    ReflectPos.range(sourceFile, scalaMetaPos.start - 1, scalaMetaPos.start, scalaMetaPos.end)
 
   private def getExactPos(scalaMetaPos: Position): ReflectPos =
     ReflectPos.range(sourceFile, scalaMetaPos.start, scalaMetaPos.start, scalaMetaPos.end)
