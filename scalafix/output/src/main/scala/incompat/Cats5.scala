@@ -33,7 +33,7 @@ trait MapInstances extends cats.kernel.instances.MapInstances {
             })
           }
           .value
-        G.map[Map[K,B], Map[K,B]](gbb)(_.toMap[K, B](scala.$less$colon$less.refl))
+        G.map[Map[K,B], Map[K,B]](gbb)(_.toMap[K, B](<:<.refl))
       }
 
       override def map[A, B](fa: Map[K, A])(f: A => B): Map[K, B] =

@@ -29,12 +29,8 @@ class PrettyPrinter[G <: Global](val g: G) {
             else Some(SingleType(loop(pre).get, sym))
 
           }
-          case ThisType(sym) => {
-            val lookUp = context.lookupSymbol(sym.name.toTermName, _ => true)
-            if (isTheSameSymbol(sym, lookUp))
-              Some(new PrettyType(sym.name.toTermName.toString))
-            else Some(lookUpName(sym, context))
-          }
+          case ThisType(sym) =>
+            Some(new PrettyType(lookUpName(sym, context)))
           case ConstantType(Constant(sym: TermSymbol)) => Some(t)
           case ConstantType(Constant(tpe: Type))       => Some(t)
           case SuperType(thistpe, supertpe)            => Some(t)
@@ -66,25 +62,15 @@ class PrettyPrinter[G <: Global](val g: G) {
     }
   }
 
-  def print(gsymbol: g.Symbol, context: g.Context): Option[String] = {
-    val top = topPackage(gsymbol)
-    val to  = context.lookupSymbol(top.name.toTermName, _ => true)
-    val inScope = to match {
-      case LookupSucceeded(qual, _) => !qual.isEmpty
-      case _                        => false
-    }
-
+  def print(gsymbol: g.Symbol, context: g.Context): Option[String] =
     if (isPrivateMaybeWithin(gsymbol)) None
     else if (gsymbol.name.startsWith("evidence$")) None
     else if (gsymbol.isLocalToBlock)
       Some(gsymbol.name.toString())
-    else if (inScope && top.isStatic) {
-      Some(s"${top.owner.nameSyntax}.${gsymbol.fullName}")
-    } else if (gsymbol.isStatic) Some(gsymbol.fullName)
+    else if (gsymbol.isStatic) Some(lookUpName(gsymbol, context))
     else None
-  }
 
-  private def lookUpName(sym: g.Symbol, context: g.Context): g.Type = {
+  private def lookUpName(sym: g.Symbol, context: g.Context): String = {
     // first get all owners
     val owners = getOwnersFor(sym)
     val necessaryOwners = owners.iterator.takeWhile {
@@ -96,13 +82,13 @@ class PrettyPrinter[G <: Global](val g: G) {
 
     val size = necessaryOwners.size
     necessaryOwners match {
-      case Nil => g.NoPrefix
+      case Nil => sym.name.toTermName.toString
       case _ if size < owners.size - 1 =>
         val names = owners.take(size + 1).reverse.map(s => m.Term.Name(s.nameSyntax))
         val ref = names.tail.foldLeft(names.head: m.Term.Ref) { case (qual, name) =>
           m.Term.Select(qual, name)
         }
-        new PrettyType(ref.syntax)
+        ref.syntax
       case _ if size >= owners.size - 1 =>
         val top = owners.last
         val to  = context.lookupSymbol(top.name.toTermName, _ => true)
@@ -111,8 +97,8 @@ class PrettyPrinter[G <: Global](val g: G) {
           case _                        => false
         }
         if (inScope && top.isStatic) {
-          new PrettyType(s"${top.owner.nameSyntax}.${sym.fullNameSyntax}")
-        } else new PrettyType(sym.fullNameSyntax)
+          s"${top.owner.nameSyntax}.${sym.fullNameSyntax}"
+        } else sym.fullNameSyntax
     }
   }
 

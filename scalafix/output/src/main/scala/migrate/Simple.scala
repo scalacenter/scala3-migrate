@@ -14,7 +14,7 @@ object Simple {
 
   case class Person(name: String) {
     import Person._
-    implicit val crazy1: Int = implicitly[Int](migrate.Simple.Person.age)
+    implicit val crazy1: Int = implicitly[Int](age)
 
     val minute: FiniteDuration = DurationInt(1).minute
   }
