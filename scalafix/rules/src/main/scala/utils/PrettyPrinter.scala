@@ -16,11 +16,14 @@ class PrettyPrinter[G <: Global](val g: G) {
       else {
         t match {
           case TypeRef(pre, sym, args) => {
-            val lookUp  = context.lookupSymbol(sym.name, _ => true)
-            val argsOpt = args.map(loop).sequence
-            if (isTheSameSymbol(sym, lookUp, pre)) {
-              argsOpt.map(a => TypeRef(g.NoPrefix, sym, a))
-            } else argsOpt.map(a => TypeRef(loop(pre).get, sym, a))
+            if (sym.isExistentialSkolem) None
+            else {
+              val lookUp  = context.lookupSymbol(sym.name, _ => true)
+              val argsOpt = args.map(loop).sequence
+              if (isTheSameSymbol(sym, lookUp, pre)) {
+                argsOpt.map(a => TypeRef(g.NoPrefix, sym, a))
+              } else argsOpt.map(a => TypeRef(loop(pre).get, sym, a))
+            }
           }
           case SingleType(pre, sym) => {
             val lookUp = context.lookupSymbol(sym.name, _ => true)
@@ -61,8 +64,9 @@ class PrettyPrinter[G <: Global](val g: G) {
       }
 
     gtype match {
-      case ThisType(_) => Some(gtype)
-      case _           => loop(gtype)
+      case _ if gtype.toString() == "_" => None // for topLevel WildCard.
+      case ThisType(_)                  => Some(gtype)
+      case _                            => loop(gtype)
     }
   }
 
