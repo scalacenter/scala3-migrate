@@ -22,7 +22,7 @@ object EtaExpansion {
   bar(EtaExpansion.this.foo2)
   bar(foo2)
   bar(foo2 _)
-  bar(a => b => foo2(a)(b)(implicits.EtaExpansion.value))
-  bar(a => b => EtaExpansion.this.foo2(a)(b)(implicits.EtaExpansion.value))
+  bar(a => b => foo2(a)(b)(value))
+  bar(a => b => EtaExpansion.this.foo2(a)(b)(value))
   
 }

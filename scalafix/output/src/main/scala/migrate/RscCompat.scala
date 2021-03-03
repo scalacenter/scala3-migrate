@@ -147,7 +147,7 @@ object RscCompat {
     val innerClass3: ti.X = ti.x
     val innerClass4: Base64.Decoder = Base64.getMimeDecoder
 
-    val sane1: String = implicitly[String](migrate.RscCompat.implicit_y)
+    val sane1: String = implicitly[String](implicit_y)
 
     val t: foo.T = ??? : foo.T
 
