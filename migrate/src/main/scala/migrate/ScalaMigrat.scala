@@ -111,26 +111,30 @@ class ScalaMigrat(scalafixSrv: ScalafixService) {
     } yield ()
 
   private def buildMigrationFiles(unmanagedSources: Seq[AbsolutePath]): Try[Seq[FileMigrationState.Initial]] =
-    for {
-      fileEvaluations <-
-        timeAndLog(scalafixSrv.inferTypesAndImplicits(unmanagedSources)) {
-          case (duration, Success(files)) =>
-            val fileEvaluationsSeq = files.getFileEvaluations().toSeq
-            val patchesCount       = fileEvaluationsSeq.map(_.getPatches().size).sum
-            scribe.info(s"Found ${patchesCount} patch candidate(s) in ${unmanagedSources.size} file(s)after $duration")
-          case (_, Failure(e)) =>
-            scribe.info(s"""|Failed inferring types 
-                            |Cause ${e.getMessage()}""".stripMargin)
-        }
-      fileEvaluationMap <- fileEvaluations
-                             .getFileEvaluations()
-                             .toSeq
-                             .map(e => AbsolutePath.from(e.getEvaluatedFile()).map(file => file -> e))
-                             .sequence
-                             .map(_.toMap)
-      fileToMigrate <-
-        unmanagedSources.map(src => fileEvaluationMap.get(src).map(FileMigrationState.Initial).toTry).sequence
-    } yield fileToMigrate
+    if (unmanagedSources.isEmpty) Success(Seq())
+    else
+      for {
+        fileEvaluations <-
+          timeAndLog(scalafixSrv.inferTypesAndImplicits(unmanagedSources)) {
+            case (duration, Success(files)) =>
+              val fileEvaluationsSeq = files.getFileEvaluations().toSeq
+              val patchesCount       = fileEvaluationsSeq.map(_.getPatches().size).sum
+              scribe.info(
+                s"Found ${patchesCount} patch candidate(s) in ${unmanagedSources.size} file(s)after $duration"
+              )
+            case (_, Failure(e)) =>
+              scribe.info(s"""|Failed inferring types 
+                              |Cause ${e.getMessage()}""".stripMargin)
+          }
+        fileEvaluationMap <- fileEvaluations
+                               .getFileEvaluations()
+                               .toSeq
+                               .map(e => AbsolutePath.from(e.getEvaluatedFile()).map(file => file -> e))
+                               .sequence
+                               .map(_.toMap)
+        fileToMigrate <-
+          unmanagedSources.map(src => fileEvaluationMap.get(src).map(FileMigrationState.Initial).toTry).sequence
+      } yield fileToMigrate
 
 }
 object ScalaMigrat {
