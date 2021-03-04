@@ -30,13 +30,23 @@ class ScalaMigrat(scalafixSrv: ScalafixService) {
     for {
       compiler               <- setupScala3Compiler(scala3Classpath, scala3ClassDirectory, scala3CompilerOptions)
       (scalaFiles, javaFiles) = unmanagedSources.partition(_.value.endsWith("scala"))
-      initialFileToMigrate <-
-        buildMigrationFiles(scalaFiles)
-      _ <- compileInScala3(initialFileToMigrate, javaFiles ++ managedSources, compiler)
-      initialFileToMigrate <-
-        buildMigrationFiles(unmanagedSources)
-      _            <- compileInScala3(initialFileToMigrate, managedSources, compiler)
-      migratedFiles = initialFileToMigrate.map(f => (f.source, f.migrate(compiler))).toMap
+      // first try to compile without adding any patch
+      filesWithErr = compileInScala3AndGetFilesWithErrors(unmanagedSources ++ managedSources, compiler)
+      migratedFiles <- if (filesWithErr.isEmpty) {
+                         scribe.info("The project compiles successfully in Scala 3")
+                         Success(Map[AbsolutePath, FileMigrationState.FinalState]())
+                       } else {
+                         val filesWithoutErrors = scalaFiles.diff(filesWithErr)
+                         for {
+                           initialFileToMigrate <- buildMigrationFiles(filesWithErr)
+                           _ <- compileInScala3(
+                                  initialFileToMigrate,
+                                  filesWithoutErrors ++ javaFiles ++ managedSources,
+                                  compiler
+                                )
+                           migratedFiles = initialFileToMigrate.map(f => (f.source, f.migrate(compiler))).toMap
+                         } yield migratedFiles
+                       }
     } yield migratedFiles
   }
 
@@ -100,15 +110,23 @@ class ScalaMigrat(scalafixSrv: ScalafixService) {
     for {
       cuUnmanagedSources <- migrationFiles.map(_.previewAllPatches()).sequence
       cuManagedSources    = managedSources.map(path => new CompilationUnit(path.value, FileUtils.read(path)))
-      _ <- timeAndLog(Try(compiler.compileAndReport(cuManagedSources.toList ++ cuUnmanagedSources.toList, reporter))) {
+      _ <- timeAndLog(Try(compiler.compileAndReport((cuUnmanagedSources ++ cuManagedSources).toList, reporter))) {
              case (finiteDuration, Success(_)) =>
                scribe.info(s"Successfully compiled with scala 3 in $finiteDuration")
              case (_, Failure(e)) =>
                scribe.info(s"""|Compilation with scala 3 failed.
                                |Please fix the errors above.""".stripMargin)
            }
-
     } yield ()
+
+  private def compileInScala3AndGetFilesWithErrors(
+    files: Seq[AbsolutePath],
+    compiler: Scala3Compiler
+  ): Seq[AbsolutePath] = {
+    val compilationUnits = files.map(path => new CompilationUnit(path.value, FileUtils.read(path)))
+    val res              = compiler.compileAndReportFilesWithErrors(compilationUnits.toList).toSeq
+    res.map(AbsolutePath.from(_)).sequence.getOrElse(Nil)
+  }
 
   private def buildMigrationFiles(unmanagedSources: Seq[AbsolutePath]): Try[Seq[FileMigrationState.Initial]] =
     if (unmanagedSources.isEmpty) Success(Seq())
@@ -137,6 +155,7 @@ class ScalaMigrat(scalafixSrv: ScalafixService) {
       } yield fileToMigrate
 
 }
+
 object ScalaMigrat {
   def migrateScalacOptions(scalacOptions: Seq[String]): MigratedScalacOptions = {
     val sanitized                              = ScalacOption.sanitizeScalacOption(scalacOptions)

@@ -10,6 +10,8 @@ import scala.Function1;
 import scala.collection.immutable.List;
 import scala.runtime.AbstractFunction1;
 
+import java.util.HashSet;
+
 public class Scala3Compiler {
   private Compiler compiler;
   private Context context;
@@ -49,5 +51,14 @@ public class Scala3Compiler {
     if (reporter.hasErrors()) {
       throw new CompilationException(reporter.allErrors().mkString("\n"));
     }
+  }
+
+  public String[] compileAndReportFilesWithErrors(List<CompilationUnit> units) {
+    List<SourceFile> sources = units.map(toSourceFile);
+    FileWithErrorReporter reporter = new FileWithErrorReporter();
+    Context freshContext = context.fresh().setReporter(reporter);
+    Run run = compiler.newRun(freshContext);
+    run.compileSources(sources);
+    return reporter.getFilesWithErrors();
   }
 }

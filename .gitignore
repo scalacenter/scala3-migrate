@@ -28,3 +28,4 @@ out/
 .metals/
 .vscode/
 project/metals.sbt
+project/project/metals.sbt
