@@ -34,14 +34,15 @@ case class Scala2Inputs(
 )
 
 object ScalaMigratePlugin extends AutoPlugin {
-  private[migrate] val scala3inputsAttirbute = AttributeKey[Scala3Inputs]("scala3Inputs")
-  private[migrate] val scala2inputsAttirbute = AttributeKey[Scala2Inputs]("scala2Inputs")
-  private[migrate] val syntheticsOn          = "-P:semanticdb:synthetics:on"
-  private[migrate] val migrationOn           = "-source:3.0-migration"
-  private[migrate] val scalaBinaryVersion    = BuildInfo.scalaBinaryVersion
-  private[migrate] val migrateVersion        = BuildInfo.version
-  private[migrate] val scala3Version         = BuildInfo.scala3Version
-  private[migrate] val migrateAPI            = Migrate.fetchAndClassloadInstance(migrateVersion, scalaBinaryVersion)
+  private[migrate] val scala3inputsAttirbute    = AttributeKey[Scala3Inputs]("scala3Inputs")
+  private[migrate] val scala2inputsAttirbute    = AttributeKey[Scala2Inputs]("scala2Inputs")
+  private[migrate] val syntheticsOn             = "-P:semanticdb:synthetics:on"
+  private[migrate] val migrationOn              = "-source:3.0-migration"
+  private[migrate] val scalaBinaryVersion       = BuildInfo.scalaBinaryVersion
+  private[migrate] val migrateVersion           = BuildInfo.version
+  private[migrate] val scala3Version            = BuildInfo.scala3Version
+  private[migrate] val migrateSemanticdbVersion = BuildInfo.semanticdbVersion
+  private[migrate] val migrateAPI               = Migrate.fetchAndClassloadInstance(migrateVersion, scalaBinaryVersion)
 
   object autoImport {
     val scala3InputComputed = taskKey[Scala3Inputs]("show scala 3 inputs if available")
@@ -63,10 +64,16 @@ object ScalaMigratePlugin extends AutoPlugin {
   override def trigger = AllRequirements
 
   override def projectSettings: Seq[Setting[_]] =
-    Seq(semanticdbEnabled := {
-      if (scalaVersion.value.contains("2.13.")) true
-      else semanticdbEnabled.value
-    }) ++
+    Seq(
+      semanticdbEnabled := {
+        if (scalaVersion.value.startsWith("2.13.")) true
+        else semanticdbEnabled.value
+      },
+      semanticdbVersion := {
+        if (scalaVersion.value.startsWith("2.13.")) migrateSemanticdbVersion
+        else semanticdbVersion.value
+      }
+    ) ++
       inConfig(Compile)(configSettings) ++
       inConfig(Test)(configSettings) ++
       Seq(commands ++= Seq(migratePreprare, migrateScalacOptions, migrateLibDependencies, migrate))
@@ -134,7 +141,10 @@ object ScalaMigratePlugin extends AutoPlugin {
 
       },
       scalacOptions ++= {
-        if (scalaVersion.value.startsWith("2.13.") && !scalacOptions.value.contains(syntheticsOn))
+        if (
+          scalaVersion.value.startsWith("2.13.") && semanticdbEnabled.value && !scalacOptions.value
+            .contains(syntheticsOn)
+        )
           Seq(syntheticsOn)
         else if (scalaVersion.value.startsWith("3.") && !scalacOptions.value.contains(migrationOn))
           Seq(migrationOn)
