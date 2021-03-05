@@ -117,7 +117,7 @@ object ScalaMigratePlugin extends AutoPlugin {
         s"${projectId} / isScala213",
         s"$projectId / compile",
         s"$projectId / storeScala2Inputs",
-        s"""set $projectId / scalaVersion := "${scala3Version}"""",
+        s"""set LocalProject("$projectId") / scalaVersion := "${scala3Version}"""",
         s"$projectId / storeScala3Inputs",
         s"$projectId / internalMigrate",
         PopOnFailure,
