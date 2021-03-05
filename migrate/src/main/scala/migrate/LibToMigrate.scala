@@ -22,23 +22,30 @@ sealed trait LibToMigrate extends Lib {
 
 }
 
-case class Lib213(organization: Organization, name: Name, revision: Revision, crossVersion: CrossVersion)
-    extends LibToMigrate {
+case class Lib213(
+  organization: Organization,
+  name: Name,
+  revision: Revision,
+  crossVersion: CrossVersion,
+  isCompilerPlugin: Boolean
+) extends LibToMigrate {
   def toCompatible: Seq[CompatibleWithScala3Lib] =
-    crossVersion match {
-      // keep the same if CrossVersion.Disabled. Usually it's a Java Lib
-      case CrossVersion.Disabled => Seq(CompatibleWithScala3Lib.from(this))
-      // look for revisions that are compatible with scala 3 binary version
-      case CrossVersion.Binary(_, _) => getCompatibleWhenBinaryCrossVersion()
-      // look for revisions that are compatible with scala 3 full version
-      case CrossVersion.Full(_, _) => CoursierHelper.getCompatibleForScala3Full(this)
-      // already compatible
-      case CrossVersion.For2_13Use3(_, _) => Seq(CompatibleWithScala3Lib.from(this))
-      case CrossVersion.For3Use2_13(_, _) => Seq(CompatibleWithScala3Lib.from(this))
-      // For Patch and Constant, we search full compatible scala 3 version
-      case CrossVersion.Patch       => CoursierHelper.getCompatibleForScala3Full(this)
-      case CrossVersion.Constant(_) => CoursierHelper.getCompatibleForScala3Full(this)
-    }
+    if (isCompilerPlugin) Seq()
+    else
+      crossVersion match {
+        // keep the same if CrossVersion.Disabled. Usually it's a Java Lib
+        case CrossVersion.Disabled => Seq(CompatibleWithScala3Lib.from(this))
+        // look for revisions that are compatible with scala 3 binary version
+        case CrossVersion.Binary(_, _) => getCompatibleWhenBinaryCrossVersion()
+        // look for revisions that are compatible with scala 3 full version
+        case CrossVersion.Full(_, _) => CoursierHelper.getCompatibleForScala3Full(this)
+        // already compatible
+        case CrossVersion.For2_13Use3(_, _) => Seq(CompatibleWithScala3Lib.from(this))
+        case CrossVersion.For3Use2_13(_, _) => Seq(CompatibleWithScala3Lib.from(this))
+        // For Patch and Constant, we search full compatible scala 3 version
+        case CrossVersion.Patch       => CoursierHelper.getCompatibleForScala3Full(this)
+        case CrossVersion.Constant(_) => CoursierHelper.getCompatibleForScala3Full(this)
+      }
 
   private def getCompatibleWhenBinaryCrossVersion(): Seq[CompatibleWithScala3Lib] = {
     val scala3Libs = CoursierHelper.getCompatibleForScala3Binary(this)
@@ -55,7 +62,9 @@ case class CompatibleWithScala3Lib(
   name: Name,
   revision: Revision,
   crossVersion: CrossVersion
-) extends LibToMigrate
+) extends LibToMigrate {
+  override def isCompilerPlugin: Boolean = false
+}
 
 object LibToMigrate {
   case class Organization(value: String)
@@ -105,18 +114,19 @@ object LibToMigrate {
 
 object Lib213 {
   def from(lib: migrate.interfaces.Lib): Option[Lib213] = {
-    val organization = Organization(lib.getOrganization)
-    val name         = Name(lib.getName)
-    val revision     = Revision(lib.getRevision)
-    val crossVersion = CrossVersion.from(lib.getCrossVersion)
-    crossVersion.map(c => Lib213(organization, name, revision, c))
+    val organization              = Organization(lib.getOrganization)
+    val name                      = Name(lib.getName)
+    val revision                  = Revision(lib.getRevision)
+    val crossVersion              = CrossVersion.from(lib.getCrossVersion)
+    val isCompilerPlugin: Boolean = lib.isCompilerPlugin
+    crossVersion.map(c => Lib213(organization, name, revision, c, isCompilerPlugin))
   }
 
-  def from(value: String, crossVersion: CrossVersion): Option[Lib213] = {
+  def from(value: String, crossVersion: CrossVersion, isCompilerPlugin: Boolean): Option[Lib213] = {
     val splited = value.split(":").toList
     splited match {
       case (org :: name :: revision :: Nil) =>
-        Some(Lib213(Organization(org), Name(name), Revision(revision), crossVersion))
+        Some(Lib213(Organization(org), Name(name), Revision(revision), crossVersion, isCompilerPlugin))
       case _ => None
     }
   }

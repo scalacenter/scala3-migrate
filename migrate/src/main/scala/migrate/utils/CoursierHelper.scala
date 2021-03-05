@@ -60,7 +60,7 @@ object CoursierHelper {
   ): Seq[CompatibleWithScala3Lib] = {
     val possibleRevisions = compatibleLibs.map(_.revision).zipWithIndex.toMap
     val index             = possibleRevisions.get(lib.revision)
-    index.map(compatibleLibs.drop).getOrElse(Nil)
+    index.map(compatibleLibs.drop).getOrElse(compatibleLibs)
   }
 
 }

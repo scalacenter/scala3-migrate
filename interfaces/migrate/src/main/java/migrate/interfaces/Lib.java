@@ -6,4 +6,5 @@ public interface Lib {
     String getRevision();
     String getCrossVersion();
     String toString();
+    boolean isCompilerPlugin();
 }
