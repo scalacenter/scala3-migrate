@@ -70,7 +70,7 @@ object ScalaMigratePlugin extends AutoPlugin {
         else semanticdbEnabled.value
       },
       semanticdbVersion := {
-        if (scalaVersion.value.contains("2.13.")) migrateSemanticdbVersion
+        if (scalaVersion.value.startsWith("2.13.")) migrateSemanticdbVersion
         else semanticdbVersion.value
       }
     ) ++
