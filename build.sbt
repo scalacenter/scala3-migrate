@@ -88,6 +88,7 @@ lazy val `sbt-plugin` = project
       name,
       "scala3Version"      -> V.scala3,
       "scalaBinaryVersion" -> V.scala213BinaryVersion,
+      "semanticdbVersion"  -> V.semanticdbVersion,
       version
     )
   )
@@ -189,4 +190,5 @@ lazy val V = new {
   val kindProjector         = "0.11.3"
   val coursierApi           = "2.0.12"
   val coursierInterface     = "1.0.3"
+  val semanticdbVersion     = "4.4.10"
 }
