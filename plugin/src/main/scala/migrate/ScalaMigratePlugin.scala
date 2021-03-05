@@ -66,7 +66,7 @@ object ScalaMigratePlugin extends AutoPlugin {
   override def projectSettings: Seq[Setting[_]] =
     Seq(
       semanticdbEnabled := {
-        if (scalaVersion.value.contains("2.13.")) true
+        if (scalaVersion.value.startsWith("2.13.")) true
         else semanticdbEnabled.value
       },
       semanticdbVersion := {
