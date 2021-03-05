@@ -105,14 +105,19 @@ object Messages {
         |Starting to migrate libDependencies for $projectId
         |""".stripMargin
 
-  def notMigratedLibs(libs: Seq[Lib]): String =
+  def notMigratedLibs(libs: Seq[Lib]): String = {
+    val (compilerPlugins, others) = libs.partition(_.isCompilerPlugin)
     s"""|
+        |The following compiler plugins are not supported in scala 3
+        |${compilerPlugins.map(_.toString).mkString("\n")}
+        |
         |
         |The following list of libs cannot be migrated.
         |Please check the migration guide for more information. 
-        |${libs.map(_.toString).mkString("\n")}
+        |${others.map(_.toString).mkString("\n")}
         |
         |""".stripMargin
+  }
 
   def migratedLib(libs: Map[Lib, Seq[Lib]]): String =
     s"""|
