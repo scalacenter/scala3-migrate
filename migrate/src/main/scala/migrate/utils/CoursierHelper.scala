@@ -11,8 +11,8 @@ import migrate.LibToMigrate.Revision
 
 object CoursierHelper {
   implicit val ec: ExecutionContextExecutor = ExecutionContext.global
-  val scala3Full                            = "3.0.0-M3"
-  val scala3Binary                          = "3.0.0-M3"
+  val scala3Full                            = "3.0.0-RC1"
+  val scala3Binary                          = "3.0.0-RC1"
   val scala213Binary                        = "2.13"
 
   def getCompatibleForScala3Binary(lib: Lib213): Seq[CompatibleWithScala3Lib] = {
