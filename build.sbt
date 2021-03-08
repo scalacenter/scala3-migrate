@@ -1,13 +1,23 @@
 import BuildInfoExtension._
 import sbt.Keys.libraryDependencies
 
-ThisBuild / scalaVersion := V.scala213
-ThisBuild / semanticdbEnabled := true
-ThisBuild / semanticdbVersion := scalafixSemanticdb.revision // use Scalafix compatible version
-ThisBuild / scalafixScalaBinaryVersion := V.scala213BinaryVersion
-ThisBuild / scalafixDependencies ++= List("com.github.liancheng" %% "organize-imports" % V.organizeImports)
-ThisBuild / organization := "ch.epfl.scala"
-ThisBuild / version := "0.1.0-SNAPSHOT"
+inThisBuild(
+  List(
+    scalaVersion := V.scala213,
+    semanticdbEnabled := true,
+    semanticdbVersion := scalafixSemanticdb.revision, // use Scalafix compatible version
+    scalafixScalaBinaryVersion := V.scala213BinaryVersion,
+    scalafixDependencies ++= List("com.github.liancheng" %% "organize-imports" % V.organizeImports),
+    organization := "ch.epfl.scala",
+    homepage := Some(url("https://github.com/scalacenter/scala3-migrate")),
+    licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+    developers := Developers.list,
+    version ~= { dynVer =>
+      if (isCI) dynVer
+      else localSnapshotVersion // only for local publishing
+    }
+  )
+)
 
 lazy val `compiler-interfaces` = project
   .in(file("interfaces/compiler"))
@@ -176,6 +186,9 @@ lazy val `scalafix-tests` = project
 
 // for CI
 addCommandAlias("compileScalafixOutputinScala3", s"""set `scalafix-output`/scalaVersion := "${V.scala3}" ; compile""")
+
+def localSnapshotVersion = "0.1.0-SNAPSHOT"
+def isCI                 = System.getenv("CI") != null
 
 lazy val V = new {
   val scala213              = "2.13.5"
