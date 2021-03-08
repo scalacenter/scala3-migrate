@@ -22,6 +22,7 @@ inThisBuild(
 lazy val `compiler-interfaces` = project
   .in(file("interfaces/compiler"))
   .settings(
+    publish / skip := true,
     scalaVersion := V.scala3,
     libraryDependencies ++= Seq("org.scala-lang" %% "scala3-compiler" % V.scala3),
     crossPaths := false,
@@ -31,6 +32,7 @@ lazy val `compiler-interfaces` = project
 lazy val `migrate-interfaces` = project
   .in(file("interfaces/migrate"))
   .settings(
+    publish / skip := true,
     libraryDependencies ++= Seq("io.get-coursier" % "interface" % V.coursierInterface),
     crossPaths := false,
     autoScalaLibrary := false
@@ -72,6 +74,7 @@ lazy val migrate = project
 lazy val input = project
   .in(file("input"))
   .settings(
+    publish / skip := true,
     scalacOptions ++= List("-P:semanticdb:synthetics:on"),
     libraryDependencies ++= List(
       "org.typelevel"                 %% "cats-core"      % V.catsCore,
@@ -109,6 +112,7 @@ lazy val `sbt-plugin` = project
 lazy val output = project
   .in(file("output"))
   .settings(
+    publish / skip := true,
     scalaVersion := V.scala3,
     scalacOptions := Seq("-Ykind-projector"),
     libraryDependencies ++= Seq("org.typelevel" % "cats-core_2.13" % V.catsCore)
@@ -164,6 +168,7 @@ lazy val `scalafix-output` = project
 lazy val `scalafix-tests` = project
   .in(file("scalafix/tests"))
   .settings(
+    publish / skip := true,
     scalacOptions ++= Seq("-Wunused", "-P:semanticdb:synthetics:on", "-deprecation"),
     libraryDependencies +=
       "ch.epfl.scala" %
