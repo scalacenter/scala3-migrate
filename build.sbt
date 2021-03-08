@@ -22,20 +22,20 @@ inThisBuild(
 lazy val `compiler-interfaces` = project
   .in(file("interfaces/compiler"))
   .settings(
-    publish / skip := true,
     scalaVersion := V.scala3,
     libraryDependencies ++= Seq("org.scala-lang" %% "scala3-compiler" % V.scala3),
     crossPaths := false,
-    autoScalaLibrary := false
+    autoScalaLibrary := false,
+    moduleName := "migrate-compiler-interfaces"
   )
 
 lazy val `migrate-interfaces` = project
   .in(file("interfaces/migrate"))
   .settings(
-    publish / skip := true,
     libraryDependencies ++= Seq("io.get-coursier" % "interface" % V.coursierInterface),
     crossPaths := false,
-    autoScalaLibrary := false
+    autoScalaLibrary := false,
+    moduleName := "migrate-interfaces"
   )
 
 lazy val migrate = project
