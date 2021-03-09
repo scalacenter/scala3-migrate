@@ -14,7 +14,7 @@ inThisBuild(
     developers := Developers.list,
     version ~= { dynVer =>
       if (isCI) dynVer
-      else localSnapshotVersion // only for local publishing
+      else V.localSnapshotVersion // only for local publishing
     }
   )
 )
@@ -192,7 +192,7 @@ lazy val `scalafix-tests` = project
 // for CI
 addCommandAlias("compileScalafixOutputinScala3", s"""set `scalafix-output`/scalaVersion := "${V.scala3}" ; compile""")
 
-def localSnapshotVersion = "0.1.0-SNAPSHOT"
+
 def isCI                 = System.getenv("CI") != null
 
 lazy val V = new {
@@ -209,4 +209,5 @@ lazy val V = new {
   val coursierApi           = "2.0.12"
   val coursierInterface     = "1.0.3"
   val semanticdbVersion     = "4.4.10"
+  val localSnapshotVersion = "0.2.0-SNAPSHOT"
 }
