@@ -192,8 +192,7 @@ lazy val `scalafix-tests` = project
 // for CI
 addCommandAlias("compileScalafixOutputinScala3", s"""set `scalafix-output`/scalaVersion := "${V.scala3}" ; compile""")
 
-
-def isCI                 = System.getenv("CI") != null
+def isCI = System.getenv("CI") != null
 
 lazy val V = new {
   val scala213              = "2.13.5"
@@ -209,5 +208,5 @@ lazy val V = new {
   val coursierApi           = "2.0.12"
   val coursierInterface     = "1.0.3"
   val semanticdbVersion     = "4.4.10"
-  val localSnapshotVersion = "0.2.0-SNAPSHOT"
+  val localSnapshotVersion  = "0.2.0-SNAPSHOT"
 }
