@@ -131,12 +131,43 @@ object Lib213 {
     }
   }
 
-  val macroLibs: Map[Organization, Name] =
+  val macroLibs: Map[Organization, Name] = {
     // need to complete the list
+    // the other solution would be to download the src-jar and look for =\w*macro\w
     Map(
-      Organization("com.softwaremill.scalamacrodebug") -> Name("macros"),
-      Organization("com.github.ajozwik")               -> Name("macro")
+      Organization("com.softwaremill.scalamacrodebug")            -> Name("macros"),
+      Organization("com.github.ajozwik")                          -> Name("macro"),
+      Organization("io.argonaut")                                 -> Name("argonaut"),
+      Organization("eu.timepit")                                  -> Name("refined"),
+      Organization("org.backuity")                                -> Name("ansi-interpolator"),
+      Organization("org.typelevel")                               -> Name("log4cats-slf4j"),
+      Organization("org.typelevel")                               -> Name("log4cats-core"),
+      Organization("com.github.dmytromitin")                      -> Name("auxify-macros"),
+      Organization("biz.enef")                                    -> Name("slogging"),
+      Organization("io.getquill")                                 -> Name("quill-jdbc"),
+      Organization("com.phylage")                                 -> Name("refuel-container"),
+      Organization("com.typesafe.scala-logging")                  -> Name("scala-logging"),
+      Organization("com.lihaoyi")                                 -> Name("macro"),
+      Organization("com.lihaoyi")                                 -> Name("fastparse"),
+      Organization("com.github.kmizu")                            -> Name("macro_peg"),
+      Organization("com.michaelpollmeier")                        -> Name("macros"),
+      Organization("me.lyh")                                      -> Name("parquet-avro-extra"),
+      Organization("org.spire-math")                              -> Name("imp"),
+      Organization("com.typesafe.play")                           -> Name("play-json"),
+      Organization("com.github.plokhotnyuk.expression-evaluator") -> Name("expression-evaluator"),
+      Organization("com.github.plokhotnyuk.fsi")                  -> Name("fsi-macros"),
+      Organization("com.propensive")                              -> Name("magnolia"),
+      Organization("org.wvlet.airframe")                          -> Name("airframe"),
+      Organization("com.wix")                                     -> Name("accord-api"),
+      Organization("org.typelevel")                               -> Name("spire"),
+      Organization("org.typelevel")                               -> Name("claimant"),
+      Organization("com.softwaremill.macwire")                    -> Name("util"),
+      Organization("com.typesafe.slick")                          -> Name("slick"),
+      Organization("io.bullet")                                   -> Name("borer-core"),
+      Organization("org.parboiled")                               -> Name("parboiled"),
+      Organization("com.github.pureconfig")                       -> Name("pureconfig")
     )
+  }
 }
 
 object CompatibleWithScala3Lib {
