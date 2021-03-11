@@ -95,7 +95,7 @@ object ScalacOption {
       case "-Vdebug"                      => Renamed.Vdebug
       case "-Vprint-pos"                  => Renamed.VprintPos
 
-      //Specif to scala 2
+      //Specific to scala 2
       case _ if s.startsWith("-D")                                                      => Specific2.Scala2Specific(s)
       case _ if s.startsWith("-J")                                                      => Specific2.Scala2Specific(s)
       case _ if s.startsWith("-dependencyfile")                                         => Specific2.Scala2Specific(s)
@@ -179,6 +179,7 @@ object ScalacOption {
       case _ if s.startsWith("-Xsource-reader")                              => Specific2.Scala2Specific(s)
       case _ if s.startsWith("-Xxml")                                        => Specific2.Scala2Specific(s)
 
+      case "-Ytasty-reader"                    => Specific2.Scala2Specific(s)
       case "-Ybackend-parallelism"             => Specific2.Scala2Specific(s)
       case "-Ybackend-worker-queue"            => Specific2.Scala2Specific(s)
       case "-Ybreak-cycles"                    => Specific2.Scala2Specific(s)
