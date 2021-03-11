@@ -42,7 +42,6 @@ object Messages {
 
   def successMessagePrepareMigration(projectId: String, scala3: String) =
     s"""|
-        |
         |The syntax incompatibilities have been fixed on the project $projectId
         |You can now commit the change!
         |You can also execute the next command to try to migrate to $scala3
