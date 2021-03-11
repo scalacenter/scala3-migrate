@@ -201,10 +201,10 @@ object ScalaMigratePlugin extends AutoPlugin {
     )
 
   def prepareMigrateImpl = Def.task {
-    val log = streams.value.log
-    log.info(Messages.welcomePrepareMigration)
+    val log        = streams.value.log
     val targetRoot = semanticdbTargetRoot.value
     val projectId  = thisProject.value.id
+    log.info(Messages.welcomePrepareMigration(projectId))
     // computed values
     val scala2InputsValue     = state.value.attributes.get(scala2inputsAttirbute).get
     val unamangedSources      = scala2InputsValue.unmanagedSources
@@ -265,8 +265,9 @@ object ScalaMigratePlugin extends AutoPlugin {
 
   def migrateImp =
     Def.task {
-      val log = streams.value.log
-      log.info(Messages.welcomeMigration)
+      val log       = streams.value.log
+      val projectID = thisProject.value.id
+      log.info(Messages.welcomeMigration(projectID))
 
       val targetRoot = semanticdbTargetRoot.value
 
@@ -296,7 +297,7 @@ object ScalaMigratePlugin extends AutoPlugin {
         )
       } match {
         case Success(_) =>
-          log.info(Messages.successOfMigration(thisProject.value.id, scala3Version))
+          log.info(Messages.successOfMigration(projectID, scala3Version))
 
         case Failure(exception) =>
           log.err(Messages.errorMesssageMigration())
