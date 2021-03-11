@@ -3,8 +3,9 @@ package migrate
 import migrate.interfaces.Lib
 
 object Messages {
-  def welcomeMigration: String        = "We are going to migrate your project to scala 3"
-  def welcomePrepareMigration: String = "We are going to fix some syntax incompatibilities"
+  def welcomeMigration(projectD: String): String = s"We are going to migrate your project $projectD to scala 3"
+  def welcomePrepareMigration(projectD: String): String =
+    s"We are going to fix some syntax incompatibilities on $projectD"
   def notScala213(scalaVersion: String, projectId: String) =
     s"""
        |
