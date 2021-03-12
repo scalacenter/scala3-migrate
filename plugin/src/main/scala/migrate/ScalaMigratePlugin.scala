@@ -257,7 +257,6 @@ object ScalaMigratePlugin extends AutoPlugin {
       lib -> migrated.asScala.toSeq
     }
     val (notMigrated, migrated) = migrateLibsScala.partition { case (_, migrated) => migrated.isEmpty }
-
     // logging
     if (notMigrated.nonEmpty) log.info(Messages.notMigratedLibs(notMigrated.keys.toSeq))
     log.info(Messages.migratedLib(migrated))

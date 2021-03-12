@@ -176,7 +176,10 @@ object ScalaMigrat {
       scribe.info(s"Not able to parse the crossVersion of ${lib}: ${lib.getCrossVersion}")
     }
     val allParsedLibs = libsCompatibleWith213.values.flatten.toSeq
-    allParsedLibs.map(lib => (lib, lib.toCompatible)).toMap
+    val filteredLibs = allParsedLibs.filterNot(l =>
+      l.organization == Lib213.scalaLibrary.organization && l.name == Lib213.scalaLibrary.name
+    )
+    filteredLibs.map(lib => (lib, lib.toCompatible)).toMap
   }
 
 }
