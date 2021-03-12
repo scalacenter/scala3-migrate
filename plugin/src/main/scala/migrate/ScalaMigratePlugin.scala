@@ -2,7 +2,7 @@ package migrate
 
 import interfaceImpl.LibImpl
 import migrate.CommandStrings._
-import migrate.interfaces.{ Lib, Migrate }
+import migrate.interfaces.{ Lib, Migrate, MigratedLibs }
 import sbt.BasicCommandStrings._
 import sbt.Keys._
 import sbt._
@@ -251,14 +251,17 @@ object ScalaMigratePlugin extends AutoPlugin {
 
     val libDependencies: Seq[ModuleID] = libraryDependencies.value
     val libs                           = libDependencies.map(LibImpl)
-    val migratedLibs                   = migrateAPI.migrateLibs(libs.map(_.asInstanceOf[Lib]).asJava)
+    val migratedLibs: MigratedLibs     = migrateAPI.migrateLibs(libs.map(_.asInstanceOf[Lib]).asJava)
     // to scala Seq
-    val migrateLibsScala: Map[Lib, Seq[Lib]] = migratedLibs.asScala.toMap.map { case (lib, migrated) =>
-      lib -> migrated.asScala.toSeq
+    val notMigrated = migratedLibs.getNotMigrated.toSeq
+    val migrated = migratedLibs.getMigrated.asScala.toMap.map { case (lib, migrated) =>
+      lib -> migrated.asScala
     }
-    val (notMigrated, migrated) = migrateLibsScala.partition { case (_, migrated) => migrated.isEmpty }
+    val compilerPluginWithScalacOption: Map[Lib, String] = migratedLibs.getMigratedCompilerPlugins.asScala.toMap
     // logging
-    if (notMigrated.nonEmpty) log.info(Messages.notMigratedLibs(notMigrated.keys.toSeq))
+    if (notMigrated.nonEmpty) log.info(Messages.notMigratedLibs(notMigrated))
+    if (compilerPluginWithScalacOption.nonEmpty)
+      log.info(Messages.compilerPluginWithScalacOption(compilerPluginWithScalacOption))
     log.info(Messages.migratedLib(migrated))
   }
 

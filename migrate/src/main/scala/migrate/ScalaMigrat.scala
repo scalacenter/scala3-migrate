@@ -7,6 +7,7 @@ import scala.util.Try
 import compiler.interfaces.CompilationUnit
 import compiler.interfaces.Scala3Compiler
 import migrate.interfaces.Lib
+import migrate.interfaces.MigratedLibsImpl
 import migrate.interfaces.MigratedScalacOptions
 import migrate.internal._
 import migrate.utils.FileUtils
@@ -170,7 +171,7 @@ object ScalaMigrat {
     MigratedScalacOptions(notParsed, specific2, scala3cOption ++ renamed)
   }
 
-  def migrateLibs(libs: Seq[Lib]): Map[Lib213, Seq[CompatibleWithScala3Lib]] = {
+  def migrateLibs(libs: Seq[Lib]): MigratedLibsImpl = {
     val libsCompatibleWith213 = libs.map(l => l -> Lib213.from(l)).toMap
     libsCompatibleWith213.collect { case (lib, None) =>
       scribe.info(s"Not able to parse the crossVersion of ${lib}: ${lib.getCrossVersion}")
@@ -179,7 +180,7 @@ object ScalaMigrat {
     val filteredLibs = allParsedLibs.filterNot(l =>
       l.organization == Lib213.scalaLibrary.organization && l.name == Lib213.scalaLibrary.name
     )
-    filteredLibs.map(lib => (lib, lib.toCompatible)).toMap
+    MigratedLibsImpl.from(filteredLibs.map(lib => (lib, lib.toCompatible)).toMap)
   }
 
 }
