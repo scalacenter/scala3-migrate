@@ -18,21 +18,21 @@ object CoursierHelper {
   def getCompatibleForScala3Binary(lib: Lib213): Seq[CompatibleWithScala3Lib] = {
     val revisions = searchRevisionsFor(lib, scala3Binary)
     val all = revisions.map { r =>
-      CompatibleWithScala3Lib(lib.organization, lib.name, r, CrossVersion.For2_13Use3("", ""))
+      CompatibleWithScala3Lib(lib.organization, lib.name, r, CrossVersion.For2_13Use3("", ""), lib.configurations)
     }
     getNewerRevision(lib, all)
   }
   def getCompatibleForScala3Full(lib: Lib213): Seq[CompatibleWithScala3Lib] = {
     val revisions = searchRevisionsFor(lib, scala3Full)
     val all = revisions.map { r =>
-      CompatibleWithScala3Lib(lib.organization, lib.name, r, CrossVersion.Full("", ""))
+      CompatibleWithScala3Lib(lib.organization, lib.name, r, CrossVersion.Full("", ""), lib.configurations)
     }
     getNewerRevision(lib, all)
   }
   def getCompatibleForBinary213(lib: Lib213): Seq[CompatibleWithScala3Lib] = {
     val revisions = searchRevisionsFor(lib, scala213Binary)
     val all = revisions.map { r =>
-      CompatibleWithScala3Lib(lib.organization, lib.name, r, CrossVersion.For3Use2_13("", ""))
+      CompatibleWithScala3Lib(lib.organization, lib.name, r, CrossVersion.For3Use2_13("", ""), lib.configurations)
     }
     getNewerRevision(lib, all)
   }

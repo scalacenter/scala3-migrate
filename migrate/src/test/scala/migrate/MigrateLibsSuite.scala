@@ -8,12 +8,12 @@ import scalafix.testkit.DiffAssertions
 class MigrateLibsSuite extends AnyFunSuiteLike with DiffAssertions {
   val binary: CrossVersion.Binary = CrossVersion.Binary("", "")
 
-  val cats: Lib213          = Lib213.from("org.typelevel:cats-core:2.4.0", binary, false).get
-  val opentelemetry: Lib213 = Lib213.from("io.opentelemetry:opentelemetry-api:0.7.1", CrossVersion.Disabled, false).get
-  val collection: Lib213    = Lib213.from("org.scala-lang.modules:scala-collection-compat:2.4.0", binary, false).get
-  val kind: Lib213          = Lib213.from("org.typelevel:kind-projector:0.11.3", binary, true).get
-  val scalafix: Lib213      = Lib213.from("ch.epfl.scala:scalafix-core:0.9.24", binary, false).get
-  val macroLib: Lib213      = Lib213.from("com.softwaremill.scalamacrodebug:macros:0.4.1", binary, false).get
+  val cats: Lib213          = Lib213.from("org.typelevel:cats-core:2.4.0", binary, None).get
+  val opentelemetry: Lib213 = Lib213.from("io.opentelemetry:opentelemetry-api:0.7.1", CrossVersion.Disabled, None).get
+  val collection: Lib213    = Lib213.from("org.scala-lang.modules:scala-collection-compat:2.4.0", binary, None).get
+  val kind: Lib213          = Lib213.from("org.typelevel:kind-projector:0.11.3", binary, Some("compile")).get
+  val scalafix: Lib213      = Lib213.from("ch.epfl.scala:scalafix-core:0.9.24", binary, None).get
+  val macroLib: Lib213      = Lib213.from("com.softwaremill.scalamacrodebug:macros:0.4.1", binary, None).get
 
   test("Not available lib") {
     val migrated = ScalaMigrat.migrateLibs(Seq(kind))

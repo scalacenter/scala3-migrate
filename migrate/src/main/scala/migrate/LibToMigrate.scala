@@ -1,25 +1,29 @@
 package migrate
 
+import java.util.Optional
+
 import scala.util.Try
 
 import migrate.Lib213.macroLibs
 import migrate.LibToMigrate._
 import migrate.interfaces.Lib
 import migrate.utils.CoursierHelper
+import migrate.utils.ScalaExtensions._
 
 sealed trait LibToMigrate extends Lib {
   val organization: Organization
   val name: Name
   val revision: Revision
   val crossVersion: CrossVersion
+  val configurations: Option[String]
 
-  override def getOrganization: String = organization.value
-  override def getName: String         = name.value
-  override def getRevision: String     = revision.value
-  override def getCrossVersion: String = crossVersion.toString
+  override def getOrganization: String             = organization.value
+  override def getName: String                     = name.value
+  override def getRevision: String                 = revision.value
+  override def getCrossVersion: String             = crossVersion.toString
+  override def getConfigurations: Optional[String] = configurations.asJava
 
-  override def toString: String = s"${organization.value}:${name.value}:${revision.value}"
-
+  def isCompilerPlugin: Boolean = configurations.contains("compile")
 }
 
 case class Lib213(
@@ -27,7 +31,7 @@ case class Lib213(
   name: Name,
   revision: Revision,
   crossVersion: CrossVersion,
-  isCompilerPlugin: Boolean
+  configurations: Option[String]
 ) extends LibToMigrate {
   def toCompatible: Seq[CompatibleWithScala3Lib] =
     if (isCompilerPlugin) Seq()
@@ -47,6 +51,9 @@ case class Lib213(
         case CrossVersion.Constant(_) => CoursierHelper.getCompatibleForScala3Full(this)
       }
 
+  override def toString: String =
+    s"${organization.value}:${name.value}:${revision.value}${configurations.map(":" + _).getOrElse("")}"
+
   private def getCompatibleWhenBinaryCrossVersion(): Seq[CompatibleWithScala3Lib] = {
     val scala3Libs = CoursierHelper.getCompatibleForScala3Binary(this)
     if (scala3Libs.isEmpty) {
@@ -61,9 +68,26 @@ case class CompatibleWithScala3Lib(
   organization: Organization,
   name: Name,
   revision: Revision,
-  crossVersion: CrossVersion
+  crossVersion: CrossVersion,
+  configurations: Option[String]
 ) extends LibToMigrate {
-  override def isCompilerPlugin: Boolean = false
+
+  override def toString: String = {
+    val configuration  = configurations.map(c => " % " + withQuote(c)).getOrElse("")
+    val orgQuoted      = withQuote(organization.value)
+    val nameQuoted     = withQuote(name.value)
+    val revisionQuoted = withQuote(revision.value)
+    crossVersion match {
+      case CrossVersion.Disabled          => s"$orgQuoted % ${withQuote(name.value)} % $revisionQuoted$configuration"
+      case CrossVersion.For2_13Use3(_, _) => s"$orgQuoted %% ${withQuote(name.value)} % $revisionQuoted$configuration"
+      case CrossVersion.For3Use2_13(_, _) =>
+        s"$orgQuoted % ${withQuote(s"${name.value}_${CoursierHelper.scala213Binary}")} % $revisionQuoted$configuration"
+      case CrossVersion.Full(_, _) =>
+        s"$orgQuoted % ${withQuote(s"${name.value}_${CoursierHelper.scala3Full}")} % $revisionQuoted$configuration"
+      case _ => s"$orgQuoted %% $nameQuoted % $revisionQuoted$configuration"
+    }
+  }
+  private def withQuote(s: String) = "\"" + s + "\""
 }
 
 object LibToMigrate {
@@ -114,22 +138,22 @@ object LibToMigrate {
 
 object Lib213 {
   def from(lib: migrate.interfaces.Lib): Option[Lib213] = {
-    val organization              = Organization(lib.getOrganization)
-    val name                      = Name(lib.getName)
-    val revision                  = Revision(lib.getRevision)
-    val crossVersion              = CrossVersion.from(lib.getCrossVersion)
-    val isCompilerPlugin: Boolean = lib.isCompilerPlugin
-    crossVersion.map(c => Lib213(organization, name, revision, c, isCompilerPlugin))
+    val organization = Organization(lib.getOrganization)
+    val name         = Name(lib.getName)
+    val revision     = Revision(lib.getRevision)
+    val crossVersion = CrossVersion.from(lib.getCrossVersion)
+    crossVersion.map(c => Lib213(organization, name, revision, c, lib.getConfigurations.asScala))
   }
 
-  def from(value: String, crossVersion: CrossVersion, isCompilerPlugin: Boolean): Option[Lib213] = {
+  def from(value: String, crossVersion: CrossVersion, configurations: Option[String] = None): Option[Lib213] = {
     val splited = value.split(":").toList
     splited match {
       case (org :: name :: revision :: Nil) =>
-        Some(Lib213(Organization(org), Name(name), Revision(revision), crossVersion, isCompilerPlugin))
+        Some(Lib213(Organization(org), Name(name), Revision(revision), crossVersion, configurations))
       case _ => None
     }
   }
+  val scalaLibrary: Lib213 = Lib213.from("org.scala-lang:scala-library:2.13.5", CrossVersion.Disabled, None).get
 
   val macroLibs: Map[Organization, Name] = {
     // need to complete the list
@@ -172,5 +196,5 @@ object Lib213 {
 
 object CompatibleWithScala3Lib {
   def from(lib: Lib213): CompatibleWithScala3Lib =
-    CompatibleWithScala3Lib(lib.organization, lib.name, lib.revision, lib.crossVersion)
+    CompatibleWithScala3Lib(lib.organization, lib.name, lib.revision, lib.crossVersion, lib.configurations)
 }

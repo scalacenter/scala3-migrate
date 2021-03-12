@@ -69,7 +69,7 @@ object Messages {
     if (s.nonEmpty)
       Some(s"""|
                |We were not able to parse the following ScalacOptions:
-               |${format(s)}
+               |${formatScalacOptions(s)}
                |
                |""".stripMargin)
     else None
@@ -78,7 +78,7 @@ object Messages {
     if (s.nonEmpty)
       Some(s"""|
                |The Following scalacOptions are specific to scala 2 and don't have an equivalent in Scala 3
-               |${format(s)}
+               |${formatScalacOptions(s)}
                |
                |""".stripMargin)
     else None
@@ -87,7 +87,7 @@ object Messages {
     if (s.nonEmpty)
       s"""|
           |You can update your scalacOptions for Scala 3 with the following settings.
-          |${format(s)}
+          |${formatScalacOptions(s)}
           |
           |
           |
@@ -108,16 +108,22 @@ object Messages {
 
   def notMigratedLibs(libs: Seq[Lib]): String = {
     val (compilerPlugins, others) = libs.partition(_.isCompilerPlugin)
-    s"""|
-        |The following compiler plugins are not supported in scala 3
-        |${compilerPlugins.map(_.toString).mkString("\n")}
-        |
-        |
-        |The following list of libs cannot be migrated.
-        |Please check the migration guide for more information. 
-        |${others.map(_.toString).mkString("\n")}
-        |
-        |""".stripMargin
+    val messageCompilerPlugin = if (compilerPlugins.nonEmpty) {
+      s"""|
+          |The following compiler plugins are not supported in scala 3
+          |${compilerPlugins.map(_.toString).mkString("\n")}
+          |""".stripMargin
+    } else ""
+    val messageOtherLibs =
+      if (others.nonEmpty)
+        s"""
+           |The following list of libs cannot be migrated.
+           |Please check the migration guide for more information. 
+           |${others.map(_.toString).mkString("\n")}
+           |
+           |""".stripMargin
+      else ""
+    messageCompilerPlugin + messageOtherLibs
   }
 
   def migratedLib(libs: Map[Lib, Seq[Lib]]): String =
@@ -134,10 +140,13 @@ object Messages {
   private def format(libs: Map[Lib, Seq[Lib]]): String =
     libs.map(format).mkString("\n")
 
-  private def format(l: (Lib, Seq[Lib])): String =
-    s"""\"${l._1}\" -> ${l._2.mkString("\"", "\", ", "\"")}"""
+  private def format(l: (Lib, Seq[Lib])): String = {
+    val initial  = l._1
+    val migrated = l._2
+    s"""\"$initial\" -> ${migrated.mkString(", ")}"""
+  }
 
-  private def format(l: Seq[String]): String =
+  private def formatScalacOptions(l: Seq[String]): String =
     l.mkString("Seq(\n\"", "\",\n\"", "\"\n)")
 
 }
