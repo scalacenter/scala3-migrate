@@ -72,7 +72,7 @@ class ScalaMigrat(scalafixSrv: ScalafixService) {
     } yield ()
 
   def previewPrepareMigration(unmanagedSources: Seq[AbsolutePath]): Try[ScalafixEvaluation] = {
-    unmanagedSources.foreach(f => scribe.info(s"Fixing syntax of $f"))
+    unmanagedSources.foreach(f => scribe.debug(s"Fixing syntax of $f"))
     for {
       scalafixEval <- timeAndLog(scalafixSrv.fixSyntaxForScala3(unmanagedSources)) {
                         case (finiteDuration, Success(_)) =>
