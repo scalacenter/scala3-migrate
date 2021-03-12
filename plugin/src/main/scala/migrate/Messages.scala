@@ -3,7 +3,8 @@ package migrate
 import migrate.interfaces.Lib
 
 object Messages {
-  def welcomeMigration(projectD: String): String = s"We are going to migrate your project $projectD to scala 3"
+  def welcomeMigration(projectD: String): String =
+    s"We are going to migrate your project $projectD to ${ScalaMigratePlugin.scala3Version}"
   def welcomePrepareMigration(projectD: String): String =
     s"We are going to fix some syntax incompatibilities on $projectD"
   def notScala213(scalaVersion: String, projectId: String) =
@@ -97,7 +98,6 @@ object Messages {
          |The ScalacOptions for Scala 3 is empty. 
          |
          |
-         |
          |""".stripMargin
 
   def migrateLibsStarting(projectId: String): String =
@@ -110,15 +110,17 @@ object Messages {
     val (compilerPlugins, others) = libs.partition(_.isCompilerPlugin)
     val messageCompilerPlugin = if (compilerPlugins.nonEmpty) {
       s"""|
-          |The following compiler plugins are not supported in scala 3
+          |The following compiler plugins are not supported in scala ${ScalaMigratePlugin.scala3Version}
+          |You need to find alternatives. Please check the migration guide for more information.
           |${compilerPlugins.map(_.toString).mkString("\n")}
           |""".stripMargin
     } else ""
     val messageOtherLibs =
       if (others.nonEmpty)
         s"""
-           |The following list of libs cannot be migrated.
-           |Please check the migration guide for more information. 
+           |The following list of libs cannot be migrated as they contain Macros and are not yet
+           |published for ${ScalaMigratePlugin.scala3Version}
+           |
            |${others.map(_.toString).mkString("\n")}
            |
            |""".stripMargin
@@ -126,25 +128,35 @@ object Messages {
     messageCompilerPlugin + messageOtherLibs
   }
 
+  def compilerPluginWithScalacOption(plugins: Map[Lib, String]): String =
+    s"""
+       |The following compiler plugins are not supported in scala ${ScalaMigratePlugin.scala3Version}
+       |but there is an equivalent scalacOption that can replace it.
+       |Add these scalacOptions to your ScalacOptions:
+       |
+       |${formatCompilerPlugins(plugins)}
+       |
+       |""".stripMargin
+
   def migratedLib(libs: Map[Lib, Seq[Lib]]): String =
     s"""|
         |
         |You can update your libs with the following versions: 
         |
-        |${format(libs)}
+        |${formatLibs(libs)}
         |
         |
         |
         |""".stripMargin
 
-  private def format(libs: Map[Lib, Seq[Lib]]): String =
-    libs.map(format).mkString("\n")
+  private def formatCompilerPlugins(l: Map[Lib, String]): String =
+    l.map { case (l, scalacOption) => format(l, Seq(scalacOption)) }.mkString("\n")
 
-  private def format(l: (Lib, Seq[Lib])): String = {
-    val initial  = l._1
-    val migrated = l._2
+  private def formatLibs(libs: Map[Lib, Seq[Lib]]): String =
+    libs.map { case (initial, migrated) => format(initial, migrated.map(_.toString)) }.mkString("\n")
+
+  private def format(initial: Lib, migrated: Seq[String]): String =
     s"""\"$initial\" -> ${migrated.mkString(", ")}"""
-  }
 
   private def formatScalacOptions(l: Seq[String]): String =
     l.mkString("Seq(\n\"", "\",\n\"", "\"\n)")

@@ -291,8 +291,8 @@ object ScalacOption {
       case _ if s.startsWith("-Yshow-var-bounds")           => Specific3.Scala3Specific(s)
       case _ if s.startsWith("-Ytest-pickler")              => Specific3.Scala3Specific(s)
       case _ if s.startsWith("-Yunsound-match-types")       => Specific3.Scala3Specific(s)
-      case _ if s.startsWith("-Xsemanticdb")                => Specific3.Scala3Specific(s)
-      case _ if s.startsWith("-Ykind-projector")            => Specific3.Scala3Specific(s)
+      case _ if s.startsWith("-Xsemanticdb")                => Specific3.SemanticDB
+      case _ if s.startsWith("-Ykind-projector")            => Specific3.KindProjector
 
       case _ => NotParsed(s)
     }
@@ -409,5 +409,7 @@ object ScalacOption {
 
   object Specific3 {
     case class Scala3Specific(value: String) extends Specific3(value)
+    case object KindProjector                extends Specific3("-Ykind-projector")
+    case object SemanticDB                   extends Specific3("-Xsemanticdb")
   }
 }

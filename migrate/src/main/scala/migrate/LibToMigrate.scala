@@ -6,6 +6,7 @@ import scala.util.Try
 
 import migrate.Lib213.macroLibs
 import migrate.LibToMigrate._
+import migrate.ScalacOption.Specific3
 import migrate.interfaces.Lib
 import migrate.utils.CoursierHelper
 import migrate.utils.ScalaExtensions._
@@ -23,7 +24,7 @@ sealed trait LibToMigrate extends Lib {
   override def getCrossVersion: String             = crossVersion.toString
   override def getConfigurations: Optional[String] = configurations.asJava
 
-  def isCompilerPlugin: Boolean = configurations.contains("compile")
+  def isCompilerPlugin: Boolean = configurations.contains("plugin->default(compile)")
 }
 
 case class Lib213(
@@ -33,22 +34,23 @@ case class Lib213(
   crossVersion: CrossVersion,
   configurations: Option[String]
 ) extends LibToMigrate {
-  def toCompatible: Seq[CompatibleWithScala3Lib] =
-    if (isCompilerPlugin) Seq()
-    else
+  def toCompatible: Either[Option[Scala3cOption], Seq[CompatibleWithScala3Lib]] =
+    if (isCompilerPlugin) {
+      Left(Lib213.compilerPluginToScalacOption.get((this.organization, this.name)))
+    } else
       crossVersion match {
         // keep the same if CrossVersion.Disabled. Usually it's a Java Lib
-        case CrossVersion.Disabled => Seq(CompatibleWithScala3Lib.from(this))
+        case CrossVersion.Disabled => Right(Seq(CompatibleWithScala3Lib.from(this)))
         // look for revisions that are compatible with scala 3 binary version
-        case CrossVersion.Binary(_, _) => getCompatibleWhenBinaryCrossVersion()
+        case CrossVersion.Binary(_, _) => Right(getCompatibleWhenBinaryCrossVersion())
         // look for revisions that are compatible with scala 3 full version
-        case CrossVersion.Full(_, _) => CoursierHelper.getCompatibleForScala3Full(this)
+        case CrossVersion.Full(_, _) => Right(CoursierHelper.getCompatibleForScala3Full(this))
         // already compatible
-        case CrossVersion.For2_13Use3(_, _) => Seq(CompatibleWithScala3Lib.from(this))
-        case CrossVersion.For3Use2_13(_, _) => Seq(CompatibleWithScala3Lib.from(this))
+        case CrossVersion.For2_13Use3(_, _) => Right(Seq(CompatibleWithScala3Lib.from(this)))
+        case CrossVersion.For3Use2_13(_, _) => Right(Seq(CompatibleWithScala3Lib.from(this)))
         // For Patch and Constant, we search full compatible scala 3 version
-        case CrossVersion.Patch       => CoursierHelper.getCompatibleForScala3Full(this)
-        case CrossVersion.Constant(_) => CoursierHelper.getCompatibleForScala3Full(this)
+        case CrossVersion.Patch       => Right(CoursierHelper.getCompatibleForScala3Full(this))
+        case CrossVersion.Constant(_) => Right(CoursierHelper.getCompatibleForScala3Full(this))
       }
 
   override def toString: String =
@@ -153,6 +155,13 @@ object Lib213 {
       case _ => None
     }
   }
+
+  val compilerPluginToScalacOption: Map[(Organization, Name), Scala3cOption] =
+    Map(
+      (Organization("org.typelevel"), Name("kind-projector"))    -> Specific3.KindProjector,
+      (Organization("org.scalameta"), Name("semanticdb-scalac")) -> Specific3.SemanticDB
+    )
+
   val scalaLibrary: Lib213 = Lib213.from("org.scala-lang:scala-library:2.13.5", CrossVersion.Disabled, None).get
 
   val macroLibs: Map[Organization, Name] = {
