@@ -5,9 +5,9 @@ import scala.io.AnsiColor._
 
 object Messages {
   def welcomeMigration(projectD: String): String =
-    s"We are going to migrate your project $projectD to ${ScalaMigratePlugin.scala3Version}"
+    s"${BOLD}We are going to migrate your project $projectD to ${ScalaMigratePlugin.scala3Version}${RESET}"
   def welcomePrepareMigration(projectD: String): String =
-    s"We are going to fix some syntax incompatibilities on $projectD"
+    s"${BOLD}We are going to fix some syntax incompatibilities on $projectD${RESET}"
   def notScala213(scalaVersion: String, projectId: String) =
     s"""
        |
@@ -117,23 +117,24 @@ object Messages {
   def migrateLibsStarting(projectId: String): String =
     s"""|
         |
-        |Starting to migrate libDependencies for $projectId
+        |${BOLD}Starting to migrate libDependencies for $projectId${RESET}
         |""".stripMargin
 
   def notMigratedLibs(libs: Seq[Lib]): String = {
     val (compilerPlugins, others) = libs.partition(_.isCompilerPlugin)
     val messageCompilerPlugin = if (compilerPlugins.nonEmpty) {
       s"""|
-          |The following compiler plugins are not supported in scala ${ScalaMigratePlugin.scala3Version}
-          |You need to find alternatives. Please check the migration guide for more information.
+          |${YELLOW}The following compiler plugins are not supported in scala ${ScalaMigratePlugin.scala3Version}${RESET}
+          |${YELLOW}You need to find alternatives. Please check the migration guide for more information.${RESET}
+          |
           |${compilerPlugins.map(_.toString).mkString("\n")}
           |""".stripMargin
     } else ""
     val messageOtherLibs =
       if (others.nonEmpty)
         s"""
-           |The following list of libs cannot be migrated as they contain Macros and are not yet
-           |published for ${ScalaMigratePlugin.scala3Version}
+           |${YELLOW}The following list of libs cannot be migrated as they contain Macros and are not yet${RESET}
+           |${YELLOW}published for ${ScalaMigratePlugin.scala3Version}${RESET}
            |
            |${others.map(_.toString).mkString("\n")}
            |
@@ -155,7 +156,7 @@ object Messages {
   def migratedLib(libs: Map[Lib, Seq[Lib]]): String =
     s"""|
         |
-        |You can update your libs with the following versions: 
+        |${BOLD}You can update your libs with the following versions:${RESET}
         |
         |${formatLibs(libs)}
         |
@@ -170,7 +171,7 @@ object Messages {
     libs.map { case (initial, migrated) => format(initial, migrated.map(_.toString)) }.mkString("\n")
 
   private def format(initial: Lib, migrated: Seq[String]): String =
-    s"""\"$initial\" -> ${migrated.mkString(", ")}"""
+    s"""\"$initial\" -> ${GREEN}${migrated.mkString(", ")}$RESET"""
 
   private def formatScalacOptions(l: Seq[String]): String =
     l.mkString("Seq(\n\"", "\",\n\"", "\"\n)")
