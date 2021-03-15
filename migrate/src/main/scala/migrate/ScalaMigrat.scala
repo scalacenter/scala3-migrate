@@ -168,7 +168,7 @@ object ScalaMigrat {
     }
     val renamed   = scalaSettings.collect { case x: ScalacOption.Renamed => x }
     val specific2 = scalaSettings.collect { case x: ScalacOption.Specific2 => x }
-    MigratedScalacOptions(notParsed, specific2, scala3cOption ++ renamed)
+    MigratedScalacOptions(notParsed, specific2, scala3cOption, renamed)
   }
 
   def migrateLibs(libs: Seq[Lib]): MigratedLibsImpl = {
