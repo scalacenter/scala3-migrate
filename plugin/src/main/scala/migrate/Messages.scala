@@ -52,7 +52,7 @@ object Messages {
         |
         |""".stripMargin
 
-  def errorMessagePrepareMigration(projectId: String, ex: Throwable) =
+  def errorMessagePrepareMigration(projectId: String, ex: Throwable): String =
     s"""|
         |
         |Failed fixing the syntax for $projectId project
@@ -61,14 +61,14 @@ object Messages {
         |
         |""".stripMargin
 
-  def migrationScalacOptionsStarting(projectId: String) =
+  def migrationScalacOptionsStarting(projectId: String): String =
     s"""|
         |${BOLD}Starting to migrate the scalacOptions for $projectId${RESET}
         |""".stripMargin
 
   val warnMessageScalacOption: String =
-    s"""|${YELLOW}Some scalacOptions are set by plugins and don't need to be modified, removed or added.${RESET}
-        |${YELLOW}The plugin will adapt its own scalacOptions for Scala 3${RESET}""".stripMargin
+    s"""|${YELLOW}Some scalacOptions are set by sbt plugins and don't need to be modified, removed or added.${RESET}
+        |${YELLOW}The sbt plugin should adapt its own scalacOptions for Scala 3${RESET}""".stripMargin
 
   def notParsed(s: Seq[String]): Option[String] =
     if (s.nonEmpty)
@@ -79,7 +79,12 @@ object Messages {
                |""".stripMargin)
     else None
 
-  def scalacOptionsMessage(removed: Seq[String], renamed: Map[String, String], scala3cOptions: Seq[String]): String = {
+  def scalacOptionsMessage(
+    removed: Seq[String],
+    renamed: Map[String, String],
+    scala3cOptions: Seq[String],
+    pluginsOption: Seq[String]
+  ): String = {
     val removedSign           = s"""${BOLD}${RED}X${RESET}"""
     val sameSign              = s"""${BOLD}${CYAN}\u2714${RESET}"""
     val renamedSign           = s"""${BOLD}${BLUE}Renamed${RESET}"""
@@ -87,21 +92,26 @@ object Messages {
     def formatRenamed: String = renamed.map { case (initial, renamed) =>
       s""""$initial" -> ${BOLD}${BLUE}"$renamed"${BLUE}"""
     }.mkString("\n")
-    def formatScala3cOptions: String = scala3cOptions.map(r => s""""$r" -> $sameSign""").mkString("\n")
-
+    def formatScala3cOptions(s: Seq[String]): String = s.map(r => s""""$r" -> $sameSign""").mkString("\n")
+    def pluginSettingsMessage: String =
+      if (pluginsOption.isEmpty) ""
+      else
+        s"""|
+            |${BOLD}The following scalacOption are specific to compiler plugins, usually added through `compilerPlugin` or `addCompilerPlugin`.${RESET}
+            |In the previous step `migrate-libs`, you should have removed/fixed compiler plugins and for the remaining plugins and settings, they can be kept as they are.
+            |
+            |${formatScala3cOptions(pluginsOption)}
+            |""".stripMargin
     s"""
-       |
        |$removedSign         $RED: The following scalacOption is specific to Scala 2 and doesn't have an equivalent in Scala 3$RESET
-       |$renamedSign $BLUE: The following scalacOption has been renamed in Scala3$RESET
+       |$renamedSign   $BLUE: The following scalacOption has been renamed in Scala3$RESET
        |$sameSign         $CYAN: The following scalacOption is a valid Scala 3 option$RESET
-       |
        |
        |$formatRemoved
        |$formatRenamed
-       |$formatScala3cOptions
+       |${formatScala3cOptions(scala3cOptions)}
        |
-       |
-       |""".stripMargin
+       |""".stripMargin + pluginSettingsMessage
   }
 
   def migrateLibsStarting(projectId: String): String =

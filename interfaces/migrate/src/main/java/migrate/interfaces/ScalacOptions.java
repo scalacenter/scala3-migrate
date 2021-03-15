@@ -7,4 +7,5 @@ public interface ScalacOptions {
     String[] getSpecificScala2();
     String[] getScala3cOptions();
     Map<String, String> getRenamed();
+    String[] getPluginsOptions();
 }

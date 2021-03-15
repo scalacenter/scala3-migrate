@@ -6,6 +6,7 @@ import scala.util.Try
 
 import compiler.interfaces.CompilationUnit
 import compiler.interfaces.Scala3Compiler
+import migrate.ScalacOption.PluginSpecific
 import migrate.interfaces.Lib
 import migrate.interfaces.MigratedLibsImpl
 import migrate.interfaces.MigratedScalacOptions
@@ -166,9 +167,10 @@ object ScalaMigrat {
       case x: ScalacOption.Specific3 => x;
       case x: ScalacOption.Shared    => x
     }
-    val renamed   = scalaSettings.collect { case x: ScalacOption.Renamed => x }
-    val specific2 = scalaSettings.collect { case x: ScalacOption.Specific2 => x }
-    MigratedScalacOptions(notParsed, specific2, scala3cOption, renamed)
+    val pluginsSettings: Seq[PluginSpecific] = scalaSettings.collect { case x: ScalacOption.PluginSpecific => x }
+    val renamed                              = scalaSettings.collect { case x: ScalacOption.Renamed => x }
+    val specific2                            = scalaSettings.collect { case x: ScalacOption.Specific2 => x }
+    MigratedScalacOptions(notParsed, specific2, scala3cOption, renamed, pluginsSettings)
   }
 
   def migrateLibs(libs: Seq[Lib]): MigratedLibsImpl = {

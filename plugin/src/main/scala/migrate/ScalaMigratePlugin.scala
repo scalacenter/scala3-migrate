@@ -237,10 +237,10 @@ object ScalaMigratePlugin extends AutoPlugin {
     val specific2      = migrated.getSpecificScala2.toSeq
     val scala3         = migrated.getScala3cOptions.toSeq
     val renamed        = migrated.getRenamed.asScala.toMap
+    val plugins        = migrated.getPluginsOptions.toSeq
 
     Messages.notParsed(notParsed).foreach(message => log.warn(message))
-    log.info(Messages.scalacOptionsMessage(specific2, renamed, scala3))
-
+    log.info(Messages.scalacOptionsMessage(specific2, renamed, scala3, plugins))
   }
 
   def internalMigrateLibsImp = Def.task {
