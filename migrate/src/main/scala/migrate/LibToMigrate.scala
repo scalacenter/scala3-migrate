@@ -36,7 +36,10 @@ case class Lib213(
 ) extends LibToMigrate {
   def toCompatible: Either[Option[Scala3cOption], Seq[CompatibleWithScala3Lib]] =
     if (isCompilerPlugin) {
-      Left(Lib213.compilerPluginToScalacOption.get((this.organization, this.name)))
+      val compatibleLib = CoursierHelper.getCompatibleForScala3Full(this)
+      if (compatibleLib.isEmpty)
+        Left(Lib213.compilerPluginToScalacOption.get((this.organization, this.name)))
+      else Right(compatibleLib)
     } else
       crossVersion match {
         // keep the same if CrossVersion.Disabled. Usually it's a Java Lib
