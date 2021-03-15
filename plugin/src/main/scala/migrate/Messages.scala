@@ -1,6 +1,7 @@
 package migrate
 
 import migrate.interfaces.Lib
+import scala.io.AnsiColor._
 
 object Messages {
   def welcomeMigration(projectD: String): String =
@@ -62,9 +63,12 @@ object Messages {
 
   def migrationScalacOptionsStarting(projectId: String) =
     s"""|
-        |
-        |Starting to migrate ScalacOptions for $projectId
+        |${BOLD}Starting to migrate the scalacOptions for $projectId${RESET}
         |""".stripMargin
+
+  val warnMessageScalacOption: String =
+    s"""|${YELLOW}Some scalacOptions are set by plugins and don't need to be modified, removed or added.${RESET}
+        |${YELLOW}The plugin will adapt its own scalacOptions for Scala 3${RESET}""".stripMargin
 
   def notParsed(s: Seq[String]): Option[String] =
     if (s.nonEmpty)
@@ -75,30 +79,30 @@ object Messages {
                |""".stripMargin)
     else None
 
-  def specificToScala2(s: Seq[String]): Option[String] =
-    if (s.nonEmpty)
-      Some(s"""|
-               |The Following scalacOptions are specific to scala 2 and don't have an equivalent in Scala 3
-               |${formatScalacOptions(s)}
-               |
-               |""".stripMargin)
-    else None
+  def scalacOptionsMessage(removed: Seq[String], renamed: Map[String, String], scala3cOptions: Seq[String]): String = {
+    val removedSign           = s"""${BOLD}${RED}X${RESET}"""
+    val sameSign              = s"""${BOLD}${CYAN}\u2714${RESET}"""
+    val renamedSign           = s"""${BOLD}${BLUE}Renamed${RESET}"""
+    def formatRemoved: String = removed.map(r => s""""$r" -> $removedSign""").mkString("\n")
+    def formatRenamed: String = renamed.map { case (initial, renamed) =>
+      s""""$initial" -> ${BOLD}${BLUE}"$renamed"${BLUE}"""
+    }.mkString("\n")
+    def formatScala3cOptions: String = scala3cOptions.map(r => s""""$r" -> $sameSign""").mkString("\n")
 
-  def migrated(s: Seq[String]): String =
-    if (s.nonEmpty)
-      s"""|
-          |You can update your scalacOptions for Scala 3 with the following settings.
-          |${formatScalacOptions(s)}
-          |
-          |
-          |
-          |""".stripMargin
-    else
-      """|
-         |The ScalacOptions for Scala 3 is empty. 
-         |
-         |
-         |""".stripMargin
+    s"""
+       |
+       |$removedSign         $RED: The following scalacOption is specific to Scala 2 and doesn't have an equivalent in Scala 3$RESET
+       |$renamedSign $BLUE: The following scalacOption has been renamed in Scala3$RESET
+       |$sameSign         $CYAN: The following scalacOption is a valid Scala 3 option$RESET
+       |
+       |
+       |$formatRemoved
+       |$formatRenamed
+       |$formatScala3cOptions
+       |
+       |
+       |""".stripMargin
+  }
 
   def migrateLibsStarting(projectId: String): String =
     s"""|

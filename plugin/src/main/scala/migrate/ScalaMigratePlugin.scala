@@ -22,7 +22,6 @@ case class Scala3Inputs(
   classpath: Seq[Path],
   classDirectory: Path
 )
-case class ScalacOption(value: String)
 
 case class Scala2Inputs(
   projectId: String,
@@ -230,17 +229,17 @@ object ScalaMigratePlugin extends AutoPlugin {
     val log       = streams.value.log
     val projectId = thisProject.value.id
     log.info(Messages.migrationScalacOptionsStarting(projectId))
+    log.warn(Messages.warnMessageScalacOption)
 
-    val scalacOptions2      = scalacOptions.value
-    val migrated            = migrateAPI.migrateScalacOption(scalacOptions2.asJava)
-    val notParsed           = migrated.getNotParsed.toSeq
-    val specific2           = migrated.getSpecificScala2.toSeq
-    val scala3ScalacOptions = migrated.getMigrated.toSeq
+    val scalacOptions2 = scalacOptions.value
+    val migrated       = migrateAPI.migrateScalacOption(scalacOptions2.asJava)
+    val notParsed      = migrated.getNotParsed.toSeq
+    val specific2      = migrated.getSpecificScala2.toSeq
+    val scala3         = migrated.getScala3cOptions.toSeq
+    val renamed        = migrated.getRenamed.asScala.toMap
 
-    // logging notParsed, specific to Scala 2 and the new scala 3 settings
-    Messages.notParsed(notParsed).foreach(log.info(_))
-    Messages.specificToScala2(specific2).foreach(log.info(_))
-    log.info(Messages.migrated(scala3ScalacOptions))
+    Messages.notParsed(notParsed).foreach(message => log.warn(message))
+    log.info(Messages.scalacOptionsMessage(specific2, renamed, scala3))
 
   }
 

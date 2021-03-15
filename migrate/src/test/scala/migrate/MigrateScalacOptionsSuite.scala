@@ -9,7 +9,7 @@ class MigrateScalacOptionsSuite extends AnyFunSuiteLike with DiffAssertions {
     val res   = ScalaMigrat.migrateScalacOptions(input)
     assert(res.notParsed.isEmpty)
     assert(res.specificScala2.isEmpty)
-    assert(res.migrated.isEmpty)
+    assert(res.scala3cOptions.isEmpty)
   }
   test("ScalacOptions 1") {
     val input = Seq(
@@ -43,6 +43,6 @@ class MigrateScalacOptionsSuite extends AnyFunSuiteLike with DiffAssertions {
     )
     assert(res.notParsed.isEmpty, "All scalacOptions should be parsed correctly")
     assert(res.specificScala2.map(_.scala2Value) == expectedSpecific2)
-    assert(res.migrated.flatMap(_.scala3ValueForBuild) == expectedMigrated)
+    assert((res.scala3cOptions ++ res.renamed).flatMap(_.scala3ValueForBuild) == expectedMigrated)
   }
 }
