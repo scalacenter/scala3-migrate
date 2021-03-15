@@ -21,7 +21,6 @@ sealed trait Scala3cOption extends ScalacOption {
 object ScalacOption {
   def from(s: String): ScalacOption =
     s match {
-      case s"-P:$plugin"               => Shared.Plugin(plugin)
       case s"-bootclasspath $path"     => Shared.Bootclasspath(path)
       case s"-classpath $path"         => Shared.Classpath(path)
       case s"-d $directoryOrJar"       => Shared.D(directoryOrJar)
@@ -48,19 +47,13 @@ object ScalacOption {
       case "-verbose"                  => Shared.Verbose
       case "-version"                  => Shared.Version
       // advanced settings
-      case "-X"                        => Shared.XHelp
-      case "-Xcheckinit"               => Renamed.Xcheckinit
-      case "-Xmigration"               => Shared.Xmigration
-      case "-Xmixin-force-forwarders"  => Shared.Xmigration
-      case "-Xmigration"               => Shared.Xmigration
-      case "-Xmixin-force-forwarders"  => Shared.XmixinForceForwarders
-      case "-Xno-forwarders"           => Shared.XnoForwarders
-      case s"-Xplugin:$paths"          => Shared.Xplugin(paths)
-      case s"-Xplugin-disable:$plugin" => Shared.XpluginDisable(plugin)
-      case s"-Xplugin-list"            => Shared.XpluginList
-      //today
-      case s"-Xplugin-require:$plugin"         => Shared.XpluginRequire(plugin)
-      case s"-Xpluginsdir $path"               => Shared.Xpluginsdir(path)
+      case "-X"                                => Shared.XHelp
+      case "-Xcheckinit"                       => Renamed.Xcheckinit
+      case "-Xmigration"                       => Shared.Xmigration
+      case "-Xmixin-force-forwarders"          => Shared.Xmigration
+      case "-Xmigration"                       => Shared.Xmigration
+      case "-Xmixin-force-forwarders"          => Shared.XmixinForceForwarders
+      case "-Xno-forwarders"                   => Shared.XnoForwarders
       case s"-Xprompt"                         => Shared.Xprompt
       case s"-Xverify" | "-Xverify-signatures" => Renamed.Xverify
       case s"-Vprint-types" | "-Xprint-types"  => Renamed.VprintTypes
@@ -294,6 +287,14 @@ object ScalacOption {
       case _ if s.startsWith("-Xsemanticdb")                => Specific3.SemanticDB
       case _ if s.startsWith("-Ykind-projector")            => Specific3.KindProjector
 
+      // plugin specific scalacOption
+      case s"-P:$plugin"               => PluginSpecific.Plugin(plugin)
+      case s"-Xplugin:$paths"          => PluginSpecific.Xplugin(paths)
+      case s"-Xplugin-disable:$plugin" => PluginSpecific.XpluginDisable(plugin)
+      case s"-Xplugin-list"            => PluginSpecific.XpluginList
+      case s"-Xplugin-require:$plugin" => PluginSpecific.XpluginRequire(plugin)
+      case s"-Xpluginsdir $path"       => PluginSpecific.Xpluginsdir(path)
+
       case _ => NotParsed(s)
     }
 
@@ -320,6 +321,11 @@ object ScalacOption {
   sealed abstract class Specific3(val scala3Value: String) extends Scala3cOption
   case class NotParsed(value: String)                      extends ScalacOption
 
+  sealed abstract class PluginSpecific(value: String) extends Scala2cOption with Scala3cOption {
+    override val scala2Value: String = value
+    override val scala3Value: String = value
+  }
+
   sealed abstract class Shared(value: String) extends Scala2cOption with Scala3cOption {
     override val scala2Value: String = value
     override val scala3Value: String = value
@@ -327,7 +333,6 @@ object ScalacOption {
 
   object Shared {
     // standard settings
-    case class Plugin(plugin: String)          extends Shared(s"-P:$plugin")
     case class Bootclasspath(path: String)     extends Shared(s"-bootclasspath $path")
     case class Classpath(path: String)         extends Shared(s"-classpath $path")
     case class D(directoryOrJar: String)       extends Shared(s"-d $directoryOrJar")
@@ -349,16 +354,11 @@ object ScalacOption {
     case object Verbose                        extends Shared("-verbose")
     case object Version                        extends Shared("-version")
     // advanced settings
-    case object XHelp                         extends Shared("-X")
-    case object Xmigration                    extends Shared("-Xmigration")
-    case object XmixinForceForwarders         extends Shared("-Xmixin-force-forwarders")
-    case object XnoForwarders                 extends Shared("-Xno-forwarders")
-    case class Xplugin(paths: String)         extends Shared(s"-Xplugin:$paths")
-    case class XpluginDisable(plugin: String) extends Shared(s"-Xplugin-disable:$plugin")
-    case object XpluginList                   extends Shared("-Xplugin-list")
-    case class XpluginRequire(plugin: String) extends Shared(s"-Xplugin-require:$plugin")
-    case class Xpluginsdir(path: String)      extends Shared(s"-Xpluginsdir $path")
-    case object Xprompt                       extends Shared("-Xprompt")
+    case object XHelp                 extends Shared("-X")
+    case object Xmigration            extends Shared("-Xmigration")
+    case object XmixinForceForwarders extends Shared("-Xmixin-force-forwarders")
+    case object XnoForwarders         extends Shared("-Xno-forwarders")
+    case object Xprompt               extends Shared("-Xprompt")
     // Private settings
     case object YHelp                                 extends Shared("-Y")
     case class Ycheck(phases: String)                 extends Shared(s"-Ycheck:$phases")
@@ -372,6 +372,17 @@ object ScalacOption {
     case class Yskip(phases: String)                  extends Shared(s"-Yskip:$phases")
     case class YstopAfter(phases: String)             extends Shared(s"-Ystop-after:$phases")
     case class YstopBefore(phases: String)            extends Shared(s"-Ystop-before:$phases")
+
+  }
+
+  object PluginSpecific {
+    // plugin specific scalacOptions
+    case class Plugin(plugin: String)         extends PluginSpecific(s"-P:$plugin")
+    case class Xplugin(paths: String)         extends PluginSpecific(s"-Xplugin:$paths")
+    case class XpluginDisable(plugin: String) extends PluginSpecific(s"-Xplugin-disable:$plugin")
+    case class XpluginRequire(plugin: String) extends PluginSpecific(s"-Xplugin-require:$plugin")
+    case class Xpluginsdir(path: String)      extends PluginSpecific(s"-Xpluginsdir $path")
+    case object XpluginList                   extends PluginSpecific("-Xplugin-list")
   }
 
   object Renamed {
