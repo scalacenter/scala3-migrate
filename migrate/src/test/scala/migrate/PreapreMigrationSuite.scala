@@ -1,5 +1,7 @@
 package migrate
 
+import scala.tools.nsc.io.File
+
 import migrate.Values._
 import migrate.utils.FileUtils._
 import migrate.utils.ScalaExtensions._
@@ -9,7 +11,8 @@ import scalafix.testkit.DiffAssertions
 
 class PreapreMigrationSuite extends AnyFunSuiteLike with DiffAssertions {
 
-  val migrateFiles: Seq[AbsolutePath] = unmanaged.filter(_.value.contains(s"/prepareMigration/"))
+  val migrateFiles: Seq[AbsolutePath] =
+    unmanaged.filter(_.value.contains(s"${File.separator}prepareMigration${File.separator}"))
   migrateFiles.foreach { inputFile =>
     test(s"${inputFile.getName}") {
       val fixSyntaxResult = scalaMigrat
