@@ -28,6 +28,23 @@ jobs:
       - run: sbt test
 #      - run: sbt compileScalafixOutputinScala3 -- this only test that scalafixOutput compiles in the latest scala 3.
 #                                                   Right now there a missing dependency. Todo: Remove this once dev.zio:zio_3.0.0-RC1 is released
+  windows_213:
+    name: Windows tests
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: olafurpg/setup-scala@v10
+      - run: sbt test
+        shell: bash
+
+  windows_213_plugins_tests:
+    name: Windows plugin's tests
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: olafurpg/setup-scala@v10
+      - run: sbt sbt-plugin/scripted
+        shell: bash
 
   plugin:
     name: plugin test with jdk8
