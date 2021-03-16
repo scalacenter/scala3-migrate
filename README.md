@@ -178,7 +178,7 @@ The command `migrate-prepare` fix number of incompatibilities by applying the fo
 After running this command, you can already commit those changes. Your module is still compiling in Scala 2 
 and is one step further to compile in Scala 3. 
 
-## Add inferred types and implicits to make the project compile in scala 3
+## Add inferred types and implicits to make the project compile in Scala 3
 Scala 3 uses a new type inference algorithm, therefore the Scala 3.0 compiler can infer a different type 
 than the one inferred by the Scala 2.13.
 This command goal is to find the necessary types to add in order to make you code compiles.
