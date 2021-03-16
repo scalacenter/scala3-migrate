@@ -1,5 +1,5 @@
 # scala3-migrate
-This projects aims to make easier the migration to scala 3:
+This project aims to make the migration to Scala 3 easier:
 
 - migrate-libs: It will help you update the list of your `libraryDependencies`
 - migrate-scalacOptions: it will help you update your `scalacOptions`
