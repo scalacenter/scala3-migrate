@@ -7,7 +7,7 @@ This project aims to make the migration to Scala 3 easier:
 - migrate: Add the minimum set of types required explicitly to make Scala 3 compiling a project without changing its meaning
 
 # Requirements 
-- sbt 1.0 or higher
+- sbt 1.3 or higher
 - java 8 or 11
 - scala 2.13, preferred 2.13.5
 
