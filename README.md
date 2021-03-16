@@ -138,7 +138,7 @@ lazy val main = project
 
 So following the output, the build will look like:
 ```
-    scalacOptions ++= (if (scalaVersion.value.startsWith("3.0")) Seq("-explain-types", "-Wunused", "-Ykind-projector")
+    scalacOptions ++= (if (scalaVersion.value.startsWith("3")) Seq("-explain-types", "-Wunused", "-Ykind-projector")
                        else Seq("-explaintypes")),
 ```
 
