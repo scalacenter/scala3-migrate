@@ -13,6 +13,7 @@ This project aims to make the migration to Scala 3 easier:
 
 # Installation
 ```
+// project/plugins.sbt
 addSbtPlugin("ch.epfl.scala" % "sbt-scala3-migrate" % "0.2.0")
 // sbt-dotty is not needed anymore since sbt 1.5.0-M1
 addSbtPlugin("ch.epfl.lamp"  % "sbt-dotty"          % "0.5.3")
