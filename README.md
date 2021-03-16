@@ -2,7 +2,7 @@
 This project aims to make the migration to Scala 3 easier:
 
 - migrate-libs: It will help you update the list of your `libraryDependencies`
-- migrate-scalacOptions: it will help you update your `scalacOptions`
+- migrate-scalacOptions: It will help you update your `scalacOptions`
 - migrate-prepare: Fix no more supported syntax in scala 3
 - migrate: Add the minimum set of types required explicitly to make scala 3 compiling a project without changing its meaning
 
