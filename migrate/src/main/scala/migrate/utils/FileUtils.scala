@@ -8,7 +8,7 @@ import java.nio.file.Files
 
 import scala.util.Try
 
-import migrate.AbsolutePath
+import migrate.internal.AbsolutePath
 
 private[migrate] object FileUtils {
 

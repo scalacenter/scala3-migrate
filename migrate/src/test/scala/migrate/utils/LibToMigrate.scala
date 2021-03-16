@@ -1,8 +1,8 @@
 package migrate.utils
 
-import migrate.Lib213
-import migrate.LibToMigrate.CrossVersion
-import migrate.LibToMigrate.Revision
+import migrate.internal.Lib213
+import migrate.internal.LibToMigrate.CrossVersion
+import migrate.internal.LibToMigrate.Revision
 import org.scalatest.funsuite.AnyFunSuiteLike
 import scalafix.testkit.DiffAssertions
 

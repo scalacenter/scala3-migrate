@@ -1,4 +1,4 @@
-package migrate
+package migrate.internal
 
 import scala.tools.cmd.CommandLineParser
 

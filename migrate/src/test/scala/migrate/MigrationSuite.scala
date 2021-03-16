@@ -6,6 +6,7 @@ import scala.util.Success
 import scala.util.Try
 
 import migrate.Values._
+import migrate.internal.AbsolutePath
 import migrate.internal.FileMigrationState
 import migrate.utils.FileUtils._
 import org.scalatest.funsuite.AnyFunSuiteLike

@@ -1,4 +1,4 @@
-package migrate
+package migrate.internal
 
 case class PathName private (value: String) {
   require(PathName.hasErrors(value), s"$value is not a PathName!")
