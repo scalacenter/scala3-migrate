@@ -1,5 +1,6 @@
 package migrate
 
+import scala.tools.nsc.io.File
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -11,8 +12,7 @@ import org.scalatest.funsuite.AnyFunSuiteLike
 import scalafix.testkit.DiffAssertions
 
 class MigrationSuite extends AnyFunSuiteLike with DiffAssertions {
-
-  val migrateFiles: Seq[AbsolutePath] = unmanaged.filter(_.value.contains(s"/migrate/"))
+  val migrateFiles: Seq[AbsolutePath] = unmanaged.filter(_.value.contains(s"${File.separator}migrate${File.separator}"))
   migrateFiles.foreach { inputFile =>
     test(s"${inputFile.getName}") {
       val migrateResult = Values.scalaMigrat
