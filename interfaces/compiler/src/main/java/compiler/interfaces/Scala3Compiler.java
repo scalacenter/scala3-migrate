@@ -10,6 +10,8 @@ import scala.Function1;
 import scala.collection.immutable.List;
 import scala.runtime.AbstractFunction1;
 
+import migrate.interfaces.CompilationException;
+
 import java.util.HashSet;
 
 public class Scala3Compiler {

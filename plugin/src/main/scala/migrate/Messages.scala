@@ -32,13 +32,15 @@ object Messages {
         |
         |""".stripMargin
 
-  def errorMesssageMigration() =
+  def errorMesssageMigration(exceptionOpt: Option[Throwable]) = {
+    val exceptionError = exceptionOpt.map(error => s"because of ${error.getMessage}").getOrElse("")
     s"""|
         |
-        |Migration has failed!
-        |
+        |Migration has failed
+        |$exceptionError
         |
         |""".stripMargin
+  }
 
   def successMessagePrepareMigration(projectId: String, scala3: String) =
     s"""|

@@ -2,7 +2,7 @@ package migrate
 
 import interfaceImpl.LibImpl
 import migrate.CommandStrings._
-import migrate.interfaces.{ Lib, Migrate, MigratedLibs }
+import migrate.interfaces.{ CompilationException, Lib, Migrate, MigratedLibs }
 import sbt.BasicCommandStrings._
 import sbt.Keys._
 import sbt._
@@ -300,8 +300,10 @@ object ScalaMigratePlugin extends AutoPlugin {
         case Success(_) =>
           log.info(Messages.successOfMigration(projectID, scala3Version))
 
+        case Failure(_: CompilationException) =>
+          log.err(Messages.errorMesssageMigration(None))
         case Failure(exception) =>
-          log.err(Messages.errorMesssageMigration())
+          log.err(Messages.errorMesssageMigration(Some(exception)))
       }
     }
 

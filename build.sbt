@@ -28,6 +28,7 @@ lazy val `compiler-interfaces` = project
     autoScalaLibrary := false,
     moduleName := "migrate-compiler-interfaces"
   )
+  .dependsOn(`migrate-interfaces`)
 
 lazy val `migrate-interfaces` = project
   .in(file("interfaces/migrate"))
