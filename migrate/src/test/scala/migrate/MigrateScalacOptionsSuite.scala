@@ -6,7 +6,7 @@ import scalafix.testkit.DiffAssertions
 class MigrateScalacOptionsSuite extends AnyFunSuiteLike with DiffAssertions {
   test("Empty ScalacOptions list") {
     val input = Nil
-    val res   = ScalaMigrat.migrateScalacOptions(input)
+    val res   = Scala3Migrate.migrateScalacOptions(input)
     assert(res.notParsed.isEmpty)
     assert(res.specificScala2.isEmpty)
     assert(res.scala3cOptions.isEmpty)
@@ -27,7 +27,7 @@ class MigrateScalacOptionsSuite extends AnyFunSuiteLike with DiffAssertions {
       "-Xfatal-warnings",
       "-Wunused:patvars"
     )
-    val res               = ScalaMigrat.migrateScalacOptions(input)
+    val res               = Scala3Migrate.migrateScalacOptions(input)
     val expectedSpecific2 = Seq("-Yrangepos", "-Xlint:_,-type-parameter-shadow", "-Wunused:patvars")
     val expectedMigrated = Seq(
       "-encoding",

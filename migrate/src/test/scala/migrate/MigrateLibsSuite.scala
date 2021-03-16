@@ -1,7 +1,10 @@
 package migrate
 
-import migrate.LibToMigrate.CrossVersion
-import migrate.LibToMigrate.Revision
+import migrate.internal.CompatibleWithScala3Lib
+import migrate.internal.Lib213
+import migrate.internal.LibToMigrate.CrossVersion
+import migrate.internal.LibToMigrate.Revision
+import migrate.internal.ScalacOption
 import org.scalatest.funsuite.AnyFunSuiteLike
 import scalafix.testkit.DiffAssertions
 
@@ -16,31 +19,31 @@ class MigrateLibsSuite extends AnyFunSuiteLike with DiffAssertions {
   val macroLib: Lib213      = Lib213.from("com.softwaremill.scalamacrodebug:macros:0.4.1", binary, None).get
 
   test("Not available lib") {
-    val res      = ScalaMigrat.migrateLibs(Seq(kind))
+    val res      = Scala3Migrate.migrateLibs(Seq(kind))
     val compiler = res.compilerPlugins
     assert(compiler.nonEmpty)
     assert(compiler.values.head.get == ScalacOption.Specific3.KindProjector)
   }
   test("Java lib") {
-    val migrated = ScalaMigrat.migrateLibs(Seq(opentelemetry)).libs
+    val migrated = Scala3Migrate.migrateLibs(Seq(opentelemetry)).libs
     assert(migrated(opentelemetry).size == 1)
     val res = migrated(opentelemetry).head
     assert(isTheSame(opentelemetry, res))
   }
   test("Available in scala 3") {
-    val migrated = ScalaMigrat.migrateLibs(Seq(cats)).libs
+    val migrated = Scala3Migrate.migrateLibs(Seq(cats)).libs
     val res      = migrated(cats)
     assert(res.nonEmpty)
     assert(res.forall(_.crossVersion.isInstanceOf[CrossVersion.For2_13Use3]))
   }
   test("Don't show older version") {
-    val migrated = ScalaMigrat.migrateLibs(Seq(collection)).libs
+    val migrated = Scala3Migrate.migrateLibs(Seq(collection)).libs
     val res      = migrated(collection).map(_.revision)
     val revision = Revision("2.3.2")
     assert(!res.contains(revision))
   }
   test("Not available lib in scala 3 ") {
-    val migrateLib = ScalaMigrat.migrateLibs(Seq(scalafix)).libs
+    val migrateLib = Scala3Migrate.migrateLibs(Seq(scalafix)).libs
     val res        = migrateLib(scalafix)
     assert(res.nonEmpty)
     assert(res.forall(_.crossVersion.isInstanceOf[CrossVersion.For3Use2_13]))
@@ -48,7 +51,7 @@ class MigrateLibsSuite extends AnyFunSuiteLike with DiffAssertions {
   }
   // Warning: this test may change if the lib is ported to scala 3
   test("Not migrated because macro lib") {
-    val migrateLib = ScalaMigrat.migrateLibs(Seq(macroLib)).libs
+    val migrateLib = Scala3Migrate.migrateLibs(Seq(macroLib)).libs
     val res        = migrateLib(macroLib)
     assert(res.isEmpty)
   }

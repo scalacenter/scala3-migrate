@@ -1,13 +1,13 @@
-package migrate
+package migrate.internal
 
 import java.util.Optional
 
 import scala.util.Try
 
-import migrate.Lib213.macroLibs
-import migrate.LibToMigrate._
-import migrate.ScalacOption.Specific3
 import migrate.interfaces.Lib
+import migrate.internal.Lib213.macroLibs
+import migrate.internal.LibToMigrate._
+import migrate.internal.ScalacOption.Specific3
 import migrate.utils.CoursierHelper
 import migrate.utils.ScalaExtensions._
 

@@ -3,6 +3,7 @@ package migrate
 import scala.tools.nsc.io.File
 
 import migrate.Values._
+import migrate.internal.AbsolutePath
 import migrate.utils.FileUtils._
 import migrate.utils.ScalaExtensions._
 import org.scalatest.funsuite.AnyFunSuiteLike

@@ -4,7 +4,6 @@ import scala.util.Try
 
 import compiler.interfaces.CompilationUnit
 import compiler.interfaces.Scala3Compiler
-import migrate.AbsolutePath
 import migrate.utils.ScalaExtensions._
 import scalafix.interfaces._
 

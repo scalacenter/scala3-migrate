@@ -6,10 +6,10 @@ import scala.util.Try
 
 import compiler.interfaces.CompilationUnit
 import compiler.interfaces.Scala3Compiler
-import migrate.ScalacOption.PluginSpecific
 import migrate.interfaces.Lib
 import migrate.interfaces.MigratedLibsImpl
 import migrate.interfaces.MigratedScalacOptions
+import migrate.internal.ScalacOption.PluginSpecific
 import migrate.internal._
 import migrate.utils.FileUtils
 import migrate.utils.ScalaExtensions._
@@ -18,7 +18,7 @@ import migrate.utils.ScalafixService
 import migrate.utils.Timer._
 import scalafix.interfaces.ScalafixEvaluation
 
-class ScalaMigrat(scalafixSrv: ScalafixService) {
+class Scala3Migrate(scalafixSrv: ScalafixService) {
   private val reporter = ScalaMigrateLogger
 
   def previewMigration(
@@ -158,7 +158,7 @@ class ScalaMigrat(scalafixSrv: ScalafixService) {
 
 }
 
-object ScalaMigrat {
+object Scala3Migrate {
   def migrateScalacOptions(scalacOptions: Seq[String]): MigratedScalacOptions = {
     val sanitized                              = ScalacOption.sanitizeScalacOption(scalacOptions)
     val scalaSettings                          = sanitized.map(ScalacOption.from)

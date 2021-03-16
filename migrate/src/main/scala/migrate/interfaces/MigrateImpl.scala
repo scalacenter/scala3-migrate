@@ -5,9 +5,9 @@ import java.{ util => jutil }
 
 import scala.jdk.CollectionConverters._
 
-import migrate.AbsolutePath
-import migrate.Classpath
-import migrate.ScalaMigrat
+import migrate.Scala3Migrate
+import migrate.internal.AbsolutePath
+import migrate.internal.Classpath
 import migrate.utils.ScalaExtensions._
 import migrate.utils.ScalafixService
 
@@ -34,7 +34,7 @@ final class MigrateImpl() extends Migrate {
       scala3ClassDirectoryAbs <- AbsolutePath.from(scala3ClassDirectory)
       configuredScalafixSrv <-
         ScalafixService.from(scala2CompilerOptions.asScala.toList, scala2Classpath, targetRootAbs)
-      scalaMigrate = new ScalaMigrat(configuredScalafixSrv)
+      scalaMigrate = new Scala3Migrate(configuredScalafixSrv)
       _ <- scalaMigrate
              .migrate(
                unmanagedSources = unmanagedSourcesAbs,
@@ -47,12 +47,12 @@ final class MigrateImpl() extends Migrate {
 
   override def migrateScalacOption(scala3CompilerOptions: jutil.List[String]): ScalacOptions = {
     val s = scala3CompilerOptions.asScala.toList // .mkString(" ")
-    ScalaMigrat.migrateScalacOptions(s)
+    Scala3Migrate.migrateScalacOptions(s)
   }
 
   override def migrateLibs(libs: jutil.List[Lib]): MigratedLibs = {
     val initialLibs = libs.asScala.toList
-    ScalaMigrat.migrateLibs(initialLibs)
+    Scala3Migrate.migrateLibs(initialLibs)
   }
 
   override def prepareMigration(
@@ -68,7 +68,7 @@ final class MigrateImpl() extends Migrate {
       scala2Classpath      = Classpath(scala2CpAbs: _*)
       configuredScalafixSrv <-
         ScalafixService.from(scala2CompilerOptions.asScala.toList, scala2Classpath, targetRootAbs)
-      scalaMigrate = new ScalaMigrat(configuredScalafixSrv)
+      scalaMigrate = new Scala3Migrate(configuredScalafixSrv)
       _           <- scalaMigrate.prepareMigration(unmanagedSourcesAbs)
     } yield ()).get
 

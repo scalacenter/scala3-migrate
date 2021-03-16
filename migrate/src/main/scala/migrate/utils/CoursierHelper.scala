@@ -4,10 +4,10 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContextExecutor
 
 import coursier.Repositories
-import migrate.CompatibleWithScala3Lib
-import migrate.Lib213
-import migrate.LibToMigrate.CrossVersion
-import migrate.LibToMigrate.Revision
+import migrate.internal.CompatibleWithScala3Lib
+import migrate.internal.Lib213
+import migrate.internal.LibToMigrate.CrossVersion
+import migrate.internal.LibToMigrate.Revision
 
 object CoursierHelper {
   implicit val ec: ExecutionContextExecutor = ExecutionContext.global

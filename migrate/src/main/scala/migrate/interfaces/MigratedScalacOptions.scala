@@ -4,9 +4,9 @@ import java.{ util => ju }
 
 import scala.jdk.CollectionConverters._
 
-import migrate.Scala3cOption
-import migrate.ScalacOption
-import migrate.ScalacOption.PluginSpecific
+import migrate.internal.Scala3cOption
+import migrate.internal.ScalacOption
+import migrate.internal.ScalacOption.PluginSpecific
 
 case class MigratedScalacOptions(
   notParsed: Seq[ScalacOption.NotParsed],

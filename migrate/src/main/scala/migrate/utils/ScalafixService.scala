@@ -5,8 +5,8 @@ import scala.util.Try
 
 import buildinfo.BuildInfo
 import coursier._
-import migrate.AbsolutePath
-import migrate.Classpath
+import migrate.internal.AbsolutePath
+import migrate.internal.Classpath
 import migrate.utils.ScalaExtensions.OptionalExtension
 import scalafix.interfaces.Scalafix
 import scalafix.interfaces.ScalafixEvaluation

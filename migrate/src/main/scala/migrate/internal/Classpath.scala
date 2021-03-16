@@ -1,4 +1,4 @@
-package migrate
+package migrate.internal
 
 import java.io.File
 import java.net.URLClassLoader
