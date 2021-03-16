@@ -15,7 +15,7 @@ object Messages {
        |
        |you project must be in 2.13 and not in $scalaVersion
        |please change the scalaVersion following this command
-       |set $projectId / scalaVersion := "2.13.5"
+       |set LocalProject("$projectId") / scalaVersion := "2.13.5"
        |
        |
        |""".stripMargin
