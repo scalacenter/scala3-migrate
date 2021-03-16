@@ -150,7 +150,7 @@ First reload the build to take into account the new libs and scalacOptions.
 > reload
 ```
 
-The command `migrate-prepare` fix number of incompatibilities by applying the following scalafix rules:
+The command `migrate-prepare` fix number of incompatibilities by applying the following Scalafix rules:
 - ProcedureSyntax
 - fix.scala213.ConstructorProcedureSyntax
 - fix.scala213.ExplicitNullaryEtaExpansion
