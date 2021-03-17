@@ -3,7 +3,7 @@ This project aims to make the migration to Scala 3 easier:
 
 - migrate-libs: It will help you update the list of your `libraryDependencies`
 - migrate-scalacOptions: It will help you update your `scalacOptions`
-- migrate-prepare: Fix no more supported syntax in Scala 3
+- migrate-syntax: Fix no more supported syntax in Scala 3
 - migrate: Add the minimum set of types required explicitly to make Scala 3 compiling a project without changing its meaning
 
 # Requirements 
@@ -150,7 +150,7 @@ First reload the build to take into account the new libs and scalacOptions.
 > reload
 ```
 
-The command `migrate-prepare` fix number of incompatibilities by applying the following Scalafix rules:
+The command `migrate-syntax` fix number of incompatibilities by applying the following Scalafix rules:
 - ProcedureSyntax
 - fix.scala213.ConstructorProcedureSyntax
 - fix.scala213.ExplicitNullaryEtaExpansion
@@ -159,10 +159,10 @@ The command `migrate-prepare` fix number of incompatibilities by applying the fo
 - fix.scala213.Any2StringAdd
 
 ```
-> migrate-prepare main
+> migrate-syntax main
 [success] Total time: 0 s, completed 12 Mar 2021, 20:55:51
 [info] We are going to fix some syntax incompatibilities
-[INFO ] migrate.ScalaMigrat.previewPrepareMigration:79 - Successfully run fixSyntaxForScala3  in 7280 milliseconds
+[INFO ] migrate.ScalaMigrat.previewSyntaxMigration:79 - Successfully run fixSyntaxForScala3  in 7280 milliseconds
 [INFO ] migrate.utils.ScalafixService.fixInPlace:40 - Syntax fixed for Incompat13.scala)
 [INFO ] migrate.utils.ScalafixService.fixInPlace:40 - Syntax fixed for Cats6.scala)
 [INFO ] migrate.utils.ScalafixService.fixInPlace:40 - Syntax fixed for Cats5.scala)
@@ -183,6 +183,7 @@ Scala 3 uses a new type inference algorithm, therefore the Scala 3.0 compiler ca
 than the one inferred by the Scala 2.13.
 This command goal is to find the necessary types to add in order to make you code compiles.
 ``` 
+> migrate main
 [info] We are going to migrate your project main to scala 3
 [INFO ] migrate.ScalaMigrat.buildMigrationFiles:140 - Found 20 patch candidate(s) in 7 file(s)after 1254 milliseconds
 [INFO ] migrate.ScalaMigrat.compileInScala3:115 - Successfully compiled with scala 3 in 5997 milliseconds

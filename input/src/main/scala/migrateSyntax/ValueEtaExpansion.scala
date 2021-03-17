@@ -1,4 +1,4 @@
-package prepareMigration
+package migrateSyntax
 
 object ValueEtaExpansion {
   val x = 1

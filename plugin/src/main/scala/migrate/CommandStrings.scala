@@ -2,11 +2,11 @@ package migrate
 
 object CommandStrings {
 
-  val migratePrepareCommand = "migrate-prepare"
-  val migratePrepareBrief =
-    (s"$migratePrepareCommand <projectId>", "Fix syntax incompatibilities for scala 3 for a specific projectId")
-  val migratePreprareDetailed =
-    s"""|Usage : $migratePrepareCommand <projectId>
+  val migrateSyntaxCommand = "migrate-syntax"
+  val migrateSyntaxBrief =
+    (s"$migrateSyntaxCommand <projectId>", "Fix syntax incompatibilities for scala 3 for a specific projectId")
+  val migrateSyntaxDetailed =
+    s"""|Usage : $migrateSyntaxCommand <projectId>
         |
         |Fix syntax incompatibilities of the projectId.
         |

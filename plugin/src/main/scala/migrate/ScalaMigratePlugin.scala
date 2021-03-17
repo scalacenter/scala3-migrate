@@ -49,7 +49,7 @@ object ScalaMigratePlugin extends AutoPlugin {
 
     private[migrate] val storeScala3Inputs            = taskKey[StateTransform]("store scala 3 inputs")
     private[migrate] val storeScala2Inputs            = taskKey[StateTransform]("store scala 2 inputs")
-    private[migrate] val internalPrepareMigration     = taskKey[Unit]("fix some syntax incompatibilities with scala 3")
+    private[migrate] val internalMigrateSyntax        = taskKey[Unit]("fix some syntax incompatibilities with scala 3")
     private[migrate] val internalMigrateScalacOptions = taskKey[Unit]("log information to migrate scalacOptions")
     private[migrate] val internalMigrateLibs          = taskKey[Unit]("log information to migrate libDependencies")
     private[migrate] val internalMigrate              = taskKey[Unit]("migrate a specific project to scala 3")
@@ -75,7 +75,7 @@ object ScalaMigratePlugin extends AutoPlugin {
     ) ++
       inConfig(Compile)(configSettings) ++
       inConfig(Test)(configSettings) ++
-      Seq(commands ++= Seq(migratePreprare, migrateScalacOptions, migrateLibDependencies, migrate))
+      Seq(commands ++= Seq(migrateSyntax, migrateScalacOptions, migrateLibDependencies, migrate))
 
   private def idParser(state: State): Parser[String] = {
     val projects           = Project.extract(state).structure.allProjects.map(_.id)
@@ -83,14 +83,14 @@ object ScalaMigratePlugin extends AutoPlugin {
     Space ~> projectCompletions
   }
 
-  lazy val migratePreprare: Command =
-    Command(migratePrepareCommand, migratePrepareBrief, migratePreprareDetailed)(idParser) { (state, projectId) =>
+  lazy val migrateSyntax: Command =
+    Command(migrateSyntaxCommand, migrateSyntaxBrief, migrateSyntaxDetailed)(idParser) { (state, projectId) =>
       val result = List(
         StashOnFailure,
         s"${projectId} / isScala213",
         s"$projectId / compile",
         s"$projectId / storeScala2Inputs",
-        s"$projectId / internalPrepareMigration",
+        s"$projectId / internalMigrateSyntax",
         PopOnFailure,
         FailureWall
       ) ::: state
@@ -149,7 +149,7 @@ object ScalaMigratePlugin extends AutoPlugin {
           Seq(migrationOn)
         else Nil
       },
-      internalPrepareMigration := prepareMigrateImpl.value,
+      internalMigrateSyntax := migrateSyntaxImpl.value,
       internalMigrateScalacOptions := migrateScalacOptionsImp.value,
       internalMigrateLibs := internalMigrateLibsImp.value,
       internalMigrate := migrateImp.value,
@@ -199,11 +199,11 @@ object ScalaMigratePlugin extends AutoPlugin {
       }
     )
 
-  def prepareMigrateImpl = Def.task {
+  def migrateSyntaxImpl = Def.task {
     val log        = streams.value.log
     val targetRoot = semanticdbTargetRoot.value
     val projectId  = thisProject.value.id
-    log.info(Messages.welcomePrepareMigration(projectId))
+    log.info(Messages.welcomeMigrateSyntax(projectId))
     // computed values
     val scala2InputsValue     = state.value.attributes.get(scala2inputsAttirbute).get
     val unamangedSources      = scala2InputsValue.unmanagedSources
@@ -211,7 +211,7 @@ object ScalaMigratePlugin extends AutoPlugin {
     val scala2CompilerOptions = scala2InputsValue.scalacOptions
 
     Try {
-      migrateAPI.prepareMigration(
+      migrateAPI.migrateSyntax(
         unamangedSources.asJava,
         targetRoot.toPath,
         scala2Classpath.asJava,
@@ -219,9 +219,9 @@ object ScalaMigratePlugin extends AutoPlugin {
       )
     } match {
       case Success(_) =>
-        log.info(Messages.successMessagePrepareMigration(projectId, scala3Version))
+        log.info(Messages.successMessageMigrateSyntax(projectId, scala3Version))
       case Failure(exception) =>
-        log.err(Messages.errorMessagePrepareMigration(projectId, exception))
+        log.err(Messages.errorMessageMigrateSyntax(projectId, exception))
     }
   }
 

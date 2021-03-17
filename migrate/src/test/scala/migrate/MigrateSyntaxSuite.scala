@@ -10,14 +10,14 @@ import org.scalatest.funsuite.AnyFunSuiteLike
 import scalafix.interfaces.ScalafixEvaluation
 import scalafix.testkit.DiffAssertions
 
-class PreapreMigrationSuite extends AnyFunSuiteLike with DiffAssertions {
+class MigrateSyntaxSuite extends AnyFunSuiteLike with DiffAssertions {
 
   val migrateFiles: Seq[AbsolutePath] =
-    unmanaged.filter(_.value.contains(s"${File.separator}prepareMigration${File.separator}"))
+    unmanaged.filter(_.value.contains(s"${File.separator}migrateSyntax${File.separator}"))
   migrateFiles.foreach { inputFile =>
     test(s"${inputFile.getName}") {
       val fixSyntaxResult = scalaMigrat
-        .previewPrepareMigration(Seq(inputFile))
+        .previewSyntaxMigration(Seq(inputFile))
         .get
 
       val preview       = previewSyntaxFix(inputFile, fixSyntaxResult).get
