@@ -7,6 +7,4 @@ public interface MigratedLibs {
     Lib[] getNotMigrated();
     Map<Lib, List<Lib>> getMigrated();
     Map<Lib, String> getMigratedCompilerPlugins();
-    
-    
 }

@@ -19,7 +19,8 @@ case class MigratedLibsImpl(
   }
 
   override def getNotMigrated: Array[Lib] =
-    ((nonMigratedLibs.keys ++ compilerPluginsWithout.keys).map(_.asInstanceOf[Lib]).toArray)
+    (nonMigratedLibs.keys ++ compilerPluginsWithout.keys).map(_.asInstanceOf[Lib]).toArray
+
   override def getMigrated: jutil.Map[Lib, jutil.List[Lib]] =
     // to Java ^^
     migrated.map { case (initial, compatible) =>
