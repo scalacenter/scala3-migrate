@@ -121,52 +121,49 @@ object Messages {
         |${BOLD}Starting to migrate libDependencies for $projectId${RESET}
         |""".stripMargin
 
-  def notMigratedLibs(libs: Seq[Lib]): String = {
-    val (compilerPlugins, others) = libs.partition(_.isCompilerPlugin)
-    val messageCompilerPlugin = if (compilerPlugins.nonEmpty) {
-      s"""|
-          |${YELLOW}The following compiler plugins are not supported in scala ${ScalaMigratePlugin.scala3Version}${RESET}
-          |${YELLOW}You need to find alternatives. Please check the migration guide for more information.${RESET}
-          |
-          |${compilerPlugins.map(_.toString).mkString("\n")}
-          |""".stripMargin
-    } else ""
-    val messageOtherLibs =
-      if (others.nonEmpty)
-        s"""
-           |${YELLOW}The following list of libs cannot be migrated as they contain Macros and are not yet${RESET}
-           |${YELLOW}published for ${ScalaMigratePlugin.scala3Version}${RESET}
-           |
-           |${others.map(_.toString).mkString("\n")}
-           |
-           |""".stripMargin
-      else ""
-    messageCompilerPlugin + messageOtherLibs
-  }
+  def messageForLibs(
+    notMigrated: Seq[Lib],
+    validLibs: Seq[Lib],
+    toUpdate: Map[Lib, Seq[Lib]],
+    compilerPluginsWithScalacOption: Map[Lib, String]
+  ): String = {
+    val removedSign = s"""${BOLD}${RED}X${RESET}"""
+    val validSign   = s"""${BOLD}${CYAN}Valid${RESET}"""
+    val toBeUpdated = s"""${BOLD}${BLUE}To be updated${RESET}"""
+    val commentMacro =
+      s"${BOLD}${YELLOW}Contains Macros and is not yet published for ${ScalaMigratePlugin.scala3Version}${RESET}"
+    val commentCompilerPlugin =
+      s"${BOLD}${YELLOW}Compiler plugins are not supported in scala ${ScalaMigratePlugin.scala3Version}. You need to find an alternative${RESET}"
+    val commentCompilerWithScalacOption =
+      s"${BOLD}${YELLOW}This compiler plugin has a scalacOption equivalent. Add it to your scalacOptions$RESET"
+    val notMigratedWithComments =
+      notMigrated.map(lib => if (lib.isCompilerPlugin) (lib, commentCompilerPlugin) else (lib, commentMacro))
+    def formatCompilerPlugins: String =
+      compilerPluginsWithScalacOption.map { case (l, scalacOption) =>
+        format(l, Seq(scalacOption)) + s" : $commentCompilerWithScalacOption"
+      }.mkString("\n")
+    def formatNotMigrated: String = notMigratedWithComments.map { case (lib, comment) =>
+      s""""$lib" -> $removedSign : $comment"""
+    }.mkString("\n")
+    def formatValid: String = validLibs.map(lib => s""""$lib" -> $validSign""").mkString("\n")
 
-  def compilerPluginWithScalacOption(plugins: Map[Lib, String]): String =
-    s"""
-       |The following compiler plugins are not supported in scala ${ScalaMigratePlugin.scala3Version}
-       |but there is an equivalent scalacOption that can replace it.
-       |Add these scalacOptions to your ScalacOptions:
-       |
-       |${formatCompilerPlugins(plugins)}
-       |
-       |""".stripMargin
+    val help = s"""
+                  |$removedSign             $RED: Cannot be updated to scala 3$RESET
+                  |$validSign         $CYAN: Already a valid version for Scala 3$RESET
+                  |$toBeUpdated $BLUE: Need to be updated to the following version$RESET
+                  |""".stripMargin
 
-  def migratedLib(libs: Map[Lib, Seq[Lib]]): String =
     s"""|
+        |$help
         |
-        |${BOLD}You can update your libs with the following versions:${RESET}
-        |
-        |${formatLibs(libs)}
-        |
-        |
+        |$formatNotMigrated
+        |$formatValid
+        |${formatLibs(toUpdate)}
+        |$formatCompilerPlugins
         |
         |""".stripMargin
 
-  private def formatCompilerPlugins(l: Map[Lib, String]): String =
-    l.map { case (l, scalacOption) => format(l, Seq(scalacOption)) }.mkString("\n")
+  }
 
   private def formatLibs(libs: Map[Lib, Seq[Lib]]): String =
     libs.map { case (initial, migrated) => format(initial, migrated.map(_.toString)) }.mkString("\n")

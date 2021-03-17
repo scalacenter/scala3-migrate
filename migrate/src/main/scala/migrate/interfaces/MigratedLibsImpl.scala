@@ -17,15 +17,23 @@ case class MigratedLibsImpl(
     case (_, scalacOption) =>
       scalacOption.isDefined
   }
+  private val (validLibs, toUpdate) = migrated.partition { case (initial, compatible) =>
+    compatible.exists(initialLibSameThanCompatible(initial, _))
+  }
 
   override def getNotMigrated: Array[Lib] =
     (nonMigratedLibs.keys ++ compilerPluginsWithout.keys).map(_.asInstanceOf[Lib]).toArray
 
-  override def getMigrated: jutil.Map[Lib, jutil.List[Lib]] =
+  override def getLibsToUpdate: jutil.Map[Lib, jutil.List[Lib]] =
     // to Java ^^
-    migrated.map { case (initial, compatible) =>
+    toUpdate.map { case (initial, compatible) =>
       initial.asInstanceOf[Lib] -> compatible.map(_.asInstanceOf[Lib]).asJava
     }.asJava
+
+  override def getValidLibs: Array[Lib] = validLibs.keys.toArray
+
+  private def initialLibSameThanCompatible(initial: Lib213, compatible: CompatibleWithScala3Lib): Boolean =
+    initial.name == compatible.name && initial.revision == compatible.revision
 
   override def getMigratedCompilerPlugins: jutil.Map[Lib, String] = compilerPluginsWithScalacOption.collect {
     case (initial, Some(scalacOption)) =>
