@@ -87,7 +87,7 @@ object Messages {
     pluginsOption: Seq[String]
   ): String = {
     val removedSign           = s"""${BOLD}${RED}X${RESET}"""
-    val sameSign              = s"""${BOLD}${CYAN}\u2714${RESET}"""
+    val sameSign              = s"""${BOLD}${CYAN}Valid${RESET}"""
     val renamedSign           = s"""${BOLD}${BLUE}Renamed${RESET}"""
     def formatRemoved: String = removed.map(r => s""""$r" -> $removedSign""").mkString("\n")
     def formatRenamed: String = renamed.map { case (initial, renamed) =>
@@ -106,7 +106,7 @@ object Messages {
     s"""
        |$removedSign         $RED: The following scalacOption is specific to Scala 2 and doesn't have an equivalent in Scala 3$RESET
        |$renamedSign   $BLUE: The following scalacOption has been renamed in Scala3$RESET
-       |$sameSign         $CYAN: The following scalacOption is a valid Scala 3 option$RESET
+       |$sameSign       $CYAN: The following scalacOption is a valid Scala 3 option$RESET
        |
        |$formatRemoved
        |$formatRenamed
