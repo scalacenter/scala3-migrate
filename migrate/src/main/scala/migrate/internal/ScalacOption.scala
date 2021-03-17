@@ -11,6 +11,7 @@ trait ScalacOption extends Product with Serializable {
 
 sealed trait Scala2cOption extends ScalacOption {
   val scala2Value: String
+  lazy val scala2ValueForBuild: Seq[String] = scala2Value.split(" ").toSeq
 }
 
 sealed trait Scala3cOption extends ScalacOption {
@@ -319,7 +320,9 @@ object ScalacOption {
 
   sealed abstract class Specific2(val scala2Value: String) extends Scala2cOption
   sealed abstract class Specific3(val scala3Value: String) extends Scala3cOption
-  case class NotParsed(value: String)                      extends ScalacOption
+  case class NotParsed(value: String) extends ScalacOption {
+    lazy val valueForBuild: Seq[String] = value.split(" ").toSeq
+  }
 
   sealed abstract class PluginSpecific(value: String) extends Scala2cOption with Scala3cOption {
     override val scala2Value: String = value
