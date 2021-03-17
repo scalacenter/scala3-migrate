@@ -12,7 +12,7 @@ import migrate.utils.FileUtils._
 import org.scalatest.funsuite.AnyFunSuiteLike
 import scalafix.testkit.DiffAssertions
 
-class MigrationSuite extends AnyFunSuiteLike with DiffAssertions {
+class MigrateSuite extends AnyFunSuiteLike with DiffAssertions {
   val migrateFiles: Seq[AbsolutePath] = unmanaged.filter(_.value.contains(s"${File.separator}migrate${File.separator}"))
   migrateFiles.foreach { inputFile =>
     test(s"${inputFile.getName}") {

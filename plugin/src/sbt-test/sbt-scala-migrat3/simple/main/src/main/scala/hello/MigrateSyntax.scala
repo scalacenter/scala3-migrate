@@ -1,6 +1,6 @@
 package hello
 
-object PrepareMigration {
+object MigrateSyntax {
   //ProcedureSyntax
   //fix.scala213.ConstructorProcedureSyntax
   trait Foo {

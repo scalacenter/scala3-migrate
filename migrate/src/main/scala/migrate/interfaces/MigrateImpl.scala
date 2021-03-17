@@ -55,7 +55,7 @@ final class MigrateImpl() extends Migrate {
     Scala3Migrate.migrateLibs(initialLibs)
   }
 
-  override def prepareMigration(
+  override def migrateSyntax(
     unmanagedSources: jutil.List[Path],
     targetRoot: Path,
     scala2Cp: jutil.List[Path],
@@ -69,7 +69,7 @@ final class MigrateImpl() extends Migrate {
       configuredScalafixSrv <-
         ScalafixService.from(scala2CompilerOptions.asScala.toList, scala2Classpath, targetRootAbs)
       scalaMigrate = new Scala3Migrate(configuredScalafixSrv)
-      _           <- scalaMigrate.prepareMigration(unmanagedSourcesAbs)
+      _           <- scalaMigrate.migrateSyntax(unmanagedSourcesAbs)
     } yield ()).get
 
 }

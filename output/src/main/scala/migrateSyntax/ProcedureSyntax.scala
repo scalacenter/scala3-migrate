@@ -1,4 +1,4 @@
-package prepareMigration
+package migrateSyntax
 
 object ProcedureSyntax {
   class Bar(a: String) {

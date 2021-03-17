@@ -29,10 +29,10 @@ public interface Migrate {
     ScalacOptions migrateScalacOption(List<String> scala3CompilerOptions);
     MigratedLibs migrateLibs(List<Lib> libs);
 
-    void prepareMigration(List<Path> unmanagedSources,
-                 Path targetRoot,
-                 List<Path> scala2Classpath,
-                 List<String> scala2CompilerOptions);
+    void migrateSyntax(List<Path> unmanagedSources,
+                       Path targetRoot,
+                       List<Path> scala2Classpath,
+                       List<String> scala2CompilerOptions);
 
 
     // Todo: Maybe using ServiceLoader could simplify this code a bit:
