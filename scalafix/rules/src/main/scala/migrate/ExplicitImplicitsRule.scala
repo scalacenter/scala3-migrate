@@ -68,10 +68,10 @@ class ExplicitImplicitsRule[G <: Global](g: G) {
       }.filter(_.isInstanceOf[g.ApplyImplicitView])
 
     collectedTree.collectFirst {
-      case t @ g.Apply(fun: g.Select, _) =>
+      case g.Apply(fun: g.Select, _) =>
         if (fun.qualifier.symbol.isStatic) fun.name.toString
         else fun.toString
-      case t @ g.Apply(fun: g.TypeApply, _) =>
+      case g.Apply(fun: g.TypeApply, _) =>
         if (fun.symbol.isStatic) fun.symbol.fullName.toString
         else fun.symbol.name.toString
     }

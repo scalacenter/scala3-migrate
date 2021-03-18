@@ -17,7 +17,6 @@ object RscCompat {
     val List(x3, y3) = List.apply[Int](3, 3)
     val x4, y4 = 4
     val x9 :: y9 = List.apply[Int](9, 9, 9)
-    var List() = List.apply[Nothing]()
     var List(x6) = List.apply[Int](6)
     var List(x7, y7) = List.apply[Int](7, 7)
     var x8, y8 = 8

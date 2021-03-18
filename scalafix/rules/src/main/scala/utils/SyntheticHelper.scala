@@ -19,19 +19,19 @@ object SyntheticHelper {
 
   def getOriginalTree(semanticTree: SemanticTree): Option[Tree] =
     semanticTree match {
-      case IdTree(info)              => None
-      case SelectTree(qualifier, id) => getOriginalTree(qualifier)
+      case IdTree(_)                => None
+      case SelectTree(qualifier, _) => getOriginalTree(qualifier)
       case ApplyTree(function, arguments) =>
         getOriginalTree(function)
           .orElse(arguments.map(getOriginalTree).head)
-      case TypeApplyTree(function, typeArguments) => getOriginalTree(function)
+      case TypeApplyTree(function, _) => getOriginalTree(function)
 
-      case FunctionTree(parameters, body)           => getOriginalTree(body)
-      case LiteralTree(constant)                    => None
-      case MacroExpansionTree(beforeExpansion, tpe) => None
-      case OriginalSubTree(tree)                    => Some(tree)
-      case OriginalTree(tree)                       => Some(tree)
-      case NoTree                                   => None
+      case FunctionTree(_, body)    => getOriginalTree(body)
+      case LiteralTree(_)           => None
+      case MacroExpansionTree(_, _) => None
+      case OriginalSubTree(tree)    => Some(tree)
+      case OriginalTree(tree)       => Some(tree)
+      case NoTree                   => None
     }
 
   def getTermName(origin: Tree): Option[Term] =
