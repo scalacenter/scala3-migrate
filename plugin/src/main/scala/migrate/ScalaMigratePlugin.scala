@@ -253,15 +253,14 @@ object ScalaMigratePlugin extends AutoPlugin {
     val migratedLibs: MigratedLibs     = migrateAPI.migrateLibs(libs.map(_.asInstanceOf[Lib]).asJava)
     // to scala Seq
     val notMigrated = migratedLibs.getNotMigrated.toSeq
-    val migrated = migratedLibs.getMigrated.asScala.toMap.map { case (lib, migrated) =>
+    val libsToUpdate = migratedLibs.getLibsToUpdate.asScala.toMap.map { case (lib, migrated) =>
       lib -> migrated.asScala
     }
+    val validLibs                                        = migratedLibs.getValidLibs.toSeq
     val compilerPluginWithScalacOption: Map[Lib, String] = migratedLibs.getMigratedCompilerPlugins.asScala.toMap
     // logging
-    if (notMigrated.nonEmpty) log.info(Messages.notMigratedLibs(notMigrated))
-    if (compilerPluginWithScalacOption.nonEmpty)
-      log.info(Messages.compilerPluginWithScalacOption(compilerPluginWithScalacOption))
-    log.info(Messages.migratedLib(migrated))
+
+    log.info(Messages.messageForLibs(notMigrated, validLibs, libsToUpdate, compilerPluginWithScalacOption))
   }
 
   def migrateImp =

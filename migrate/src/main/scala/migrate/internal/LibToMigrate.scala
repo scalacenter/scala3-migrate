@@ -34,20 +34,32 @@ case class Lib213(
   crossVersion: CrossVersion,
   configurations: Option[String]
 ) extends LibToMigrate {
-  def toCompatible: Either[Option[Scala3cOption], Seq[CompatibleWithScala3Lib]] =
-    if (isCompilerPlugin) {
+  def toCompatible: Either[Option[Scala3cOption], Seq[CompatibleWithScala3Lib]] = {
+    val result = if (isCompilerPlugin) {
       val compatibleLib = CoursierHelper.getCompatibleForScala3Full(this)
       if (compatibleLib.isEmpty)
         Left(Lib213.compilerPluginToScalacOption.get((this.organization, this.name)))
       else Right(compatibleLib)
-    } else
+    } else {
       crossVersion match {
-        // keep the same if CrossVersion.Disabled. Usually it's a Java Lib
-        case CrossVersion.Disabled => Right(Seq(CompatibleWithScala3Lib.from(this)))
+        case CrossVersion.Disabled => {
+          this.name.value.split("_").toList match {
+            case name :: scalaVersion :: Nil =>
+              val crossVersion =
+                if (scalaVersion.split('.').length == 2) CrossVersion.Binary("", "") else CrossVersion.Full("", "")
+              val newLib213 = this.copy(name = Name(name))
+              crossVersion match {
+                case CrossVersion.Binary(_, _) => Right(getCompatibleWhenBinaryCrossVersion(newLib213))
+                case _                         => Right(CoursierHelper.getCompatibleForScala3Full(newLib213))
+              }
+            // keep the same if CrossVersion.Disabled. Usually it's a Java Lib
+            case _ => Right(Seq(CompatibleWithScala3Lib.from(this)))
+          }
+        }
         // look for revisions that are compatible with scala 3 binary version
-        case CrossVersion.Binary(_, _) => Right(getCompatibleWhenBinaryCrossVersion())
+        case CrossVersion.Binary(_, _) => Right(getCompatibleWhenBinaryCrossVersion(this))
         // look for revisions that are compatible with scala 3 full version
-        case CrossVersion.Full(_, _) => Right(CoursierHelper.getCompatibleForScala3Full(this))
+        case CrossVersion.Full(_, _) => Right(getCompatibleWhenFullCrossVersion(this))
         // already compatible
         case CrossVersion.For2_13Use3(_, _) => Right(Seq(CompatibleWithScala3Lib.from(this)))
         case CrossVersion.For3Use2_13(_, _) => Right(Seq(CompatibleWithScala3Lib.from(this)))
@@ -55,18 +67,44 @@ case class Lib213(
         case CrossVersion.Patch       => Right(CoursierHelper.getCompatibleForScala3Full(this))
         case CrossVersion.Constant(_) => Right(CoursierHelper.getCompatibleForScala3Full(this))
       }
+    }
+    result match {
+      case Right(compatibleLibs) =>
+        // we want to keep the first newer version and the last
+        if (compatibleLibs.size <= 1)
+          Right(compatibleLibs)
+        else Right(Seq(compatibleLibs.head, compatibleLibs.last))
+      case Left(value) => Left(value)
+    }
+  }
 
   override def toString: String =
     s"${organization.value}:${name.value}:${revision.value}${configurations.map(":" + _).getOrElse("")}"
 
-  private def getCompatibleWhenBinaryCrossVersion(): Seq[CompatibleWithScala3Lib] = {
-    val scala3Libs = CoursierHelper.getCompatibleForScala3Binary(this)
+  private def getCompatibleWhenBinaryCrossVersion(lib: Lib213): Seq[CompatibleWithScala3Lib] = {
+    val scala3Libs = CoursierHelper.getCompatibleForScala3Binary(lib)
     if (scala3Libs.isEmpty) {
-      if (macroLibs.get(this.organization).contains(this.name)) Nil
-      else CoursierHelper.getCompatibleForBinary213(this)
+      if (macroLibs.get(lib.organization).contains(lib.name)) Nil
+      else Seq(CompatibleWithScala3Lib.withCrossVersionFor3Use2_13(lib))
     } else scala3Libs
   }
 
+  private def getCompatibleWhenFullCrossVersion(lib: Lib213): Seq[CompatibleWithScala3Lib] = {
+    val scala3Libs = CoursierHelper.getCompatibleForScala3Full(lib)
+    if (scala3Libs.isEmpty) {
+      if (macroLibs.get(lib.organization).contains(lib.name)) Nil
+      else
+        Seq(
+          CompatibleWithScala3Lib(
+            lib.organization,
+            Name(lib.name.value + s"_{REPLACE_BY_scala213_version}"),
+            lib.revision,
+            CrossVersion.For3Use2_13("", ""),
+            lib.configurations
+          )
+        )
+    } else scala3Libs
+  }
 }
 
 case class CompatibleWithScala3Lib(
@@ -78,18 +116,14 @@ case class CompatibleWithScala3Lib(
 ) extends LibToMigrate {
 
   override def toString: String = {
-    val configuration  = configurations.map(c => " % " + withQuote(c)).getOrElse("")
-    val orgQuoted      = withQuote(organization.value)
-    val nameQuoted     = withQuote(name.value)
+    val configuration = configurations.map(c => " % " + withQuote(c)).getOrElse("")
+    val orgQuoted     = withQuote(organization.value)
+    withQuote(name.value)
     val revisionQuoted = withQuote(revision.value)
     crossVersion match {
       case CrossVersion.Disabled          => s"$orgQuoted % ${withQuote(name.value)} % $revisionQuoted$configuration"
       case CrossVersion.For2_13Use3(_, _) => s"$orgQuoted %% ${withQuote(name.value)} % $revisionQuoted$configuration"
-      case CrossVersion.For3Use2_13(_, _) =>
-        s"$orgQuoted % ${withQuote(s"${name.value}_${CoursierHelper.scala213Binary}")} % $revisionQuoted$configuration"
-      case CrossVersion.Full(_, _) =>
-        s"$orgQuoted % ${withQuote(s"${name.value}_${CoursierHelper.scala3Full}")} % $revisionQuoted$configuration"
-      case _ => s"$orgQuoted %% $nameQuoted % $revisionQuoted$configuration"
+      case _                              => s"$orgQuoted % ${withQuote(name.value)} % $revisionQuoted$configuration"
     }
   }
   private def withQuote(s: String) = "\"" + s + "\""
@@ -99,7 +133,7 @@ object LibToMigrate {
   case class Organization(value: String)
   case class Name(value: String)
   case class Revision(value: String) {
-    private val version: Seq[String] = value.split('.')
+    private val version: Seq[String] = value.split('.').toSeq
     val major: Option[Int]           = version.headOption.flatMap(v => Try(v.toInt).toOption)
     val minor: Option[Int]           = Try(version(1).toInt).toOption
     val patch: Option[Int]           = Try(version(2).split("-")(0).toInt).toOption
@@ -209,4 +243,12 @@ object Lib213 {
 object CompatibleWithScala3Lib {
   def from(lib: Lib213): CompatibleWithScala3Lib =
     CompatibleWithScala3Lib(lib.organization, lib.name, lib.revision, lib.crossVersion, lib.configurations)
+  def withCrossVersionFor3Use2_13(lib: Lib213): CompatibleWithScala3Lib =
+    CompatibleWithScala3Lib(
+      lib.organization,
+      Name(lib.name.value + s"_${CoursierHelper.scala213Binary}"),
+      lib.revision,
+      CrossVersion.For3Use2_13("", ""),
+      lib.configurations
+    )
 }

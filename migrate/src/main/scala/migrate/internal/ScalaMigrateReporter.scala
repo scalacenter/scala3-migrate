@@ -1,4 +1,4 @@
-package migrate.utils
+package migrate.internal
 
 import compiler.interfaces.Logger
 

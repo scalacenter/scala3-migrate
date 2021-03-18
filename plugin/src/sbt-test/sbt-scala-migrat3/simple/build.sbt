@@ -24,7 +24,7 @@ lazy val basic = project
     libraryDependencies ++=
       Seq(
         ("org.typelevel" %% "cats-core" % V.catsCore),
-        compilerPlugin("org.typelevel" %% "kind-projector" % V.kindProjector cross CrossVersion.full)
+        compilerPlugin("org.typelevel" % "kind-projector" % V.kindProjector cross CrossVersion.full)
       )
   )
 

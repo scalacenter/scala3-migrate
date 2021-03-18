@@ -7,6 +7,7 @@ import coursier.Repositories
 import migrate.internal.CompatibleWithScala3Lib
 import migrate.internal.Lib213
 import migrate.internal.LibToMigrate.CrossVersion
+import migrate.internal.LibToMigrate.Name
 import migrate.internal.LibToMigrate.Revision
 
 object CoursierHelper {
@@ -14,6 +15,7 @@ object CoursierHelper {
   val scala3Full                            = "3.0.0-RC1"
   val scala3Binary                          = "3.0.0-RC1"
   val scala213Binary                        = "2.13"
+  val scala213Full                          = "2.13.5" // should be taken from the project build
 
   def getCompatibleForScala3Binary(lib: Lib213): Seq[CompatibleWithScala3Lib] = {
     val revisions = searchRevisionsFor(lib, scala3Binary)
@@ -25,14 +27,13 @@ object CoursierHelper {
   def getCompatibleForScala3Full(lib: Lib213): Seq[CompatibleWithScala3Lib] = {
     val revisions = searchRevisionsFor(lib, scala3Full)
     val all = revisions.map { r =>
-      CompatibleWithScala3Lib(lib.organization, lib.name, r, CrossVersion.Full("", ""), lib.configurations)
-    }
-    getNewerRevision(lib, all)
-  }
-  def getCompatibleForBinary213(lib: Lib213): Seq[CompatibleWithScala3Lib] = {
-    val revisions = searchRevisionsFor(lib, scala213Binary)
-    val all = revisions.map { r =>
-      CompatibleWithScala3Lib(lib.organization, lib.name, r, CrossVersion.For3Use2_13("", ""), lib.configurations)
+      CompatibleWithScala3Lib(
+        lib.organization,
+        Name(lib.name.value + s"_${CoursierHelper.scala3Full}"),
+        r,
+        CrossVersion.Full("", ""),
+        lib.configurations
+      )
     }
     getNewerRevision(lib, all)
   }

@@ -9,11 +9,11 @@ import compiler.interfaces.Scala3Compiler
 import migrate.interfaces.Lib
 import migrate.interfaces.MigratedLibsImpl
 import migrate.interfaces.MigratedScalacOptions
+import migrate.internal.ScalaMigrateLogger
 import migrate.internal.ScalacOption.PluginSpecific
 import migrate.internal._
 import migrate.utils.FileUtils
 import migrate.utils.ScalaExtensions._
-import migrate.utils.ScalaMigrateLogger
 import migrate.utils.ScalafixService
 import migrate.utils.Timer._
 import scalafix.interfaces.ScalafixEvaluation
