@@ -43,15 +43,12 @@ object ScalacOption {
       case s"-target:$target"          => Renamed.Target(target)
       case "-unchecked"                => Shared.Unchecked
       case "-uniqid"                   => Shared.Uniqid
-      case "-usejavacp"                => Shared.Uniqid
-      case "-uniqid"                   => Shared.Usejavacp
+      case "-usejavacp"                => Shared.Usejavacp
       case "-verbose"                  => Shared.Verbose
       case "-version"                  => Shared.Version
       // advanced settings
       case "-X"                                => Shared.XHelp
       case "-Xcheckinit"                       => Renamed.Xcheckinit
-      case "-Xmigration"                       => Shared.Xmigration
-      case "-Xmixin-force-forwarders"          => Shared.Xmigration
       case "-Xmigration"                       => Shared.Xmigration
       case "-Xmixin-force-forwarders"          => Shared.XmixinForceForwarders
       case "-Xno-forwarders"                   => Shared.XnoForwarders

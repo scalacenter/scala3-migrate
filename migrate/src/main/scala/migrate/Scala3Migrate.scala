@@ -63,11 +63,11 @@ class Scala3Migrate(scalafixSrv: ScalafixService) {
       migratedFiles <-
         previewMigration(unmanagedSources, managedSources, scala3Classpath, scala3CompilerOptions, scala3ClassDirectory)
       (success, failures) = migratedFiles.toSeq.partition { case (_, migrated) => migrated.isSuccess }
-      _ <- success.map { case (file, migrated: FileMigrationState.Succeeded) =>
+      _ <- success.collect { case (file, migrated: FileMigrationState.Succeeded) =>
              migrated.newFileContent.flatMap(FileUtils.writeFile(file, _))
            }.sequence
       _ = success.foreach { case (file, _) => scribe.info(s"${file.value} has been successfully migrated") }
-      _ = failures.foreach { case (file, FileMigrationState.Failed(_, cause)) =>
+      _ = failures.collect { case (file, FileMigrationState.Failed(_, cause)) =>
             scribe.info(s"${file.value} has not been migrated because ${cause.getMessage()}")
           }
     } yield ()
@@ -115,7 +115,7 @@ class Scala3Migrate(scalafixSrv: ScalafixService) {
       _ <- timeAndLog(Try(compiler.compileAndReport((cuUnmanagedSources ++ cuManagedSources).toList, reporter))) {
              case (finiteDuration, Success(_)) =>
                scribe.info(s"Successfully compiled with scala 3 in $finiteDuration")
-             case (_, Failure(e)) =>
+             case (_, Failure(_)) =>
                scribe.info(s"""|Compilation with scala 3 failed.
                                |Please fix the errors above.""".stripMargin)
            }

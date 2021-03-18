@@ -34,18 +34,18 @@ class PrettyPrinter[G <: Global](val g: G) {
           }
           case ThisType(sym) =>
             Some(new PrettyType(lookUpName(sym, context)))
-          case ConstantType(Constant(sym: TermSymbol)) => Some(t)
-          case ConstantType(Constant(tpe: Type))       => Some(t)
-          case SuperType(thistpe, supertpe)            => Some(t)
+          case ConstantType(Constant(_: TermSymbol)) => Some(t)
+          case ConstantType(Constant(_: Type))       => Some(t)
+          case SuperType(_, _)                       => Some(t)
           case RefinedType(parents, decls) =>
             val parentOp = parents.map(loop).sequence
             parentOp.map(p => RefinedType(p, decls))
-          case AnnotatedType(annotations, underlying) => Some(t)
+          case AnnotatedType(_, _) => Some(t)
           case ExistentialType(quantified, underlying) =>
             scala.util
               .Try(ExistentialType(quantified.map(sym => sym.setInfo(loop(sym.info).get)), loop(underlying).get))
               .toOption
-          case PolyType(tparams, resultType) => Some(t)
+          case PolyType(_, _) => Some(t)
           case NullaryMethodType(resultType) =>
             loop(resultType)
           case TypeBounds(lo, hi) =>
@@ -53,9 +53,9 @@ class PrettyPrinter[G <: Global](val g: G) {
               case (Some(lo), Some(hi)) => Some(TypeBounds(lo, hi))
               case _                    => None
             }
-          case MethodType(params, resultType) => Some(t)
-          case ErrorType                      => Some(definitions.AnyTpe)
-          case t                              => Some(t)
+          case MethodType(_, _) => Some(t)
+          case ErrorType        => Some(definitions.AnyTpe)
+          case t                => Some(t)
         }
       }
 

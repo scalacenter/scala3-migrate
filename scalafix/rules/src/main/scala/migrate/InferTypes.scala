@@ -26,18 +26,18 @@ class InferTypes[G <: Global](g: G) {
 
   private def addExplicitResultType()(implicit doc: SemanticDocument, compilerSrv: CompilerService[g.type]): Patch =
     doc.tree.collect {
-      case t @ Defn.Val(mods, Pat.Var(name) :: Nil, None, body) => {
+      case t @ Defn.Val(_, Pat.Var(name) :: Nil, None, body) => {
         fixDefinition(t, name, body)
       }
-      case t @ Defn.Var(mods, Pat.Var(name) :: Nil, None, Some(body)) =>
+      case t @ Defn.Var(_, Pat.Var(name) :: Nil, None, Some(body)) =>
         fixDefinition(t, name, body)
 
-      case t @ Defn.Def(mods, name, _, _, None, body) =>
+      case t @ Defn.Def(_, name, _, _, None, body) =>
         fixDefinition(t, name, body)
     }.flatten.asPatch
 
   private def addTypeApply()(implicit doc: SemanticDocument, compilerSrv: CompilerService[g.type]): Patch =
-    doc.synthetics.collect { case syn @ TypeApplyTree(function: SemanticTree, typeArguments: List[SemanticType]) =>
+    doc.synthetics.collect { case syn @ TypeApplyTree(_: SemanticTree, _: List[SemanticType]) =>
       Try {
         for {
           originalTree <- SyntheticHelper.getOriginalTree(syn)
@@ -74,7 +74,7 @@ class InferTypes[G <: Global](g: G) {
     }.filter(_.isInstanceOf[g.TypeApply])
 
     treeAtTheRightPos.collectFirst {
-      case t @ g.TypeApply(fun, args) if fun.isInstanceOf[g.Select] && fun.asInstanceOf[g.Select].name == termName =>
+      case g.TypeApply(fun, args) if fun.isInstanceOf[g.Select] && fun.asInstanceOf[g.Select].name == termName =>
         args.map(_.tpe.dealias)
     }
   }

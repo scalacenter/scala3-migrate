@@ -49,9 +49,9 @@ object CompilerService {
 }
 
 class CompilerService[G <: Global](val g: G, doc: SemanticDocument) {
-  private val unit: G#CompilationUnit = g.newCompilationUnit(doc.input.text, doc.input.syntax)
-  private val sourceFile: SourceFile  = unit.source
-  private val globalService           = new GlobalProxyService(g, sourceFile)
+  private val unit: G#CompilationUnit              = g.newCompilationUnit(doc.input.text, doc.input.syntax)
+  private val sourceFile: SourceFile               = unit.source
+  private val globalService: GlobalProxyService[G] = GlobalProxyService(g, sourceFile)
 
   def getContext(name: Term): Option[g.Context] = {
     val gpos = unit.position(name.pos.start)

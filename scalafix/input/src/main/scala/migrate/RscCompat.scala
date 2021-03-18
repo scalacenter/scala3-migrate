@@ -20,7 +20,6 @@ object RscCompat {
     val List(x3, y3) = List(3, 3)
     val x4, y4 = 4
     val x9 :: y9 = List(9, 9, 9)
-    var List() = List()
     var List(x6) = List(6)
     var List(x7, y7) = List(7, 7)
     var x8, y8 = 8
