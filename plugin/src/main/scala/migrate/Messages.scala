@@ -86,33 +86,43 @@ object Messages {
     scala3cOptions: Seq[String],
     pluginsOption: Seq[String]
   ): String = {
-    val removedSign           = s"""${BOLD}${RED}X${RESET}"""
-    val sameSign              = s"""${BOLD}${CYAN}Valid${RESET}"""
-    val renamedSign           = s"""${BOLD}${BLUE}Renamed${RESET}"""
-    def formatRemoved: String = removed.map(r => s""""$r" -> $removedSign""").mkString("\n")
-    def formatRenamed: String = renamed.map { case (initial, renamed) =>
-      s""""$initial" -> ${BOLD}${BLUE}"$renamed"${BLUE}"""
+    val removedSign       = s"""${BOLD}${RED}X${RESET}"""
+    val sameSign          = s"""${BOLD}${CYAN}Valid${RESET}"""
+    val renamedSign       = s"""${BOLD}${BLUE}Renamed${RESET}"""
+    val spacesHelp        = computeLongestValue(Seq(removedSign, sameSign, renamedSign))
+    val spaceScalacOption = computeLongestValue(removed ++ renamed.keys ++ scala3cOptions)
+    def formatRemoved(longest: Int): String =
+      removed.map(r => s"""${formatValueWithSpace(r, longest)} -> $removedSign""").mkString("\n")
+    def formatRenamed(longest: Int): String = renamed.map { case (initial, renamed) =>
+      s"""${formatValueWithSpace(initial, longest)} -> ${BOLD}${BLUE}$renamed${BLUE}"""
     }.mkString("\n")
-    def formatScala3cOptions(s: Seq[String]): String = s.map(r => s""""$r" -> $sameSign""").mkString("\n")
+    def formatScala3cOptions(s: Seq[String], spaces: Int): String =
+      s.map(r => s"""${formatValueWithSpace(r, spaces)} -> $sameSign""").mkString("\n")
     def pluginSettingsMessage: String =
       if (pluginsOption.isEmpty) ""
-      else
+      else {
+        val longestValue = computeLongestValue(pluginsOption)
         s"""|
             |${BOLD}The following scalacOption are specific to compiler plugins, usually added through `compilerPlugin` or `addCompilerPlugin`.${RESET}
             |In the previous step `migrate-libs`, you should have removed/fixed compiler plugins and for the remaining plugins and settings, they can be kept as they are.
             |
-            |${formatScala3cOptions(pluginsOption)}
+            |${formatScala3cOptions(pluginsOption, longestValue)}
             |""".stripMargin
-    s"""
-       |$removedSign         $RED: The following scalacOption is specific to Scala 2 and doesn't have an equivalent in Scala 3$RESET
-       |$renamedSign   $BLUE: The following scalacOption has been renamed in Scala3$RESET
-       |$sameSign       $CYAN: The following scalacOption is a valid Scala 3 option$RESET
-       |
-       |$formatRemoved
-       |$formatRenamed
-       |${formatScala3cOptions(scala3cOptions)}
-       |
-       |""".stripMargin + pluginSettingsMessage
+      }
+
+    val help = s"""
+                  |${formatValueWithSpace(removedSign, spacesHelp)} $RED: The following scalacOption is specific to Scala 2 and doesn't have an equivalent in Scala 3$RESET
+                  |${formatValueWithSpace(renamedSign, spacesHelp)} $BLUE: The following scalacOption has been renamed in Scala3$RESET
+                  |${formatValueWithSpace(sameSign, spacesHelp)} $CYAN: The following scalacOption is a valid Scala 3 option$RESET
+                  |""".stripMargin
+
+    Seq(
+      help,
+      formatRemoved(spaceScalacOption),
+      formatRenamed(spaceScalacOption),
+      formatScala3cOptions(scala3cOptions, spaceScalacOption),
+      pluginSettingsMessage
+    ).filterNot(_.isEmpty).mkString("\n")
   }
 
   def migrateLibsStarting(projectId: String): String =
@@ -133,43 +143,54 @@ object Messages {
     val commentMacro =
       s"${BOLD}${YELLOW}Contains Macros and is not yet published for ${ScalaMigratePlugin.scala3Version}${RESET}"
     val commentCompilerPlugin =
-      s"${BOLD}${YELLOW}Compiler plugins are not supported in scala ${ScalaMigratePlugin.scala3Version}. You need to find an alternative${RESET}"
+      s"${BOLD}${YELLOW}Scala 2 compiler plugins are not supported in scala ${ScalaMigratePlugin.scala3Version}. You need to find an alternative${RESET}"
     val commentCompilerWithScalacOption =
       s"${BOLD}${YELLOW}This compiler plugin has a scalacOption equivalent. Add it to your scalacOptions$RESET"
+
+    val spacesForLib = computeLongestValue(
+      (notMigrated ++ validLibs ++ toUpdate.keys ++ compilerPluginsWithScalacOption.keys).map(_.toString)
+    )
+
     val notMigratedWithComments =
       notMigrated.map(lib => if (lib.isCompilerPlugin) (lib, commentCompilerPlugin) else (lib, commentMacro))
     def formatCompilerPlugins: String =
       compilerPluginsWithScalacOption.map { case (l, scalacOption) =>
-        format(l, Seq(scalacOption)) + s" : $commentCompilerWithScalacOption"
+        format(l, Seq(scalacOption), spacesForLib) + s" : $commentCompilerWithScalacOption"
       }.mkString("\n")
     def formatNotMigrated: String = notMigratedWithComments.map { case (lib, comment) =>
-      s""""$lib" -> $removedSign : $comment"""
+      s"""${formatValueWithSpace(lib.toString, spacesForLib)} -> $removedSign : $comment"""
     }.mkString("\n")
-    def formatValid: String = validLibs.map(lib => s""""$lib" -> $validSign""").mkString("\n")
+    def formatValid: String =
+      validLibs.map(lib => s"""${formatValueWithSpace(lib.toString, spacesForLib)} -> $validSign""").mkString("\n")
+
+    val spacesForHelp = computeLongestValue(Seq(removedSign, validSign, toBeUpdated))
 
     val help = s"""
-                  |$removedSign             $RED: Cannot be updated to scala 3$RESET
-                  |$validSign         $CYAN: Already a valid version for Scala 3$RESET
-                  |$toBeUpdated $BLUE: Need to be updated to the following version$RESET
+                  |${formatValueWithSpace(removedSign, spacesForHelp)} $RED: Cannot be updated to scala 3$RESET
+                  |${formatValueWithSpace(validSign, spacesForHelp)} $CYAN: Already a valid version for Scala 3$RESET
+                  |${formatValueWithSpace(toBeUpdated, spacesForHelp)} $BLUE: Need to be updated to the following version$RESET
                   |""".stripMargin
 
-    s"""|
-        |$help
-        |
-        |$formatNotMigrated
-        |$formatValid
-        |${formatLibs(toUpdate)}
-        |$formatCompilerPlugins
-        |
-        |""".stripMargin
-
+    Seq(help, formatNotMigrated, formatValid, formatLibs(toUpdate, spacesForLib), formatCompilerPlugins)
+      .filterNot(_.isEmpty)
+      .mkString("\n")
   }
 
-  private def formatLibs(libs: Map[Lib, Seq[Lib]]): String =
-    libs.map { case (initial, migrated) => format(initial, migrated.map(_.toString)) }.mkString("\n")
+  def computeLongestValue(values: Seq[String]): Int =
+    values.maxBy(_.length).length
 
-  private def format(initial: Lib, migrated: Seq[String]): String =
-    s"""\"$initial\" -> ${GREEN}${migrated.mkString(", ")}$RESET"""
+  def formatValueWithSpace(value: String, longestValue: Int): String = {
+    val numberOfSpaces = " " * (longestValue - value.length)
+    s"$value$numberOfSpaces"
+  }
+
+  private def formatLibs(libs: Map[Lib, Seq[Lib]], longestValue: Int): String =
+    libs.map { case (initial, migrated) => format(initial, migrated.map(_.toString), longestValue) }.mkString("\n")
+
+  private def format(initial: Lib, migrated: Seq[String], longestValue: Int): String = {
+    val numberOfSpaces = " " * (longestValue - initial.toString.length)
+    s"""$initial$numberOfSpaces -> ${GREEN}${migrated.mkString(", ")}$RESET"""
+  }
 
   private def formatScalacOptions(l: Seq[String]): String =
     l.mkString("Seq(\n\"", "\",\n\"", "\"\n)")
