@@ -4,6 +4,7 @@ import migrate.internal.AbsolutePath
 import migrate.internal.Classpath
 import migrate.test.BuildInfo
 import migrate.utils.ScalafixService
+import compiler.interfaces.Scala3Compiler
 
 object Values {
 
@@ -21,4 +22,6 @@ object Values {
   lazy val scalafixSrv: ScalafixService =
     ScalafixService.from(scala2CompilerOptions, scala2Classpath, semanticdbTargetRoot).get
   val scalaMigrat = new Scala3Migrate(scalafixSrv)
+  val scala3Compiler: Scala3Compiler =
+    scalaMigrat.setupScala3Compiler(scala3Classpath, scala3ClassDirectory, scala3CompilerOptions).get
 }
