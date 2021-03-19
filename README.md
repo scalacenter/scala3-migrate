@@ -49,34 +49,18 @@ lazy val main = project
 
 ```
 > migrate-libs main
-[info]
 [info] Starting to migrate libDependencies for main
 [info]
-[info] The following compiler plugins are not supported in scala 3.0.0-RC1
-[info] You need to find alternatives. Please check the migration guide for more information.
+[info] X             : Cannot be updated to scala 3
+[info] Valid         : Already a valid version for Scala 3
+[info] To be updated : Need to be updated to the following version
 [info]
-[info] com.olegpy:better-monadic-for:0.3.1:plugin->default(compile)
-[info]
-[info] The following list of libs cannot be migrated as they contain Macros and are not yet
-[info] published for 3.0.0-RC1
-[info]
-[info] com.softwaremill.scalamacrodebug:macros:0.4.1:test
-[info]
-[info]
-[info] The following compiler plugins are not supported in scala 3.0.0-RC1
-[info] but there is an equivalent scalacOption that can replace it.
-[info] Add these scalacOptions to your ScalacOptions:
-[info]
-[info] "org.typelevel:kind-projector:0.11.0:plugin->default(compile)" -> -Ykind-projector
-[info]
-[info]
-[info]
-[info] You can update your libs with the following versions:
-[info]
-[info] "org.typelevel:cats-core:2.2.0" -> "org.typelevel" %% "cats-core" % "2.4.2"
-[info] "ch.epfl.scala:scalafix-rules:0.9.26:test" -> "ch.epfl.scala" % "scalafix-rules_2.13" % "0.9.26" % "test"
-[info] "ch.epfl.scala:scalafix-interfaces:0.9.26" -> "ch.epfl.scala" % "scalafix-interfaces" % "0.9.26"
-[info]
+[info] com.softwaremill.scalamacrodebug:macros:0.4.1:test           -> X : Contains Macros and is not yet published for 3.0.0-RC1
+[info] com.olegpy:better-monadic-for:0.3.1:plugin->default(compile) -> X : Scala 2 compiler plugins are not supported in scala 3.0.0-RC1. You need to find an alternative
+[info] ch.epfl.scala:scalafix-interfaces:0.9.26                     -> Valid
+[info] org.typelevel:cats-core:2.2.0                                -> "org.typelevel" %% "cats-core" % "2.4.2"
+[info] ch.epfl.scala:scalafix-rules:0.9.26:test                     -> "ch.epfl.scala" % "scalafix-rules_2.13" % "0.9.26" % "test"
+[info] org.typelevel:kind-projector:0.11.0:plugin->default(compile) -> -Ykind-projector : This compiler plugin has a scalacOption equivalent. Add it to your scalacOptions
 ```
 
 In this case you need to find alternative to `better-monadic-for` and make the project compile without the plugin.
@@ -114,26 +98,24 @@ lazy val main = project
 [warn] Some scalacOptions are set by sbt plugins and don't need to be modified, removed or added.
 [warn] The sbt plugin should adapt its own scalacOptions for Scala 3
 [info]
-[info] X         : The following scalacOption is specific to Scala 2 and doesn't have an equivalent in Scala 3
-[info] Renamed   : The following scalacOption has been renamed in Scala3
-[info] ✔         : The following scalacOption is a valid Scala 3 option
+[info] X       : The following scalacOption is specific to Scala 2 and doesn't have an equivalent in Scala 3
+[info] Renamed : The following scalacOption has been renamed in Scala3
+[info] Valid   : The following scalacOption is a valid Scala 3 option
 [info]
-[info] "-Wunused" -> X
-[info] "-Yrangepos" -> X
-[info] "-explaintypes" -> "-explain-types"
-[info]
-[info]
+[info] -Wunused   -> X
+[info] -Yrangepos -> X
+[info] -Werror    -> "-Xfatal-warnings"
 [info]
 [info] The following scalacOption are specific to compiler plugins, usually added through `compilerPlugin` or `addCompilerPlugin`.
 [info] In the previous step `migrate-libs`, you should have removed/fixed compiler plugins and for the remaining plugins and settings, they can be kept as they are.
 [info]
-[info] "-Xplugin:/Users/meriamlachkar/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/kind-projector_2.13.3/0.11.0/kind-projector_2.13.3-0.11.0.jar" -> ✔
-[info] "-Xplugin:/Users/meriamlachkar/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/semanticdb-scalac_2.13.3/4.4.0/semanticdb-scalac_2.13.3-4.4.0.jar" -> ✔
-[info] "-P:semanticdb:synthetics:on" -> ✔
-[info] "-P:semanticdb:targetroot:/Users/meriamlachkar/perso/plugin-test/target/scala-2.13/meta" -> ✔
-[info] "-P:semanticdb:sourceroot:/Users/meriamlachkar/perso/plugin-test" -> ✔
-[info] "-P:semanticdb:failures:warning" -> ✔
-[info]
+[info] -Xplugin:/Users/meriamlachkar/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/kind-projector_2.13.3/0.11.0/kind-projector_2.13.3-0.11.0.jar     -> Valid
+[info] -Xplugin:/Users/meriamlachkar/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/olegpy/better-monadic-for_2.13/0.3.1/better-monadic-for_2.13-0.3.1.jar      -> Valid
+[info] -Xplugin:/Users/meriamlachkar/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/semanticdb-scalac_2.13.3/4.4.0/semanticdb-scalac_2.13.3-4.4.0.jar -> Valid
+[info] -P:semanticdb:synthetics:on                                                                                                                                           -> Valid
+[info] -P:semanticdb:targetroot:/Users/meriamlachkar/perso/plugin-test/target/scala-2.13/meta                                                                                -> Valid
+[info] -P:semanticdb:sourceroot:/Users/meriamlachkar/perso/plugin-test                                                                                                       -> Valid
+[info] -P:semanticdb:failures:warning                                                                                                                                        -> Valid
 ```
 
 So following the output, the build will look like:
