@@ -33,7 +33,10 @@ object Messages {
         |""".stripMargin
 
   def errorMesssageMigration(exceptionOpt: Option[Throwable]) = {
-    val exceptionError = exceptionOpt.map(error => s"because of ${error.getMessage}").getOrElse("")
+    val exceptionError = exceptionOpt
+      .map(error => s"""|because of ${error.getMessage}
+                        |${error.getStackTrace.mkString("\n")}""".stripMargin)
+      .getOrElse("")
     s"""|
         |
         |Migration has failed
@@ -58,6 +61,7 @@ object Messages {
         |
         |Failed fixing the syntax for $projectId project
         |${ex.getMessage()}
+        |${ex.getStackTrace.mkString("\n")}
         |
         |
         |""".stripMargin
