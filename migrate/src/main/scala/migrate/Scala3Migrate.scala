@@ -54,10 +54,17 @@ class Scala3Migrate(scalafixSrv: ScalafixService) {
       compiler <- setupScala3Compiler(scala3Classpath, scala3ClassDirectory, scala3CompilerOptions)
       migratedFiles <-
         previewMigration(unmanagedSources, managedSources, compiler)
-      _ <- migratedFiles.map { case (file, migrated: FileMigrationState.FinalState) =>
+      _ <- migratedFiles.map { case (file, migrated) =>
              migrated.newFileContent.flatMap(FileUtils.writeFile(file, _))
            }.sequence
-      _ = migratedFiles.foreach { case (file, _) => scribe.info(s"${file.value} has been successfully migrated") }
+      _ = migratedFiles.keys.map(file => scribe.info(s"${file.value} has been successfully migrated"))
+      _ <- compileWithRewrite(
+             scala3Classpath,
+             scala3ClassDirectory,
+             scala3CompilerOptions,
+             unmanagedSources,
+             managedSources
+           )
     } yield ()
 
   def previewSyntaxMigration(unmanagedSources: Seq[AbsolutePath]): Try[ScalafixEvaluation] = {
@@ -90,6 +97,24 @@ class Scala3Migrate(scalafixSrv: ScalafixService) {
     Try {
       Scala3Compiler.setup(scala3CompilerArgs)
     }
+  }
+
+  private def compileWithRewrite(
+    classpath3: Classpath,
+    classDir3: AbsolutePath,
+    settings3: Seq[String],
+    unmanaged: Seq[AbsolutePath],
+    managed: Seq[AbsolutePath]
+  ): Try[Unit] = {
+    scribe.info(s"Finalizing the migration: compiling in scala 3 with -rewrite option")
+    for {
+      compilerWithRewrite <- setupScala3Compiler(classpath3, classDir3, settings3 :+ "-rewrite")
+      _ <- Try(
+             compilerWithRewrite.compileWithRewrite(
+               (unmanaged ++ managed).map(path => new CompilationUnit(path.value, FileUtils.read(path))).toList
+             )
+           )
+    } yield ()
   }
 
   private def compileInScala3(
