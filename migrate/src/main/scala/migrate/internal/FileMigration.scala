@@ -16,7 +16,7 @@ import scalafix.interfaces.ScalafixPatch
  */
 private[migrate] class FileMigration(fileToMigrate: FileMigrationState.Initial, compiler: Scala3Compiler) {
 
-  def migrate(): FileMigrationState.FinalState = {
+  def migrate(): Try[FileMigrationState.FinalState] = {
     val initialState = CompilingState(fileToMigrate.patches, Seq.empty)
 
     timeAndLog(loopUntilNoCandidates(Success(initialState))) {
@@ -28,10 +28,7 @@ private[migrate] class FileMigration(fileToMigrate: FileMigrationState.Initial, 
         scribe.info(
           s"Failed finding the required patches in ${fileToMigrate.source} after $timeMs ms because ${e.getMessage()}"
         )
-    } match {
-      case Success(finalState) => fileToMigrate.success(finalState.necessaryPatches)
-      case Failure(exception)  => fileToMigrate.failed(exception)
-    }
+    }.map(finalState => fileToMigrate.success(finalState.necessaryPatches))
   }
 
   @tailrec

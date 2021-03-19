@@ -1,7 +1,6 @@
 package migrate
 
 import scala.tools.nsc.io.File
-import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
@@ -17,13 +16,7 @@ class MigrateSuite extends AnyFunSuiteLike with DiffAssertions {
   migrateFiles.foreach { inputFile =>
     test(s"${inputFile.getName}") {
       val migrateResult = Values.scalaMigrat
-        .previewMigration(
-          unmanagedSources = Seq(inputFile),
-          managedSources = managed,
-          scala3Classpath = scala3Classpath,
-          scala3CompilerOptions = scala3CompilerOptions,
-          scala3ClassDirectory = scala3ClassDirectory
-        )
+        .previewMigration(unmanagedSources = Seq(inputFile), managedSources = managed, compiler = scala3Compiler)
         .get
 
       val preview       = previewMigration(inputFile, migrateResult).get
@@ -41,10 +34,7 @@ class MigrateSuite extends AnyFunSuiteLike with DiffAssertions {
   ): Try[String] =
     migratedFiles
       .get(filetoMigrate)
-      .map {
-        case FileMigrationState.Failed(_, cause) => Failure(cause)
-        case f: FileMigrationState.Succeeded     => f.newFileContent
-      }
+      .map(_.newFileContent)
       .getOrElse(Success(read(filetoMigrate)))
 
 }

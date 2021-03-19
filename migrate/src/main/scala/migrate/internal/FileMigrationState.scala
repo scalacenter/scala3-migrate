@@ -40,21 +40,15 @@ sealed trait FileMigrationState {
 
 object FileMigrationState {
   case class Initial(evaluation: ScalafixFileEvaluation) extends FileMigrationState {
-    def migrate(compiler: Scala3Compiler): FileMigrationState.FinalState =
+    def migrate(compiler: Scala3Compiler): Try[FileMigrationState.FinalState] =
       new FileMigration(this, compiler).migrate()
 
-    def success(necessaryPatches: Seq[ScalafixPatch]): Succeeded = Succeeded(evaluation, necessaryPatches)
+    def success(necessaryPatches: Seq[ScalafixPatch]): FinalState = FinalState(evaluation, necessaryPatches)
 
-    def failed(cause: Throwable): Failed = Failed(evaluation, cause)
   }
-  sealed trait FinalState {
-    def isSuccess: Boolean = this.isInstanceOf[Succeeded]
-  }
-  case class Succeeded(evaluation: ScalafixFileEvaluation, necessaryPatches: Seq[ScalafixPatch])
-      extends FileMigrationState
-      with FinalState {
+  case class FinalState(evaluation: ScalafixFileEvaluation, necessaryPatches: Seq[ScalafixPatch])
+      extends FileMigrationState {
     def newFileContent: Try[String] = previewPatches(necessaryPatches).map(_.content)
   }
 
-  case class Failed(evaluation: ScalafixFileEvaluation, cause: Throwable) extends FileMigrationState with FinalState
 }

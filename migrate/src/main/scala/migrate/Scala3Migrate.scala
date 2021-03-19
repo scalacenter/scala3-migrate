@@ -24,32 +24,23 @@ class Scala3Migrate(scalafixSrv: ScalafixService) {
   def previewMigration(
     unmanagedSources: Seq[AbsolutePath],
     managedSources: Seq[AbsolutePath],
-    scala3Classpath: Classpath,
-    scala3CompilerOptions: Seq[String],
-    scala3ClassDirectory: AbsolutePath
+    compiler: Scala3Compiler
   ): Try[Map[AbsolutePath, FileMigrationState.FinalState]] = {
     unmanagedSources.foreach(f => scribe.info(s"Migrating $f"))
-    for {
-      compiler               <- setupScala3Compiler(scala3Classpath, scala3ClassDirectory, scala3CompilerOptions)
-      (scalaFiles, javaFiles) = unmanagedSources.partition(_.value.endsWith("scala"))
-      // first try to compile without adding any patch
-      filesWithErr = compileInScala3AndGetFilesWithErrors(unmanagedSources ++ managedSources, compiler)
-      migratedFiles <- if (filesWithErr.isEmpty) {
-                         scribe.info("The project compiles successfully in Scala 3")
-                         Success(Map[AbsolutePath, FileMigrationState.FinalState]())
-                       } else {
-                         val filesWithoutErrors = scalaFiles.diff(filesWithErr)
-                         for {
-                           initialFileToMigrate <- buildMigrationFiles(filesWithErr)
-                           _ <- compileInScala3(
-                                  initialFileToMigrate,
-                                  filesWithoutErrors ++ javaFiles ++ managedSources,
-                                  compiler
-                                )
-                           migratedFiles = initialFileToMigrate.map(f => (f.source, f.migrate(compiler))).toMap
-                         } yield migratedFiles
-                       }
-    } yield migratedFiles
+    val (scalaFiles, javaFiles) = unmanagedSources.partition(_.value.endsWith("scala"))
+    // first try to compile without adding any patch
+    val filesWithErr = compileInScala3AndGetFilesWithErrors(unmanagedSources ++ managedSources, compiler)
+    if (filesWithErr.isEmpty) {
+      scribe.info("The project compiles successfully in Scala 3")
+      Success(Map[AbsolutePath, FileMigrationState.FinalState]())
+    } else {
+      val filesWithoutErrors = scalaFiles.diff(filesWithErr)
+      (for {
+        initialFileToMigrate <- buildMigrationFiles(filesWithErr)
+        _                    <- compileInScala3(initialFileToMigrate, filesWithoutErrors ++ javaFiles ++ managedSources, compiler)
+        migratedFiles        <- initialFileToMigrate.map(f => f.migrate(compiler).map(success => (f.source, success))).sequence
+      } yield migratedFiles.toMap)
+    }
   }
 
   def migrate(
@@ -60,16 +51,13 @@ class Scala3Migrate(scalafixSrv: ScalafixService) {
     scala3ClassDirectory: AbsolutePath
   ): Try[Unit] =
     for {
+      compiler <- setupScala3Compiler(scala3Classpath, scala3ClassDirectory, scala3CompilerOptions)
       migratedFiles <-
-        previewMigration(unmanagedSources, managedSources, scala3Classpath, scala3CompilerOptions, scala3ClassDirectory)
-      (success, failures) = migratedFiles.toSeq.partition { case (_, migrated) => migrated.isSuccess }
-      _ <- success.collect { case (file, migrated: FileMigrationState.Succeeded) =>
+        previewMigration(unmanagedSources, managedSources, compiler)
+      _ <- migratedFiles.map { case (file, migrated: FileMigrationState.FinalState) =>
              migrated.newFileContent.flatMap(FileUtils.writeFile(file, _))
            }.sequence
-      _ = success.foreach { case (file, _) => scribe.info(s"${file.value} has been successfully migrated") }
-      _ = failures.collect { case (file, FileMigrationState.Failed(_, cause)) =>
-            scribe.info(s"${file.value} has not been migrated because ${cause.getMessage()}")
-          }
+      _ = migratedFiles.foreach { case (file, _) => scribe.info(s"${file.value} has been successfully migrated") }
     } yield ()
 
   def previewSyntaxMigration(unmanagedSources: Seq[AbsolutePath]): Try[ScalafixEvaluation] = {
@@ -91,7 +79,7 @@ class Scala3Migrate(scalafixSrv: ScalafixService) {
       _             = scalafixSrv.fixInPlace(scalafixEval)
     } yield ()
 
-  private def setupScala3Compiler(
+  private[migrate] def setupScala3Compiler(
     classpath: Classpath,
     classDirectory: AbsolutePath,
     scala3CompilerOptions: Seq[String]
