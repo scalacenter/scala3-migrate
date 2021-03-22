@@ -1,5 +1,7 @@
 # scala3-migrate
 [![Latest version](https://index.scala-lang.org/scalacenter/scala3-migrate/scala3-migrate/latest.svg)](https://index.scala-lang.org/scalacenter/scalafix/scalafix-core)
+
+========
 This project aims to make the migration to Scala 3 easier:
 
 - migrate-libs: It will help you update the list of your `libraryDependencies`
