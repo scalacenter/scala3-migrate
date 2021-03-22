@@ -65,11 +65,13 @@ object ScalaMigratePlugin extends AutoPlugin {
   override def projectSettings: Seq[Setting[_]] =
     Seq(
       semanticdbEnabled := {
-        if (scalaVersion.value.startsWith("2.13.")) true
+        val sv = scalaVersion.value
+        if (sv.startsWith("2.13.")) true
         else semanticdbEnabled.value
       },
       semanticdbVersion := {
-        if (scalaVersion.value.startsWith("2.13.")) migrateSemanticdbVersion
+        val sv = scalaVersion.value
+        if (sv.startsWith("2.13.")) migrateSemanticdbVersion
         else semanticdbVersion.value
       }
     ) ++
@@ -135,17 +137,20 @@ object ScalaMigratePlugin extends AutoPlugin {
   val configSettings: Seq[Setting[_]] =
     Seq(
       isScala213 := {
-        if (scalaVersion.value.startsWith("2.13.")) true
-        else throw new Exception(Messages.notScala213(scalaVersion.value, thisProject.value.id))
+        val sv = scalaVersion.value
+        if (sv.startsWith("2.13.")) true
+        else throw new Exception(Messages.notScala213(sv, thisProject.value.id))
 
       },
       scalacOptions ++= {
+        val sv       = scalaVersion.value
+        val settings = scalacOptions.value
         if (
-          scalaVersion.value.startsWith("2.13.") && semanticdbEnabled.value && !scalacOptions.value
+          sv.startsWith("2.13.") && semanticdbEnabled.value && !settings
             .contains(syntheticsOn)
         )
           Seq(syntheticsOn)
-        else if (scalaVersion.value.startsWith("3.") && !scalacOptions.value.contains(migrationOn))
+        else if (sv.startsWith("3.") && !settings.contains(migrationOn))
           Seq(migrationOn)
         else Nil
       },
