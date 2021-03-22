@@ -5,7 +5,7 @@ import java.{ util => jutil }
 import scala.jdk.CollectionConverters._
 
 import migrate.internal.CompatibleWithScala3Lib
-import migrate.internal.Lib213
+import migrate.internal.LibToMigrate
 import migrate.internal.Scala3cOption
 
 case class MigratedLibsImpl(

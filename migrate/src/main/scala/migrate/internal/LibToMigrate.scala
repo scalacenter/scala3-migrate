@@ -4,41 +4,41 @@ import java.util.Optional
 
 import scala.util.Try
 
+import MigrateLib._
 import migrate.interfaces.Lib
-import migrate.internal.Lib213.macroLibs
 import migrate.internal.LibToMigrate._
 import migrate.internal.ScalacOption.Specific3
 import migrate.utils.CoursierHelper
 import migrate.utils.ScalaExtensions._
 
-sealed trait LibToMigrate extends Lib {
+sealed trait MigrateLib extends Lib {
   val organization: Organization
   val name: Name
   val revision: Revision
   val crossVersion: CrossVersion
   val configurations: Option[String]
-
+  
   override def getOrganization: String             = organization.value
   override def getName: String                     = name.value
   override def getRevision: String                 = revision.value
   override def getCrossVersion: String             = crossVersion.toString
   override def getConfigurations: Optional[String] = configurations.asJava
-
   def isCompilerPlugin: Boolean = configurations.contains("plugin->default(compile)")
 }
 
-case class Lib213(
+case class LibToMigrate(
   organization: Organization,
   name: Name,
   revision: Revision,
   crossVersion: CrossVersion,
   configurations: Option[String]
-) extends LibToMigrate {
-  def toCompatible: Either[Option[Scala3cOption], Seq[CompatibleWithScala3Lib]] = {
+) extends MigrateLib {
+  
+  def findCompatibleWithScala3: Seq[CompatibleWithScala3] = {
     val result = if (isCompilerPlugin) {
       val compatibleLib = CoursierHelper.getCompatibleForScala3Full(this)
       if (compatibleLib.isEmpty)
-        Left(Lib213.compilerPluginToScalacOption.get((this.organization, this.name)))
+        Left(LibToMigrate.compilerPluginToScalacOption.get((this.organization, this.name)))
       else Right(compatibleLib)
     } else {
       crossVersion match {
@@ -81,7 +81,7 @@ case class Lib213(
   override def toString: String =
     s"${organization.value}:${name.value}:${revision.value}${configurations.map(":" + _).getOrElse("")}"
 
-  private def getCompatibleWhenBinaryCrossVersion(lib: Lib213): Seq[CompatibleWithScala3Lib] = {
+  private def getCompatibleWhenBinaryCrossVersion(lib: LibToMigrate): Seq[CompatibleWithScala3] = {
     val scala3Libs = CoursierHelper.getCompatibleForScala3Binary(lib)
     if (scala3Libs.isEmpty) {
       if (macroLibs.get(lib.organization).contains(lib.name)) Nil
@@ -89,7 +89,7 @@ case class Lib213(
     } else scala3Libs
   }
 
-  private def getCompatibleWhenFullCrossVersion(lib: Lib213): Seq[CompatibleWithScala3Lib] = {
+  private def getCompatibleWhenFullCrossVersion(lib: LibToMigrate): Seq[CompatibleWithScala3] = {
     val scala3Libs = CoursierHelper.getCompatibleForScala3Full(lib)
     if (scala3Libs.isEmpty) {
       if (macroLibs.get(lib.organization).contains(lib.name)) Nil
@@ -107,29 +107,34 @@ case class Lib213(
   }
 }
 
-case class CompatibleWithScala3Lib(
-  organization: Organization,
-  name: Name,
-  revision: Revision,
-  crossVersion: CrossVersion,
-  configurations: Option[String]
-) extends LibToMigrate {
-
-  override def toString: String = {
-    val configuration = configurations.map(c => " % " + withQuote(c)).getOrElse("")
-    val orgQuoted     = withQuote(organization.value)
-    withQuote(name.value)
-    val revisionQuoted = withQuote(revision.value)
-    crossVersion match {
-      case CrossVersion.Disabled          => s"$orgQuoted % ${withQuote(name.value)} % $revisionQuoted$configuration"
-      case CrossVersion.For2_13Use3(_, _) => s"$orgQuoted %% ${withQuote(name.value)} % $revisionQuoted$configuration"
-      case _                              => s"$orgQuoted % ${withQuote(name.value)} % $revisionQuoted$configuration"
-    }
-  }
-  private def withQuote(s: String) = "\"" + s + "\""
+sealed trait CompatibleWithScala3 {
+  val explanation: String = ""
 }
 
-object LibToMigrate {
+object CompatibleWithScala3 {
+  case class ScalacOption(value: String) extends CompatibleWithScala3
+  case class Lib(  organization: Organization,
+                             name: Name,
+                             revision: Seq[Revision],
+                             crossVersion: CrossVersion,
+                             configurations: Option[String]) extends CompatibleWithScala3 {
+    override def toString: String = {
+      def withQuote(s: String) = "\"" + s + "\""
+      val configuration = configurations.map(c => " % " + withQuote(c)).getOrElse("")
+      val orgQuoted     = withQuote(organization.value)
+      withQuote(name.value)
+      val revisionQuoted = withQuote(revision.value)
+      crossVersion match {
+        case CrossVersion.Disabled          => s"$orgQuoted % ${withQuote(name.value)} % $revisionQuoted$configuration"
+        case CrossVersion.For2_13Use3(_, _) => s"$orgQuoted %% ${withQuote(name.value)} % $revisionQuoted$configuration"
+        case _                              => s"$orgQuoted % ${withQuote(name.value)} % $revisionQuoted$configuration"
+      }
+    }
+    
+  }
+}
+
+object MigrateLib {
   case class Organization(value: String)
   case class Name(value: String)
   case class Revision(value: String) {
@@ -174,77 +179,76 @@ object LibToMigrate {
       }
   }
 }
-
-object Lib213 {
-  def from(lib: migrate.interfaces.Lib): Option[Lib213] = {
+object LibToMigrate {
+  def from(lib: migrate.interfaces.Lib): Option[LibToMigrate] = {
     val organization = Organization(lib.getOrganization)
-    val name         = Name(lib.getName)
-    val revision     = Revision(lib.getRevision)
+    val name = Name(lib.getName)
+    val revision = Revision(lib.getRevision)
     val crossVersion = CrossVersion.from(lib.getCrossVersion)
-    crossVersion.map(c => Lib213(organization, name, revision, c, lib.getConfigurations.asScala))
+    crossVersion.map(c => LibToMigrate(organization, name, revision, c, lib.getConfigurations.asScala))
   }
 
-  def from(value: String, crossVersion: CrossVersion, configurations: Option[String] = None): Option[Lib213] = {
+  def from(value: String, crossVersion: CrossVersion, configurations: Option[String] = None): Option[LibToMigrate] = {
     val splited = value.split(":").toList
     splited match {
       case (org :: name :: revision :: Nil) =>
-        Some(Lib213(Organization(org), Name(name), Revision(revision), crossVersion, configurations))
+        Some(LibToMigrate(Organization(org), Name(name), Revision(revision), crossVersion, configurations))
       case _ => None
     }
   }
 
   val compilerPluginToScalacOption: Map[(Organization, Name), Scala3cOption] =
     Map(
-      (Organization("org.typelevel"), Name("kind-projector"))    -> Specific3.KindProjector,
+      (Organization("org.typelevel"), Name("kind-projector")) -> Specific3.KindProjector,
       (Organization("org.scalameta"), Name("semanticdb-scalac")) -> Specific3.SemanticDB
     )
 
-  val scalaLibrary: Lib213 = Lib213.from("org.scala-lang:scala-library:2.13.5", CrossVersion.Disabled, None).get
+  val scalaLibrary: LibToMigrate = LibToMigrate.from("org.scala-lang:scala-library:2.13.5", CrossVersion.Disabled, None).get
 
   val macroLibs: Map[Organization, Name] = {
     // need to complete the list
     // the other solution would be to download the src-jar and look for =\w*macro\w
     Map(
-      Organization("com.softwaremill.scalamacrodebug")            -> Name("macros"),
-      Organization("com.github.ajozwik")                          -> Name("macro"),
-      Organization("io.argonaut")                                 -> Name("argonaut"),
-      Organization("eu.timepit")                                  -> Name("refined"),
-      Organization("org.backuity")                                -> Name("ansi-interpolator"),
-      Organization("org.typelevel")                               -> Name("log4cats-slf4j"),
-      Organization("org.typelevel")                               -> Name("log4cats-core"),
-      Organization("com.github.dmytromitin")                      -> Name("auxify-macros"),
-      Organization("biz.enef")                                    -> Name("slogging"),
-      Organization("io.getquill")                                 -> Name("quill-jdbc"),
-      Organization("com.phylage")                                 -> Name("refuel-container"),
-      Organization("com.typesafe.scala-logging")                  -> Name("scala-logging"),
-      Organization("com.lihaoyi")                                 -> Name("macro"),
-      Organization("com.lihaoyi")                                 -> Name("fastparse"),
-      Organization("com.github.kmizu")                            -> Name("macro_peg"),
-      Organization("com.michaelpollmeier")                        -> Name("macros"),
-      Organization("me.lyh")                                      -> Name("parquet-avro-extra"),
-      Organization("org.spire-math")                              -> Name("imp"),
-      Organization("com.typesafe.play")                           -> Name("play-json"),
+      Organization("com.softwaremill.scalamacrodebug") -> Name("macros"),
+      Organization("com.github.ajozwik") -> Name("macro"),
+      Organization("io.argonaut") -> Name("argonaut"),
+      Organization("eu.timepit") -> Name("refined"),
+      Organization("org.backuity") -> Name("ansi-interpolator"),
+      Organization("org.typelevel") -> Name("log4cats-slf4j"),
+      Organization("org.typelevel") -> Name("log4cats-core"),
+      Organization("com.github.dmytromitin") -> Name("auxify-macros"),
+      Organization("biz.enef") -> Name("slogging"),
+      Organization("io.getquill") -> Name("quill-jdbc"),
+      Organization("com.phylage") -> Name("refuel-container"),
+      Organization("com.typesafe.scala-logging") -> Name("scala-logging"),
+      Organization("com.lihaoyi") -> Name("macro"),
+      Organization("com.lihaoyi") -> Name("fastparse"),
+      Organization("com.github.kmizu") -> Name("macro_peg"),
+      Organization("com.michaelpollmeier") -> Name("macros"),
+      Organization("me.lyh") -> Name("parquet-avro-extra"),
+      Organization("org.spire-math") -> Name("imp"),
+      Organization("com.typesafe.play") -> Name("play-json"),
       Organization("com.github.plokhotnyuk.expression-evaluator") -> Name("expression-evaluator"),
-      Organization("com.github.plokhotnyuk.fsi")                  -> Name("fsi-macros"),
-      Organization("com.propensive")                              -> Name("magnolia"),
-      Organization("org.wvlet.airframe")                          -> Name("airframe"),
-      Organization("com.wix")                                     -> Name("accord-api"),
-      Organization("org.typelevel")                               -> Name("spire"),
-      Organization("org.typelevel")                               -> Name("claimant"),
-      Organization("com.softwaremill.macwire")                    -> Name("util"),
-      Organization("com.typesafe.slick")                          -> Name("slick"),
-      Organization("io.bullet")                                   -> Name("borer-core"),
-      Organization("org.parboiled")                               -> Name("parboiled"),
-      Organization("com.github.pureconfig")                       -> Name("pureconfig")
+      Organization("com.github.plokhotnyuk.fsi") -> Name("fsi-macros"),
+      Organization("com.propensive") -> Name("magnolia"),
+      Organization("org.wvlet.airframe") -> Name("airframe"),
+      Organization("com.wix") -> Name("accord-api"),
+      Organization("org.typelevel") -> Name("spire"),
+      Organization("org.typelevel") -> Name("claimant"),
+      Organization("com.softwaremill.macwire") -> Name("util"),
+      Organization("com.typesafe.slick") -> Name("slick"),
+      Organization("io.bullet") -> Name("borer-core"),
+      Organization("org.parboiled") -> Name("parboiled"),
+      Organization("com.github.pureconfig") -> Name("pureconfig")
     )
   }
 }
 
 object CompatibleWithScala3Lib {
-  def from(lib: Lib213): CompatibleWithScala3Lib =
-    CompatibleWithScala3Lib(lib.organization, lib.name, lib.revision, lib.crossVersion, lib.configurations)
-  def withCrossVersionFor3Use2_13(lib: Lib213): CompatibleWithScala3Lib =
-    CompatibleWithScala3Lib(
+  def from(lib: LibToMigrate): CompatibleWithScala3.Lib =
+    CompatibleWithScala3.Lib(lib.organization, lib.name, lib.revision, lib.crossVersion, lib.configurations)
+  def withCrossVersionFor3Use2_13(lib: LibToMigrate): CompatibleWithScala3.Lib =
+    CompatibleWithScala3.Lib(
       lib.organization,
       Name(lib.name.value + s"_${CoursierHelper.scala213Binary}"),
       lib.revision,
