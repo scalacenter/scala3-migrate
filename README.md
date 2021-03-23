@@ -1,21 +1,36 @@
-# scala3-migrate
-[![Latest version](https://index.scala-lang.org/scalacenter/scala3-migrate/scala3-migrate/latest.svg)](https://index.scala-lang.org/scalacenter/scalafix/scalafix-core)
-This project aims to make the migration to Scala 3 easier:
+scala3-migrate
+[![Latest version](https://index.scala-lang.org/scalacenter/scala3-migrate/scala3-migrate/latest.svg)](https://index.scala-lang.org/scalacenter/scala3-migrate/scala3-migrate)
+[![Build status](https://github.com/scalacenter/scala3-migrate/workflows/CI/badge.svg)](https://github.com/scalacenter/scala3-migrate/actions?query=workflow)
+========
+# User documentation
+For detailed documentation, refer to `scala3-migrate` [section in the migration guide](https://scalacenter.github.io/scala-3-migration-guide/docs/scala-3-migrate-tool.html)
 
-- migrate-libs: It will help you update the list of your `libraryDependencies`
-- migrate-scalacOptions: It will help you update your `scalacOptions`
-- migrate-syntax: Fix no more supported syntax in Scala 3
-- migrate: Add the minimum set of types required explicitly to make Scala 3 compiling a project without changing its meaning
+# Usage
+
+**scala3-migrate** has been designed to make the migration to scala 3 easier.
+
+It proposes an incremental approach that can be described as follows:
+- Migrating the library dependencies: using Coursier, it checks,
+  for every library dependency, if there are versions available for Scala 3.
+- Migrating the Scala compiler options (`scalacOptions`): some compiler options of Scala 2 have been removed
+  in Scala 3, others have been renamed, and some remain the same.
+  This step helps you find how to evolve the compiler options of your project.
+- Migrating the syntax: this step relies on Scalafix and on existing rules to fix deprecated
+  syntax that no longer compiles in Scala 3
+- Migrating the code: as explained in [the section of type-inference](incompatibilities/table.md#type-inference),
+  Scala 3 has a new type inference algorithm that may infer a different type than the one inferred
+  by the Scala 2 compiler. This last step tries to find the minimum set of
+  types to explicitly annotate in order to make the Scala 3 compiler work on a project without changing its meaning.
 
 # Requirements 
-- sbt 1.3 or higher
+- sbt 1.4 or higher
 - java 8 or 11
 - scala 2.13, preferred 2.13.5
 
 # Installation
 ```
 // project/plugins.sbt
-addSbtPlugin("ch.epfl.scala" % "sbt-scala3-migrate" % "0.2.0")
+addSbtPlugin("ch.epfl.scala" % "sbt-scala3-migrate" % "0.3.0")
 // sbt-dotty is not needed anymore since sbt 1.5.0-M1
 addSbtPlugin("ch.epfl.lamp"  % "sbt-dotty"          % "0.5.3")
 ```
@@ -95,6 +110,7 @@ lazy val main = project
 
 ```
 > migrate-scalacOptions main
+[info]
 [info] Starting to migrate the scalacOptions for main
 [warn] Some scalacOptions are set by sbt plugins and don't need to be modified, removed or added.
 [warn] The sbt plugin should adapt its own scalacOptions for Scala 3
@@ -103,9 +119,9 @@ lazy val main = project
 [info] Renamed : The following scalacOption has been renamed in Scala3
 [info] Valid   : The following scalacOption is a valid Scala 3 option
 [info]
-[info] -Wunused   -> X
-[info] -Yrangepos -> X
-[info] -Werror    -> "-Xfatal-warnings"
+[info] -Wunused      -> X
+[info] -Yrangepos    -> X
+[info] -explaintypes -> -explain-types
 [info]
 [info] The following scalacOption are specific to compiler plugins, usually added through `compilerPlugin` or `addCompilerPlugin`.
 [info] In the previous step `migrate-libs`, you should have removed/fixed compiler plugins and for the remaining plugins and settings, they can be kept as they are.
@@ -117,12 +133,13 @@ lazy val main = project
 [info] -P:semanticdb:targetroot:/Users/meriamlachkar/perso/plugin-test/target/scala-2.13/meta                                                                                -> Valid
 [info] -P:semanticdb:sourceroot:/Users/meriamlachkar/perso/plugin-test                                                                                                       -> Valid
 [info] -P:semanticdb:failures:warning                                                                                                                                        -> Valid
+[success]                                                                                                                                      -> Valid
 ```
 
 So following the output, the build will look like:
 ```
-    scalacOptions ++= (if (scalaVersion.value.startsWith("3")) Seq("-explain-types", "-Wunused", "-Ykind-projector")
-                       else Seq("-explaintypes")),
+    scalacOptions ++= (if (scalaVersion.value.startsWith("3")) Seq("-explain-types",, "-Ykind-projector")
+                       else Seq("-explaintypes",  "-Wunused")),
 ```
 
 
@@ -207,6 +224,17 @@ This command goal is to find the necessary types to add in order to make you cod
 [info]
 [info] main / compile
 ```
+
+# What to do next ?
+You can start again with another module `MODULE2`. If `MODULE2` depends on the last module migrated, you need
+either to add `-Ytasty-reader` to `MODULE2` scalacOptions, or `reload` or `set MODULE-MIGRATED/scalaVersion := "2.13.5"`
+
+Once you're done, you can remove `scala3-migrate` from your plugins.
+
+# Contributions and feedbacks are welcome
+The tool is still under development, and **we would love to hear from you.**
+Every feedback will help us build a better tool: typos, clearer log messages, better documentation, bug reports, ideas of features,
+so please open [GitHub issues](https://github.com/scalacenter/scala3-migrate) or contact us on [gitter](https://gitter.im/scala/center).
 
 # Acknowledgments
 <img src="https://scala.epfl.ch/resources/img/scala-center-swirl.png" width="40px" /> This tool is developed by [Scala Center](https://scala.epfl.ch)
