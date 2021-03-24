@@ -43,8 +43,8 @@ lazy val migrate = project
   .in(file("migrate"))
   .settings(addBuildInfoToConfig(Test))
   .settings(
-    moduleName := "migrate-core"
-      scalacOptions ++= Seq ("-Wunused", "-P:semanticdb:synthetics:on", "-deprecation"),
+    moduleName := "migrate-core",
+    scalacOptions ++= Seq("-Wunused", "-P:semanticdb:synthetics:on", "-deprecation"),
     libraryDependencies ++= Seq(
       "org.scala-lang"   % "scala-compiler"      % scalaVersion.value,
       "ch.epfl.scala"    % "scalafix-interfaces" % V.scalafix,
@@ -53,21 +53,23 @@ lazy val migrate = project
       "org.scalatest"   %% "scalatest"           % V.scalatest % Test,
       "ch.epfl.scala"    % "scalafix-testkit"    % V.scalafix  % Test cross CrossVersion.full
     ),
+    Test / test := (Test / test).dependsOn(`scalafix-rules` / publishLocal).value,
+    Test / testOnly := (Test / testOnly).dependsOn(`scalafix-rules` / publishLocal).evaluated,
     Test / buildInfoPackage := "migrate.test",
     Test / buildInfoKeys := Seq(
-      "input" -> (input / Compile / sourceDirectory).value,
+      "version" -> version.value,
+      "input"   -> (input / Compile / sourceDirectory).value,
       fromSources("unmanagedSources", input / Compile / unmanagedSources),
       fromSources("managedSources", input / Compile / managedSources),
       "output" -> (output / Compile / sourceDirectory).value,
       fromClasspath("scala2Classpath", input / Compile / fullClasspath),
       "semanticdbPath" -> (input / Compile / semanticdbTargetRoot).value,
       fromScalacOptions("scala2CompilerOptions", input / Compile / scalacOptions),
-      fromClasspath("toolClasspath", `scalafix-rules` / Compile / fullClasspath),
       fromClasspath("scala3Classpath", output / Compile / fullClasspath),
       fromScalacOptions("scala3CompilerOptions", output / Compile / scalacOptions),
       "scala3ClassDirectory" -> (output / Compile / compile / classDirectory).value
     ),
-    Compile / buildInfoKeys := Seq(fromClasspath("toolClasspath", `scalafix-rules` / Compile / fullClasspath))
+    Compile / buildInfoKeys := Seq("version" -> version.value)
   )
   .enablePlugins(BuildInfoPlugin)
   .dependsOn(`compiler-interfaces`)
@@ -94,7 +96,12 @@ lazy val `sbt-plugin` = project
     scriptedLaunchOpts ++= Seq(s"-Dplugin.version=${version.value}"),
     scriptedDependencies := {
       scriptedDependencies
-        .dependsOn(`migrate-interfaces` / publishLocal, `compiler-interfaces` / publishLocal, migrate / publishLocal)
+        .dependsOn(
+          `migrate-interfaces` / publishLocal,
+          `compiler-interfaces` / publishLocal,
+          migrate / publishLocal,
+          `scalafix-rules` / publishLocal
+        )
         .value
     },
     buildInfoPackage := "migrate",
