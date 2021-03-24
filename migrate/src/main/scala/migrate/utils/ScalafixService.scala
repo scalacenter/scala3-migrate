@@ -67,7 +67,7 @@ final case class ScalafixService(
 
 object ScalafixService {
   private lazy val scalafix      = Try(Scalafix.fetchAndClassloadInstance("2.13"))
-  private lazy val internalRules = Classpath.from(BuildInfo.toolClasspath)
+  private lazy val internalRules = getClassPathforMigrateRules()
   private lazy val externalRules = getClassPathforRewriteRules()
 
   val fixSyntaxRules: Seq[String] = Seq(
@@ -93,6 +93,16 @@ object ScalafixService {
       val paths2 = downloadDependecies(dep"com.sandinh:scala-rewrites_2.13:0.1.10-sd")
       Classpath((paths1 ++ paths2): _*)
     }
+
+  private def getClassPathforMigrateRules(): Try[Classpath] = {
+    val dependency =
+      Dependency(Module(Organization("ch.epfl.scala"), ModuleName(s"migrate-rules_2.13")), BuildInfo.version)
+
+    Try {
+      val paths1 = downloadDependecies(dependency)
+      Classpath(paths1: _*)
+    }
+  }
 
   def downloadDependecies(dep: Dependency): Seq[AbsolutePath] =
     Fetch()
