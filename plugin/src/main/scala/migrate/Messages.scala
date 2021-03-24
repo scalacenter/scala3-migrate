@@ -181,7 +181,7 @@ object Messages {
   }
 
   def computeLongestValue(values: Seq[String]): Int =
-    values.maxBy(_.length).length
+    if (values.isEmpty) 0 else values.maxBy(_.length).length
 
   def formatValueWithSpace(value: String, longestValue: Int): String = {
     val numberOfSpaces = " " * (longestValue - value.length)
