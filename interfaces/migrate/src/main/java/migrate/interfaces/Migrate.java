@@ -56,7 +56,7 @@ public interface Migrate {
     // put all needed dependecies here.
     static List<URL> getJars(String migrateVersion, String scalaVersion) throws Exception {
         ScalaVersion scalaV = ScalaVersion.of(scalaVersion);
-        Dependency migrate = Dependency.parse("ch.epfl.scala:::migrate:" + migrateVersion, scalaV);
+        Dependency migrate = Dependency.parse("ch.epfl.scala:::migrate-core:" + migrateVersion, scalaV);
         return fetch(Collections.singletonList(migrate), ResolutionParams.create());
     }
 

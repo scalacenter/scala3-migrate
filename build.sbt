@@ -36,14 +36,15 @@ lazy val `migrate-interfaces` = project
     libraryDependencies ++= Seq("io.get-coursier" % "interface" % V.coursierInterface),
     crossPaths := false,
     autoScalaLibrary := false,
-    moduleName := "migrate-interfaces"
+    moduleName := "migrate-core-interfaces"
   )
 
 lazy val migrate = project
   .in(file("migrate"))
   .settings(addBuildInfoToConfig(Test))
   .settings(
-    scalacOptions ++= Seq("-Wunused", "-P:semanticdb:synthetics:on", "-deprecation"),
+    moduleName := "migrate-core"
+      scalacOptions ++= Seq ("-Wunused", "-P:semanticdb:synthetics:on", "-deprecation"),
     libraryDependencies ++= Seq(
       "org.scala-lang"   % "scala-compiler"      % scalaVersion.value,
       "ch.epfl.scala"    % "scalafix-interfaces" % V.scalafix,
@@ -124,7 +125,7 @@ lazy val `scalafix-rules` = project
   .in(file("scalafix/rules"))
   .settings(
     scalacOptions ++= List("-Wunused", "-P:semanticdb:synthetics:on"),
-    moduleName := "scalafix",
+    moduleName := "migrate-rules",
     libraryDependencies ++= Seq(
       "ch.epfl.scala" %% "scalafix-core"  % V.scalafix,
       "ch.epfl.scala" %% "scalafix-rules" % V.scalafix
