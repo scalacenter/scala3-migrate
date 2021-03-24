@@ -217,5 +217,5 @@ lazy val V = new {
   val coursierApi           = "2.0.13"
   val coursierInterface     = "1.0.3"
   val semanticdbVersion     = "4.4.10"
-  val localSnapshotVersion  = "0.2.0-SNAPSHOT"
+  val localSnapshotVersion  = "0.4.0-SNAPSHOT"
 }
