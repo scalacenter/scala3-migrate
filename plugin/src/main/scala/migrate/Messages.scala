@@ -13,8 +13,8 @@ object Messages {
        |
        |Error:
        |
-       |you project must be in 2.13 and not in $scalaVersion
-       |please change the scalaVersion following this command
+       |Your project must be in 2.13 and not in $scalaVersion
+       |Please change the scalaVersion following this command
        |set LocalProject("$projectId") / scalaVersion := "2.13.5"
        |
        |
