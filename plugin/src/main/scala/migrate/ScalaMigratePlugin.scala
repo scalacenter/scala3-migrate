@@ -187,9 +187,11 @@ object ScalaMigratePlugin extends AutoPlugin {
         val scalaVersion         = Keys.scalaVersion.value
         val sOptions             = scalacOptions.value
         val classpath            = dependencyClasspath.value.map(_.data.toPath())
+        val scala3Lib            = scalaInstance.value.libraryJars.toSeq.map(_.toPath)
         val scala3ClassDirectory = (compile / classDirectory).value.toPath
         val scalac3Options       = sanitazeScala3Options(sOptions)
-        val scala3Inputs         = Scala3Inputs(projectId, scalaVersion, scalac3Options, classpath, scala3ClassDirectory)
+        val scala3Inputs =
+          Scala3Inputs(projectId, scalaVersion, scalac3Options, scala3Lib ++ classpath, scala3ClassDirectory)
         StateTransform(s => s.put(scala3inputsAttirbute, scala3Inputs))
       },
       storeScala2Inputs := {
