@@ -72,7 +72,6 @@ object ScalafixService {
 
   val fixSyntaxRules: Seq[String] = Seq(
     "ProcedureSyntax",
-    "fix.scala213.ConstructorProcedureSyntax",
     "fix.scala213.ExplicitNullaryEtaExpansion",
     "fix.scala213.ParensAroundLambda",
     "fix.scala213.ExplicitNonNullaryApply",
