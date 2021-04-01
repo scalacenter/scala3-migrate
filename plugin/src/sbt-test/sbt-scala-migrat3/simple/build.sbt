@@ -30,6 +30,6 @@ lazy val basic = project
 
 lazy val V = new {
   val scala213      = "2.13.5"
-  val catsCore      = "2.4.2"
+  val catsCore      = "2.5.0"
   val kindProjector = "0.11.3"
 }
