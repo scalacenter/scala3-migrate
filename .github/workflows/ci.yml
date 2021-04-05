@@ -27,7 +27,7 @@ jobs:
           java-version: adopt@1.11
       - run: sbt test
 #      - run: sbt compileScalafixOutputinScala3 -- this only test that scalafixOutput compiles in the latest scala 3.
-#                                                   Right now there a missing dependency. Todo: Remove this once dev.zio:zio_3.0.0-RC1 is released
+#                                                   Right now there a missing dependency. Todo: Remove this once dev.zio:zio_3.0.0-RC2 is released
   windows_213:
     name: Windows tests
     runs-on: windows-latest
