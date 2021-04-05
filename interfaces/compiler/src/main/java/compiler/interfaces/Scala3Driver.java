@@ -19,7 +19,7 @@ public class Scala3Driver extends Driver {
   }
 
   public Scala3Compiler setup(String[] args) {
-    Context setup = driver.setup(args, initCtx())._2;
+    Context setup = driver.setup(args, initCtx()).get()._2;
     return new Scala3Compiler(newCompiler(setup), setup);
   }
 }

@@ -3,6 +3,7 @@ package migrate.utils
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContextExecutor
 
+import buildinfo.BuildInfo
 import coursier.Repositories
 import migrate.internal.CompatibleWithScala3Lib
 import migrate.internal.Lib213
@@ -12,8 +13,8 @@ import migrate.internal.LibToMigrate.Revision
 
 object CoursierHelper {
   implicit val ec: ExecutionContextExecutor = ExecutionContext.global
-  val scala3Full                            = "3.0.0-RC1"
-  val scala3Binary                          = "3.0.0-RC1"
+  val scala3Full                            = BuildInfo.scala3Version
+  val scala3Binary                          = BuildInfo.scala3Version
   val scala213Binary                        = "2.13"
   val scala213Full                          = "2.13.5" // should be taken from the project build
 

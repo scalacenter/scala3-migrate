@@ -69,7 +69,7 @@ lazy val migrate = project
       fromScalacOptions("scala3CompilerOptions", output / Compile / scalacOptions),
       "scala3ClassDirectory" -> (output / Compile / compile / classDirectory).value
     ),
-    Compile / buildInfoKeys := Seq("version" -> version.value)
+    Compile / buildInfoKeys := Seq("version" -> version.value, "scala3Version" -> V.scala3)
   )
   .enablePlugins(BuildInfoPlugin)
   .dependsOn(`compiler-interfaces`)
@@ -208,7 +208,7 @@ lazy val V = new {
   val scala213BinaryVersion = "2.13"
   val scala212              = "2.12.13"
   val scalatest             = "3.2.6"
-  val scala3                = "3.0.0-RC1"
+  val scala3                = "3.0.0-RC2"
   val scalafix              = "0.9.27"
   val scribe                = "3.5.1"
   val organizeImports       = "0.4.3"
