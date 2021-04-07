@@ -45,7 +45,18 @@ class PrettyPrinter[G <: Global](val g: G) {
             scala.util
               .Try(ExistentialType(quantified.map(sym => sym.setInfo(loop(sym.info).get)), loop(underlying).get))
               .toOption
-          case PolyType(_, _) => Some(t)
+          case PolyType(typeParams, resultType) => {
+            scala.util
+              .Try(resultType.map(t => loop(t).get))
+              .toOption match {
+              // [x] => F[x] is not printable in the code, we need to use just `F`
+              case Some(TypeRef(_, sym, args)) if typeParams == args.map(_.typeSymbol) =>
+                Some(new PrettyType(sym.name.toString()))
+              case Some(otherType) =>
+                Some(PolyType(typeParams, otherType))
+              case None => None
+            }
+          }
           case NullaryMethodType(resultType) =>
             loop(resultType)
           case TypeBounds(lo, hi) =>
@@ -132,9 +143,7 @@ class PrettyPrinter[G <: Global](val g: G) {
       //Todo: add a special case for structural type: remove implicit and replace lazy val by a def
       case f if f.isStructuralRefinement && (f.toString().contains("implicit") || f.toString().contains("lazy val")) =>
         true
-      // PolyTypes need a better toString
-      case g.PolyType(_, _) => true
-      case _                => false
+      case _ => false
     }
 
   def topPackage(s: Symbol): Symbol = {

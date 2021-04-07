@@ -146,7 +146,7 @@ lazy val `scalafix-input` = project
     publish / skip := true,
     libraryDependencies ++= Seq(
       "org.typelevel"                 %% "cats-core"      % V.catsCore,
-      "dev.zio"                       %% "zio"            % "1.0.6",
+      "dev.zio"                       %% "zio"            % V.zio,
       compilerPlugin(("org.typelevel" %% "kind-projector" % V.kindProjector).cross(CrossVersion.full))
     ),
     buildInfoKeys := Seq[BuildInfoKey](name)
@@ -159,9 +159,9 @@ lazy val `scalafix-output` = project
   .settings(
     publish / skip := true,
     crossScalaVersions := List(V.scala213, V.scala3),
-    scalacOptions ++= (if (ScalaArtifacts.isScala3(scalaVersion.value)) Seq("-Ykind-projector") else Seq()),
+    scalacOptions ++= (if (scalaVersion.value.startsWith("3")) Seq("-Ykind-projector") else Seq()),
     libraryDependencies ++= {
-      Seq("org.typelevel" % "cats-core_2.13" % V.catsCore, "dev.zio" %% "zio" % "1.0.6") ++
+      Seq("org.typelevel" % "cats-core_2.13" % V.catsCore, "dev.zio" %% "zio" % V.zio) ++
         (CrossVersion.partialVersion(scalaVersion.value) match {
           case Some((2, 13)) =>
             Seq(compilerPlugin(("org.typelevel" %% "kind-projector" % V.kindProjector).cross(CrossVersion.full)))
@@ -218,4 +218,5 @@ lazy val V = new {
   val coursierInterface     = "1.0.3"
   val semanticdbVersion     = "4.4.10"
   val localSnapshotVersion  = "0.4.0-SNAPSHOT"
+  val zio                   = "1.0.6"
 }
