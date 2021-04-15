@@ -6,7 +6,7 @@ abstract private[data] class NestedFunctorFilter[F[_], G[_]] extends FunctorFilt
 
   implicit val G: FunctorFilter[G]
 
-  def functor: Functor[Nested[F, G, *]] = Nested.catsDataFunctorForNested(F, G.functor)
+  def functor: Functor[Nested[F, G, *]] = Nested.catsDataFunctorForNested[F, G](F, G.functor)
 
   def mapFilter[A, B](fa: Nested[F, G, A])(f: (A) => Option[B]): Nested[F, G, B] =
     Nested[F, G, B](F.map[G[A], G[B]](fa.value)(G.mapFilter[A, B](_)(f)))
@@ -24,6 +24,6 @@ abstract private[data] class NestedFunctorFilter[F[_], G[_]] extends FunctorFilt
 final case class IorT2[F[_], A, B](value: F[Ior[A, B]]) {
   
   def traverse[G[_], D](f: B => G[D])(implicit traverseF: Traverse[F], applicativeG: Applicative[G]): G[IorT[F, A, D]] =
-    applicativeG.map(traverseF.traverse[G, Ior[A,B], Ior[A,D]](value)(ior => Traverse[Ior[A, *]].traverse[G, B, D](ior)(f)(applicativeG))(applicativeG))(IorT.apply)
+    applicativeG.map[F[Ior[A,D]], IorT[F,A,D]](traverseF.traverse[G, Ior[A,B], Ior[A,D]](value)(ior => Traverse[Ior[A, *]].traverse[G, B, D](ior)(f)(applicativeG))(applicativeG))(IorT.apply[F, A, D])
 
 }
