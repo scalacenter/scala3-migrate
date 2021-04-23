@@ -1,0 +1,6 @@
+# the library dependencies of project foo have not been updated for Scala 3
+# it should fails
+-> migrate unresolved-dependencies
+
+# check fallback to Scala 2.13
+> unresolved-dependencies / checkFallback
