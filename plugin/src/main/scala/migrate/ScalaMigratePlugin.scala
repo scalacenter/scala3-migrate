@@ -138,8 +138,8 @@ object ScalaMigratePlugin extends AutoPlugin {
         val sv = scalaVersion.value
         if (sv.startsWith("2.13.")) true
         else throw new Exception(Messages.notScala213(sv, thisProject.value.id))
-
       },
+      isScala213 / aggregate := false,
       scalacOptions ++= {
         val sv       = scalaVersion.value
         val settings = scalacOptions.value
@@ -153,9 +153,13 @@ object ScalaMigratePlugin extends AutoPlugin {
         else Nil
       },
       internalMigrateSyntax := migrateSyntaxImpl.value,
+      internalMigrateSyntax / aggregate := false,
       internalMigrateScalacOptions := migrateScalacOptionsImp.value,
+      internalMigrateScalacOptions / aggregate := false,
       internalMigrateLibs := internalMigrateLibsImp.value,
+      internalMigrateLibs / aggregate := false,
       internalMigrate := migrateImp.value,
+      internalMigrate / aggregate := false,
       scala3InputComputed := {
         (for {
           inputs <- state.value.attributes.get(scala3inputsAttirbute)
@@ -168,6 +172,7 @@ object ScalaMigratePlugin extends AutoPlugin {
         )).get
 
       },
+      scala3InputComputed / aggregate := false,
       scala2InputComputed := {
         (for {
           inputs <- state.value.attributes.get(scala2inputsAttirbute)
@@ -180,6 +185,7 @@ object ScalaMigratePlugin extends AutoPlugin {
           inputs.managedSources
         )).get
       },
+      scala2InputComputed / aggregate := false,
       storeScala3Inputs := {
         val projectId            = thisProject.value.id
         val scalaVersion         = Keys.scalaVersion.value
@@ -192,6 +198,7 @@ object ScalaMigratePlugin extends AutoPlugin {
           Scala3Inputs(projectId, scalaVersion, scalac3Options, scala3Lib ++ classpath, scala3ClassDirectory)
         StateTransform(s => s.put(scala3inputsAttirbute, scala3Inputs))
       },
+      storeScala3Inputs / aggregate := false,
       storeScala2Inputs := {
         val projectId    = thisProject.value.id
         val scalaVersion = Keys.scalaVersion.value
@@ -201,7 +208,8 @@ object ScalaMigratePlugin extends AutoPlugin {
         val managed      = Keys.managedSources.value.map(_.toPath())
         val scala2Inputs = Scala2Inputs(projectId, scalaVersion, sOptions, classpath, unmanaged, managed)
         StateTransform(s => s.put(scala2inputsAttirbute, scala2Inputs))
-      }
+      },
+      storeScala2Inputs / aggregate := false
     )
 
   def migrateSyntaxImpl = Def.task {
