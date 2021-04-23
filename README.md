@@ -38,8 +38,10 @@ addSbtPlugin("ch.epfl.lamp"  % "sbt-dotty"          % "0.5.3")
 # Porting the build
 
 The first step of the migration is to choose a single module that is going to be ported first.
-Make sure it's not an aggregate of projects. 
 We will proceed with its migration then we will start again with another module.
+
+> If the chosen module is an aggregate project, only its own sources will be migrated, not the sources of its subprojects.
+> Each subproject needs to be ported separately, one at a time.
 
 We will port this simple build definition
 ```
