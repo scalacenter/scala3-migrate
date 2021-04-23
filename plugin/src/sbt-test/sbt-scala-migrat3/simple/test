@@ -1,8 +1,0 @@
-# verify that scala3Inputs succeeded
-> migrate-scalacOptions main
-> migrate-libs main
-> migrate-syntax main
-> migrate main
-
-# the project definition for `basic` project has not been updated to Scala 3. it should fails
-# -> migrate basic # this is just a comment. in fact this command fails, but it's not possible to test it.

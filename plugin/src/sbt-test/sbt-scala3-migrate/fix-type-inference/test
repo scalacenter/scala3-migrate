@@ -1,0 +1,7 @@
+> migrate-scalacOptions fix-type-inference
+> migrate-libs fix-type-inference
+> migrate-syntax fix-type-inference
+> migrate fix-type-inference
+
+# check scalaVersion is Scala 3 and compilation succeeds
+> fix-type-inference / checkMigration

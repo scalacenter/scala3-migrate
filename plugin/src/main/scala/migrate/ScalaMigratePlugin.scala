@@ -93,8 +93,7 @@ object ScalaMigratePlugin extends AutoPlugin {
         s"$projectId / compile",
         s"$projectId / storeScala2Inputs",
         s"$projectId / internalMigrateSyntax",
-        PopOnFailure,
-        FailureWall
+        PopOnFailure
       ) ::: state
       result
     }
@@ -128,8 +127,7 @@ object ScalaMigratePlugin extends AutoPlugin {
         s"""set LocalProject("$projectId") / scalaVersion := "${scala3Version}"""",
         s"$projectId / storeScala3Inputs",
         s"$projectId / internalMigrate",
-        PopOnFailure,
-        FailureWall
+        PopOnFailure
       ) ::: state
       result
     }
