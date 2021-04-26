@@ -43,20 +43,18 @@ object ScalaMigratePlugin extends AutoPlugin {
   private[migrate] val migrateSemanticdbVersion = BuildInfo.semanticdbVersion
   private[migrate] val migrateAPI               = Migrate.fetchAndClassloadInstance(migrateVersion, scalaBinaryVersion)
 
-  object autoImport {
-    val scala3InputComputed = taskKey[Scala3Inputs]("show scala 3 inputs if available")
-    val scala2InputComputed = taskKey[Scala2Inputs]("show scala 2 inputs if available")
+  private[migrate] val scala3InputComputed = taskKey[Scala3Inputs]("show scala 3 inputs if available")
+  private[migrate] val scala2InputComputed = taskKey[Scala2Inputs]("show scala 2 inputs if available")
 
-    private[migrate] val storeScala3Inputs            = taskKey[StateTransform]("store scala 3 inputs")
-    private[migrate] val storeScala2Inputs            = taskKey[StateTransform]("store scala 2 inputs")
-    private[migrate] val internalMigrateSyntax        = taskKey[Unit]("fix some syntax incompatibilities with scala 3")
-    private[migrate] val internalMigrateScalacOptions = taskKey[Unit]("log information to migrate scalacOptions")
-    private[migrate] val internalMigrateLibs          = taskKey[Unit]("log information to migrate libDependencies")
-    private[migrate] val internalMigrate              = taskKey[Unit]("migrate a specific project to scala 3")
-    private[migrate] val isScala213                   = taskKey[Boolean]("is this project a scala 2.13 project")
-  }
-
-  import autoImport._
+  private[migrate] val migrationConfigs =
+    settingKey[List[Configuration]]("the ordered list of configuration to migrate")
+  private[migrate] val storeScala3Inputs            = taskKey[StateTransform]("store scala 3 inputs")
+  private[migrate] val storeScala2Inputs            = taskKey[StateTransform]("store scala 2 inputs")
+  private[migrate] val internalMigrateSyntax        = taskKey[Unit]("fix some syntax incompatibilities with scala 3")
+  private[migrate] val internalMigrateScalacOptions = taskKey[Unit]("log information to migrate scalacOptions")
+  private[migrate] val internalMigrateLibs          = taskKey[Unit]("log information to migrate libDependencies")
+  private[migrate] val internalMigrate              = taskKey[Unit]("migrate a specific project to scala 3")
+  private[migrate] val isScala213                   = taskKey[Boolean]("is this project a scala 2.13 project")
 
   override def requires: Plugins = JvmPlugin
 
@@ -73,25 +71,20 @@ object ScalaMigratePlugin extends AutoPlugin {
         val sv = scalaVersion.value
         if (sv.startsWith("2.13.")) migrateSemanticdbVersion
         else semanticdbVersion.value
-      }
+      },
+      migrationConfigs := migrationConfigsImpl.value
     ) ++
       inConfig(Compile)(configSettings) ++
       inConfig(Test)(configSettings) ++
       Seq(commands ++= Seq(migrateSyntax, migrateScalacOptions, migrateLibDependencies, migrate))
-
-  private def idParser(state: State): Parser[String] = {
-    val projects           = Project.structure(state).allProjects.map(_.id)
-    val projectCompletions = projects.map(token(_)).reduce(_ | _)
-    Space ~> projectCompletions
-  }
 
   /**
    * Return all configurations that can be migrated in a project.
    * If config A extends config B then B appears first
    * ex: List(Compile, Test) because Test extends Runtime which extends Compile
    */
-  private def allMigrationConfigs(state: State, projectId: String): List[Configuration] = {
-    val project = Project.structure(state).allProjects.find(p => p.id == projectId).get
+  private def migrationConfigsImpl = Def.setting {
+    val project = thisProject.value
     val migrationConfigs: Set[String] = (
       for {
         setting   <- project.settings if setting.key.key.label == internalMigrate.key.label
@@ -108,11 +101,28 @@ object ScalaMigratePlugin extends AutoPlugin {
     orderedConfigs.filter(c => migrationConfigs.contains(c.name)).reverse
   }
 
-  private def onAllMigrationConfigs(state: State, projectId: String)(tasks: TaskKey[_]*): List[String] =
-    for {
-      config <- allMigrationConfigs(state, projectId)
-      task   <- tasks
-    } yield s"$projectId / ${config.id} / ${task.key.label}"
+  private def idParser(state: State): Parser[String] = {
+    val projects           = Project.structure(state).allProjects.map(_.id)
+    val projectCompletions = projects.map(token(_)).reduce(_ | _)
+    Space ~> projectCompletions
+  }
+
+  private def getMigrationConfigs(state: State, projectId: String): List[Configuration] = {
+    val structure = Project.structure(state)
+    val projectRef = structure.allProjectRefs
+      .find(ref => ref.project == projectId)
+      .getOrElse(sys.error("invalid project id"))
+    val key = projectRef / migrationConfigs
+    structure.data
+      .get[List[Configuration]](key.scope, key.key)
+      .getOrElse(sys.error("invalid project id: not a migration project"))
+  }
+
+  private def onAllMigrationConfigs(state: State, projectId: String)(tasks: TaskKey[_]*): List[String] = {
+    val migrationConfigs = getMigrationConfigs(state, projectId)
+    for (config <- migrationConfigs; task <- tasks)
+      yield s"$projectId / ${config.id} / ${task.key.label}"
+  }
 
   lazy val migrateSyntax: Command =
     Command(migrateSyntaxCommand, migrateSyntaxBrief, migrateSyntaxDetailed)(idParser) { (state, projectId) =>
