@@ -66,69 +66,6 @@ object Messages {
         |
         |""".stripMargin
 
-  def migrationScalacOptionsStarting(projectId: String): String =
-    s"""|
-        |${BOLD}Starting to migrate the scalacOptions for $projectId${RESET}
-        |""".stripMargin
-
-  val warnMessageScalacOption: String =
-    s"""|${YELLOW}Some scalacOptions are set by sbt plugins and don't need to be modified, removed or added.${RESET}
-        |${YELLOW}The sbt plugin should adapt its own scalacOptions for Scala 3${RESET}""".stripMargin
-
-  def notParsed(s: Seq[String]): Option[String] =
-    if (s.nonEmpty)
-      Some(s"""|
-               |We were not able to parse the following ScalacOptions:
-               |${formatScalacOptions(s)}
-               |
-               |""".stripMargin)
-    else None
-
-  def scalacOptionsMessage(
-    removed: Seq[String],
-    renamed: Map[String, String],
-    scala3cOptions: Seq[String],
-    pluginsOption: Seq[String]
-  ): String = {
-    val removedSign       = s"""${BOLD}${RED}X${RESET}"""
-    val sameSign          = s"""${BOLD}${CYAN}Valid${RESET}"""
-    val renamedSign       = s"""${BOLD}${BLUE}Renamed${RESET}"""
-    val spacesHelp        = computeLongestValue(Seq(removedSign, sameSign, renamedSign))
-    val spaceScalacOption = computeLongestValue(removed ++ renamed.keys ++ scala3cOptions)
-    def formatRemoved(longest: Int): String =
-      removed.map(r => s"""${formatValueWithSpace(r, longest)} -> $removedSign""").mkString("\n")
-    def formatRenamed(longest: Int): String = renamed.map { case (initial, renamed) =>
-      s"""${formatValueWithSpace(initial, longest)} -> ${BOLD}${BLUE}$renamed${BLUE}"""
-    }.mkString("\n")
-    def formatScala3cOptions(s: Seq[String], spaces: Int): String =
-      s.map(r => s"""${formatValueWithSpace(r, spaces)} -> $sameSign""").mkString("\n")
-    def pluginSettingsMessage: String =
-      if (pluginsOption.isEmpty) ""
-      else {
-        val longestValue = computeLongestValue(pluginsOption)
-        s"""|
-            |${BOLD}The following scalacOption are specific to compiler plugins, usually added through `compilerPlugin` or `addCompilerPlugin`.${RESET}
-            |In the previous step `migrate-libs`, you should have removed/fixed compiler plugins and for the remaining plugins and settings, they can be kept as they are.
-            |
-            |${formatScala3cOptions(pluginsOption, longestValue)}
-            |""".stripMargin
-      }
-
-    val help = s"""
-                  |${formatValueWithSpace(removedSign, spacesHelp)} $RED: The following scalacOption is specific to Scala 2 and doesn't have an equivalent in Scala 3$RESET
-                  |${formatValueWithSpace(renamedSign, spacesHelp)} $BLUE: The following scalacOption has been renamed in Scala3$RESET
-                  |${formatValueWithSpace(sameSign, spacesHelp)} $CYAN: The following scalacOption is a valid Scala 3 option$RESET
-                  |""".stripMargin
-
-    Seq(
-      help,
-      formatRemoved(spaceScalacOption),
-      formatRenamed(spaceScalacOption),
-      formatScala3cOptions(scala3cOptions, spaceScalacOption),
-      pluginSettingsMessage
-    ).filterNot(_.isEmpty).mkString("\n")
-  }
-
   def migrateLibsStarting(projectId: String): String =
     s"""|
         |
@@ -195,8 +132,4 @@ object Messages {
     val numberOfSpaces = " " * (longestValue - initial.toString.length)
     s"""$initial$numberOfSpaces -> ${GREEN}${migrated.mkString(", ")}$RESET"""
   }
-
-  private def formatScalacOptions(l: Seq[String]): String =
-    l.mkString("Seq(\n\"", "\",\n\"", "\"\n)")
-
 }

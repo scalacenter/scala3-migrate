@@ -14,6 +14,7 @@ import sbt.plugins.JvmPlugin
 import java.nio.file.{ Files, Path }
 import scala.collection.JavaConverters._
 import scala.util.{ Failure, Success, Try }
+import migrate.interfaces.ScalacOptions
 
 case class Scala3Inputs(
   projectId: String,
@@ -33,8 +34,6 @@ case class Scala2Inputs(
 )
 
 object ScalaMigratePlugin extends AutoPlugin {
-  private[migrate] val scala3inputsAttirbute    = AttributeKey[Scala3Inputs]("scala3Inputs")
-  private[migrate] val scala2inputsAttirbute    = AttributeKey[Scala2Inputs]("scala2Inputs")
   private[migrate] val syntheticsOn             = "-P:semanticdb:synthetics:on"
   private[migrate] val migrationOn              = "-source:3.0-migration"
   private[migrate] val scalaBinaryVersion       = BuildInfo.scalaBinaryVersion
@@ -43,18 +42,25 @@ object ScalaMigratePlugin extends AutoPlugin {
   private[migrate] val migrateSemanticdbVersion = BuildInfo.semanticdbVersion
   private[migrate] val migrateAPI               = Migrate.fetchAndClassloadInstance(migrateVersion, scalaBinaryVersion)
 
-  private[migrate] val scala3InputComputed = taskKey[Scala3Inputs]("show scala 3 inputs if available")
-  private[migrate] val scala2InputComputed = taskKey[Scala2Inputs]("show scala 2 inputs if available")
+  private[migrate] object Keys {
+    val scala3inputsAttribute = AttributeKey[Scala3Inputs]("scala3Inputs")
+    val scala2inputsAttribute = AttributeKey[Scala2Inputs]("scala2Inputs")
 
-  private[migrate] val migrationConfigs =
-    settingKey[List[Configuration]]("the ordered list of configuration to migrate")
-  private[migrate] val storeScala3Inputs            = taskKey[StateTransform]("store scala 3 inputs")
-  private[migrate] val storeScala2Inputs            = taskKey[StateTransform]("store scala 2 inputs")
-  private[migrate] val internalMigrateSyntax        = taskKey[Unit]("fix some syntax incompatibilities with scala 3")
-  private[migrate] val internalMigrateScalacOptions = taskKey[Unit]("log information to migrate scalacOptions")
-  private[migrate] val internalMigrateLibs          = taskKey[Unit]("log information to migrate libDependencies")
-  private[migrate] val internalMigrate              = taskKey[Unit]("migrate a specific project to scala 3")
-  private[migrate] val isScala213                   = taskKey[Boolean]("is this project a scala 2.13 project")
+    val migrationConfigs = settingKey[List[Configuration]]("the ordered list of configuration to migrate")
+    val isScala213       = taskKey[Boolean]("is this project a scala 2.13 project")
+
+    val internalMigrateSyntax        = taskKey[Unit]("fix some syntax incompatibilities with scala 3")
+    val internalMigrateScalacOptions = taskKey[Unit]("log information about migratin of the scalacOptions")
+    val internalMigrateLibs          = taskKey[Unit]("log information to migrate libDependencies")
+
+    val scala3InputComputed = taskKey[Scala3Inputs]("show scala 3 inputs if available")
+    val scala2InputComputed = taskKey[Scala2Inputs]("show scala 2 inputs if available")
+    val storeScala3Inputs   = taskKey[StateTransform]("store scala 3 inputs")
+    val storeScala2Inputs   = taskKey[StateTransform]("store scala 2 inputs")
+    val internalMigrate     = taskKey[Unit]("migrate a specific project to scala 3")
+
+  }
+  import Keys._
 
   override def requires: Plugins = JvmPlugin
 
@@ -72,7 +78,9 @@ object ScalaMigratePlugin extends AutoPlugin {
         if (sv.startsWith("2.13.")) migrateSemanticdbVersion
         else semanticdbVersion.value
       },
-      migrationConfigs := migrationConfigsImpl.value
+      migrationConfigs := migrationConfigsImpl.value,
+      internalMigrateScalacOptions := ScalacOptionsMigration.internalImpl.value,
+      internalMigrateScalacOptions / aggregate := false
     ) ++
       inConfig(Compile)(configSettings) ++
       inConfig(Test)(configSettings) ++
@@ -137,9 +145,7 @@ object ScalaMigratePlugin extends AutoPlugin {
   lazy val migrateScalacOptions: Command =
     Command(migrateScalacOptionsCommand, migrateScalacOptionsBrief, migrateScalacOptionsDetailed)(idParser) {
       (state, projectId) =>
-        val commands =
-          s"${projectId} / isScala213" ::
-            onAllMigrationConfigs(state, projectId)(internalMigrateScalacOptions)
+        val commands = List(s"$projectId / isScala213", s"$projectId / internalMigrateScalacOptions")
         commands ::: state
     }
 
@@ -183,15 +189,13 @@ object ScalaMigratePlugin extends AutoPlugin {
       },
       internalMigrateSyntax := migrateSyntaxImpl.value,
       internalMigrateSyntax / aggregate := false,
-      internalMigrateScalacOptions := migrateScalacOptionsImp.value,
-      internalMigrateScalacOptions / aggregate := false,
       internalMigrateLibs := internalMigrateLibsImp.value,
       internalMigrateLibs / aggregate := false,
       internalMigrate := migrateImp.value,
       internalMigrate / aggregate := false,
       scala3InputComputed := {
         (for {
-          inputs <- state.value.attributes.get(scala3inputsAttirbute)
+          inputs <- state.value.attributes.get(scala3inputsAttribute)
         } yield Scala3Inputs(
           inputs.projectId,
           inputs.scalaVerson,
@@ -204,7 +208,7 @@ object ScalaMigratePlugin extends AutoPlugin {
       scala3InputComputed / aggregate := false,
       scala2InputComputed := {
         (for {
-          inputs <- state.value.attributes.get(scala2inputsAttirbute)
+          inputs <- state.value.attributes.get(scala2inputsAttribute)
         } yield Scala2Inputs(
           inputs.projectId,
           inputs.scalaVerson,
@@ -217,26 +221,26 @@ object ScalaMigratePlugin extends AutoPlugin {
       scala2InputComputed / aggregate := false,
       storeScala3Inputs := {
         val projectId            = thisProject.value.id
-        val scalaVersion         = Keys.scalaVersion.value
+        val sv                   = scalaVersion.value
         val sOptions             = scalacOptions.value
         val classpath            = dependencyClasspath.value.map(_.data.toPath())
         val scala3Lib            = scalaInstance.value.libraryJars.toSeq.map(_.toPath)
         val scala3ClassDirectory = (compile / classDirectory).value.toPath
         val scalac3Options       = sanitazeScala3Options(sOptions)
         val scala3Inputs =
-          Scala3Inputs(projectId, scalaVersion, scalac3Options, scala3Lib ++ classpath, scala3ClassDirectory)
-        StateTransform(s => s.put(scala3inputsAttirbute, scala3Inputs))
+          Scala3Inputs(projectId, sv, scalac3Options, scala3Lib ++ classpath, scala3ClassDirectory)
+        StateTransform(s => s.put(scala3inputsAttribute, scala3Inputs))
       },
       storeScala3Inputs / aggregate := false,
       storeScala2Inputs := {
         val projectId    = thisProject.value.id
-        val scalaVersion = Keys.scalaVersion.value
+        val sv           = scalaVersion.value
         val sOptions     = scalacOptions.value
         val classpath    = fullClasspath.value.map(_.data.toPath())
-        val unmanaged    = Keys.unmanagedSources.value.map(_.toPath())
-        val managed      = Keys.managedSources.value.map(_.toPath())
-        val scala2Inputs = Scala2Inputs(projectId, scalaVersion, sOptions, classpath, unmanaged, managed)
-        StateTransform(s => s.put(scala2inputsAttirbute, scala2Inputs))
+        val unmanaged    = unmanagedSources.value.map(_.toPath())
+        val managed      = managedSources.value.map(_.toPath())
+        val scala2Inputs = Scala2Inputs(projectId, sv, sOptions, classpath, unmanaged, managed)
+        StateTransform(s => s.put(scala2inputsAttribute, scala2Inputs))
       },
       storeScala2Inputs / aggregate := false
     )
@@ -247,7 +251,7 @@ object ScalaMigratePlugin extends AutoPlugin {
     val projectId  = thisProject.value.id
     log.info(Messages.welcomeMigrateSyntax(projectId))
     // computed values
-    val scala2InputsValue     = state.value.attributes.get(scala2inputsAttirbute).get
+    val scala2InputsValue     = state.value.attributes.get(scala2inputsAttribute).get
     val unamangedSources      = scala2InputsValue.unmanagedSources
     val scala2Classpath       = scala2InputsValue.classpath
     val scala2CompilerOptions = scala2InputsValue.scalacOptions
@@ -265,24 +269,6 @@ object ScalaMigratePlugin extends AutoPlugin {
       case Failure(exception) =>
         log.err(Messages.errorMessageMigrateSyntax(projectId, exception))
     }
-  }
-
-  def migrateScalacOptionsImp = Def.task {
-    val log       = streams.value.log
-    val projectId = thisProject.value.id
-    log.info(Messages.migrationScalacOptionsStarting(projectId))
-    log.warn(Messages.warnMessageScalacOption)
-
-    val scalacOptions2 = scalacOptions.value
-    val migrated       = migrateAPI.migrateScalacOption(scalacOptions2.asJava)
-    val notParsed      = migrated.getNotParsed.toSeq
-    val specific2      = migrated.getSpecificScala2.toSeq
-    val scala3         = migrated.getScala3cOptions.toSeq
-    val renamed        = migrated.getRenamed.asScala.toMap
-    val plugins        = migrated.getPluginsOptions.toSeq
-
-    Messages.notParsed(notParsed).foreach(message => log.warn(message))
-    log.info(Messages.scalacOptionsMessage(specific2, renamed, scala3, plugins))
   }
 
   def internalMigrateLibsImp = Def.task {
@@ -314,13 +300,13 @@ object ScalaMigratePlugin extends AutoPlugin {
       val targetRoot = semanticdbTargetRoot.value
 
       // computed values
-      val scala2InputsValue     = state.value.attributes.get(scala2inputsAttirbute).get
+      val scala2InputsValue     = state.value.attributes.get(scala2inputsAttribute).get
       val scala2Classpath       = scala2InputsValue.classpath
       val scala2CompilerOptions = scala2InputsValue.scalacOptions
       val unamangedSources      = scala2InputsValue.unmanagedSources
       val managedSources        = scala2InputsValue.managedSources
 
-      val scala3InputsValue = state.value.attributes.get(scala3inputsAttirbute).get
+      val scala3InputsValue = state.value.attributes.get(scala3inputsAttribute).get
       val scalac3Options    = scala3InputsValue.scalacOptions
       val scala3Classpath   = scala3InputsValue.classpath
       val scala3ClassDir    = scala3InputsValue.classDirectory
