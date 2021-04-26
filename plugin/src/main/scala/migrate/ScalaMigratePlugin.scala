@@ -80,56 +80,75 @@ object ScalaMigratePlugin extends AutoPlugin {
       Seq(commands ++= Seq(migrateSyntax, migrateScalacOptions, migrateLibDependencies, migrate))
 
   private def idParser(state: State): Parser[String] = {
-    val projects           = Project.extract(state).structure.allProjects.map(_.id)
+    val projects           = Project.structure(state).allProjects.map(_.id)
     val projectCompletions = projects.map(token(_)).reduce(_ | _)
     Space ~> projectCompletions
   }
 
+  /**
+   * Return all configurations that can be migrated in a project.
+   * If config A extends config B then B appears first
+   * ex: List(Compile, Test) because Test extends Runtime which extends Compile
+   */
+  private def allMigrationConfigs(state: State, projectId: String): List[Configuration] = {
+    val project = Project.structure(state).allProjects.find(p => p.id == projectId).get
+    val migrationConfigs: Set[String] = (
+      for {
+        setting   <- project.settings if setting.key.key.label == internalMigrate.key.label
+        configKey <- setting.key.scope.config.toOption
+      } yield configKey.name
+    ).toSet
+
+    // if A extends B then B is added first, ex: List(Test, Runtime, Compile)
+    def add(allConfigs: List[Configuration], config: Configuration): List[Configuration] =
+      if (allConfigs.exists(_ == config)) allConfigs
+      else config :: config.extendsConfigs.foldLeft(allConfigs)(add)
+
+    val orderedConfigs = project.configurations.foldLeft(List.empty[Configuration])(add)
+    orderedConfigs.filter(c => migrationConfigs.contains(c.name)).reverse
+  }
+
+  private def onAllMigrationConfigs(state: State, projectId: String)(tasks: TaskKey[_]*): List[String] =
+    for {
+      config <- allMigrationConfigs(state, projectId)
+      task   <- tasks
+    } yield s"$projectId / ${config.id} / ${task.key.label}"
+
   lazy val migrateSyntax: Command =
     Command(migrateSyntaxCommand, migrateSyntaxBrief, migrateSyntaxDetailed)(idParser) { (state, projectId) =>
-      val result = List(
-        StashOnFailure,
-        s"${projectId} / isScala213",
-        s"$projectId / compile",
-        s"$projectId / storeScala2Inputs",
-        s"$projectId / internalMigrateSyntax",
-        PopOnFailure
-      ) ::: state
-      result
+      val commands = List(StashOnFailure, s"$projectId / isScala213") ++ onAllMigrationConfigs(state, projectId)(
+        compile,
+        storeScala2Inputs,
+        internalMigrateSyntax
+      ) ++ List(PopOnFailure)
+      commands ::: state
     }
 
   lazy val migrateScalacOptions: Command =
     Command(migrateScalacOptionsCommand, migrateScalacOptionsBrief, migrateScalacOptionsDetailed)(idParser) {
       (state, projectId) =>
-        val result = List(
-          StashOnFailure,
-          s"${projectId} / isScala213",
-          s"$projectId / internalMigrateScalacOptions",
-          FailureWall
-        ) ::: state
-        result
+        val commands =
+          s"${projectId} / isScala213" ::
+            onAllMigrationConfigs(state, projectId)(internalMigrateScalacOptions)
+        commands ::: state
     }
 
   lazy val migrateLibDependencies: Command =
     Command(migrateLibs, migrateLibsBrief, migrateLibsDetailed)(idParser) { (state, projectId) =>
-      val result =
-        List(StashOnFailure, s"${projectId} / isScala213", s"$projectId / internalMigrateLibs", FailureWall) ::: state
-      result
+      val commands = List(s"$projectId / isScala213", s"$projectId / internalMigrateLibs")
+      commands ::: state
     }
 
   lazy val migrate: Command =
     Command(migrateCommand, migrateBrief, migrateDetailed)(idParser) { (state, projectId) =>
-      val result = List(
-        StashOnFailure,
-        s"${projectId} / isScala213",
-        s"$projectId / compile",
-        s"$projectId / storeScala2Inputs",
-        s"""set LocalProject("$projectId") / scalaVersion := "${scala3Version}"""",
-        s"$projectId / storeScala3Inputs",
-        s"$projectId / internalMigrate",
-        PopOnFailure
-      ) ::: state
-      result
+      val commands = List(StashOnFailure, s"${projectId} / isScala213") ++ onAllMigrationConfigs(state, projectId)(
+        compile,
+        storeScala2Inputs
+      ) ++ List(s"""set LocalProject("$projectId") / scalaVersion := "$scala3Version"""") ++ onAllMigrationConfigs(
+        state,
+        projectId
+      )(storeScala3Inputs, internalMigrate) ++ List(PopOnFailure)
+      commands ::: state
     }
 
   val configSettings: Seq[Setting[_]] =
