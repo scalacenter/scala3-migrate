@@ -1,0 +1,7 @@
+> migrate-scalacOptions integration-test
+> migrate-libs integration-test
+> migrate-syntax integration-test
+> migrate integration-test
+
+# check scalaVersion is Scala 3 and compilation succeeds
+> integration-test / checkMigration
