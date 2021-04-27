@@ -21,7 +21,7 @@ private[migrate] object ScalacOptionsMigration {
     val sv            = scalaVersion.value
 
     if (!sv.startsWith("2.13."))
-      sys.error(Messages.notScala213(sv, projectId))
+      throw new MessageOnlyException(Messages.notScala213(sv, projectId))
 
     logger.info(starting(projectId, configs.map(_.id)))
     logger.info(warning)

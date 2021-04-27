@@ -18,7 +18,7 @@ private[migrate] object SyntaxMigration {
     val sv        = scalaVersion.value
 
     if (!sv.startsWith("2.13."))
-      sys.error(Messages.notScala213(sv, projectId))
+      throw new MessageOnlyException(Messages.notScala213(sv, projectId))
 
     Def.task {
       val logger          = streams.value.log

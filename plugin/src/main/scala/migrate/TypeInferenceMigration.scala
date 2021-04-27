@@ -12,7 +12,7 @@ import scala.collection.JavaConverters._
 
 import java.nio.file.Files
 
-object TypeInferenceMigration {
+private[migrate] object TypeInferenceMigration {
   val internalImpl = Def.taskDyn {
     val projectRef = thisProjectRef.value
     val configs    = Keys.migrationConfigs.value

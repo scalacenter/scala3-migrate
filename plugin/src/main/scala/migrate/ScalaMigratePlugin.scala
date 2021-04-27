@@ -64,32 +64,71 @@ object ScalaMigratePlugin extends AutoPlugin {
 
   override def trigger = AllRequirements
 
-  override def projectSettings: Seq[Setting[_]] =
-    Seq(
-      semanticdbEnabled := {
-        val sv = scalaVersion.value
-        if (sv.startsWith("2.13.")) true
-        else semanticdbEnabled.value
-      },
-      semanticdbVersion := {
-        val sv = scalaVersion.value
-        if (sv.startsWith("2.13.")) migrateSemanticdbVersion
-        else semanticdbVersion.value
-      },
-      migrationConfigs := migrationConfigsImpl.value,
-      migrationConfigs / aggregate := false,
-      storeScala2Inputs := storeScala2InputsImpl.value,
-      storeScala2Inputs / aggregate := false,
-      internalMigrateScalacOptions := ScalacOptionsMigration.internalImpl.value,
-      internalMigrateScalacOptions / aggregate := false,
-      internalMigrateSyntax := SyntaxMigration.internalImpl.value,
-      internalMigrateSyntax / aggregate := false,
-      internalMigrate := TypeInferenceMigration.internalImpl.value,
-      internalMigrate / aggregate := false
-    ) ++
-      inConfig(Compile)(configSettings) ++
-      inConfig(Test)(configSettings) ++
-      Seq(commands ++= Seq(migrateSyntax, migrateScalacOptions, migrateLibDependencies, migrate))
+  override def projectSettings: Seq[Setting[_]] = Def.settings(
+    semanticdbEnabled := {
+      val sv = scalaVersion.value
+      if (sv.startsWith("2.13.")) true
+      else semanticdbEnabled.value
+    },
+    semanticdbVersion := {
+      val sv = scalaVersion.value
+      if (sv.startsWith("2.13.")) migrateSemanticdbVersion
+      else semanticdbVersion.value
+    },
+    migrationConfigs := migrationConfigsImpl.value,
+    migrationConfigs / aggregate := false,
+    storeScala2Inputs := storeScala2InputsImpl.value,
+    storeScala2Inputs / aggregate := false,
+    internalMigrateScalacOptions := ScalacOptionsMigration.internalImpl.value,
+    internalMigrateScalacOptions / aggregate := false,
+    internalMigrateSyntax := SyntaxMigration.internalImpl.value,
+    internalMigrateSyntax / aggregate := false,
+    internalMigrate := TypeInferenceMigration.internalImpl.value,
+    internalMigrate / aggregate := false,
+    internalMigrateLibs := LibsMigration.internalImpl.value,
+    internalMigrateLibs / aggregate := false,
+    commands ++= Seq(migrateSyntax, migrateScalacOptions, migrateLibDependencies, migrate),
+    inConfig(Compile)(configSettings),
+    inConfig(Test)(configSettings)
+  )
+
+  val configSettings: Seq[Setting[_]] = Def.settings(
+    scalacOptions ++= {
+      val sv       = scalaVersion.value
+      val settings = scalacOptions.value
+      if (
+        sv.startsWith("2.13.") && semanticdbEnabled.value && !settings
+          .contains(syntheticsOn)
+      )
+        Seq(syntheticsOn)
+      else if (sv.startsWith("3.") && !settings.contains(migrationOn))
+        Seq(migrationOn)
+      else Nil
+    },
+    scala3Inputs := {
+      val projectId            = thisProject.value.id
+      val sv                   = scalaVersion.value
+      val sOptions             = scalacOptions.value
+      val classpath            = dependencyClasspath.value.map(_.data.toPath())
+      val scala3Lib            = scalaInstance.value.libraryJars.toSeq.map(_.toPath)
+      val scala3ClassDirectory = (compile / classDirectory).value.toPath
+      val scalac3Options       = sanitazeScala3Options(sOptions)
+      val semanticdbTarget     = semanticdbTargetRoot.value.toPath
+      Scala3Inputs(projectId, sv, scalac3Options, scala3Lib ++ classpath, scala3ClassDirectory, semanticdbTarget)
+    },
+    scala3Inputs / aggregate := false,
+    scala2Inputs := {
+      val projectId        = thisProject.value.id
+      val sv               = scalaVersion.value
+      val sOptions         = scalacOptions.value
+      val classpath        = fullClasspath.value.map(_.data.toPath())
+      val unmanaged        = unmanagedSources.value.map(_.toPath())
+      val managed          = managedSources.value.map(_.toPath())
+      val semanticdbTarget = semanticdbTargetRoot.value.toPath
+      Scala2Inputs(projectId, sv, sOptions, classpath, unmanaged, managed, semanticdbTarget)
+    },
+    scala2Inputs / aggregate := false
+  )
 
   private val storeScala2InputsImpl = Def.taskDyn {
     val configs    = migrationConfigs.value
@@ -99,9 +138,8 @@ object ScalaMigratePlugin extends AutoPlugin {
     if (!sv.startsWith("2.13."))
       sys.error(Messages.notScala213(sv, projectRef.project))
 
-    val filter = ScopeFilter(configurations = inConfigurations(configs: _*))
     Def.task {
-      val allScala2Inputs = scala2Inputs.all(filter).value
+      val allScala2Inputs = configs.map(_ / scala2Inputs).join.value
       for {
         (scala2Inputs, config) <- allScala2Inputs.zip(configs)
       } {
@@ -167,72 +205,6 @@ object ScalaMigratePlugin extends AutoPlugin {
       )
       commands ::: state
     }
-
-  val configSettings: Seq[Setting[_]] =
-    Seq(
-      scalacOptions ++= {
-        val sv       = scalaVersion.value
-        val settings = scalacOptions.value
-        if (
-          sv.startsWith("2.13.") && semanticdbEnabled.value && !settings
-            .contains(syntheticsOn)
-        )
-          Seq(syntheticsOn)
-        else if (sv.startsWith("3.") && !settings.contains(migrationOn))
-          Seq(migrationOn)
-        else Nil
-      },
-      internalMigrateLibs := internalMigrateLibsImp.value,
-      internalMigrateLibs / aggregate := false,
-      scala3Inputs := {
-        val projectId            = thisProject.value.id
-        val sv                   = scalaVersion.value
-        val sOptions             = scalacOptions.value
-        val classpath            = dependencyClasspath.value.map(_.data.toPath())
-        val scala3Lib            = scalaInstance.value.libraryJars.toSeq.map(_.toPath)
-        val scala3ClassDirectory = (compile / classDirectory).value.toPath
-        val scalac3Options       = sanitazeScala3Options(sOptions)
-        val semanticdbTarget     = semanticdbTargetRoot.value.toPath
-        Scala3Inputs(projectId, sv, scalac3Options, scala3Lib ++ classpath, scala3ClassDirectory, semanticdbTarget)
-      },
-      scala3Inputs / aggregate := false,
-      scala2Inputs := {
-        val projectId        = thisProject.value.id
-        val sv               = scalaVersion.value
-        val sOptions         = scalacOptions.value
-        val classpath        = fullClasspath.value.map(_.data.toPath())
-        val unmanaged        = unmanagedSources.value.map(_.toPath())
-        val managed          = managedSources.value.map(_.toPath())
-        val semanticdbTarget = semanticdbTargetRoot.value.toPath
-        Scala2Inputs(projectId, sv, sOptions, classpath, unmanaged, managed, semanticdbTarget)
-      },
-      scala2Inputs / aggregate := false
-    )
-
-  def internalMigrateLibsImp = Def.task {
-    val log       = streams.value.log
-    val projectId = thisProject.value.id
-    val sv        = scalaVersion.value
-
-    if (!sv.startsWith("2.13."))
-      sys.error(Messages.notScala213(sv, projectId))
-
-    log.info(Messages.migrateLibsStarting(projectId))
-
-    val libDependencies: Seq[ModuleID] = libraryDependencies.value
-    val libs                           = libDependencies.map(LibImpl)
-    val migratedLibs: MigratedLibs     = migrateAPI.migrateLibs(libs.map(_.asInstanceOf[Lib]).asJava)
-    // to scala Seq
-    val notMigrated = migratedLibs.getNotMigrated.toSeq
-    val libsToUpdate = migratedLibs.getLibsToUpdate.asScala.toMap.map { case (lib, migrated) =>
-      lib -> migrated.asScala
-    }
-    val validLibs                                        = migratedLibs.getValidLibs.toSeq
-    val compilerPluginWithScalacOption: Map[Lib, String] = migratedLibs.getMigratedCompilerPlugins.asScala.toMap
-    // logging
-
-    log.info(Messages.messageForLibs(notMigrated, validLibs, libsToUpdate, compilerPluginWithScalacOption))
-  }
 
   private def sanitazeScala3Options(options: Seq[String]) = {
     val nonWorkingOptions = Set(syntheticsOn)
