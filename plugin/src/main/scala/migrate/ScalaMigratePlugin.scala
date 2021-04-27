@@ -43,23 +43,22 @@ object ScalaMigratePlugin extends AutoPlugin {
   private[migrate] val migrateAPI               = Migrate.fetchAndClassloadInstance(migrateVersion, scalaBinaryVersion)
 
   private[migrate] object Keys {
-    val scala3inputsAttribute = AttributeKey[Scala3Inputs]("scala3Inputs")
-    val scala2inputsAttribute = AttributeKey[Scala2Inputs]("scala2Inputs")
-
     val migrationConfigs = settingKey[List[Configuration]]("the ordered list of configuration to migrate")
     val isScala213       = taskKey[Boolean]("is this project a scala 2.13 project")
+
+    val scala3inputsAttribute = AttributeKey[Scala3Inputs]("scala3Inputs")
+    val scala2inputsAttribute = AttributeKey[Scala2Inputs]("scala2Inputs")
+    val scala2Inputs          = taskKey[Scala2Inputs]("return Scala 2 inputs")
+    val scala3Inputs          = taskKey[Scala3Inputs]("return Scala 3 inputs")
+    val storeScala3Inputs     = taskKey[StateTransform]("store scala 3 inputs")
+    val storeScala2Inputs     = taskKey[StateTransform]("store scala 2 inputs")
 
     val internalMigrateSyntax        = taskKey[Unit]("fix some syntax incompatibilities with scala 3")
     val internalMigrateScalacOptions = taskKey[Unit]("log information about migratin of the scalacOptions")
     val internalMigrateLibs          = taskKey[Unit]("log information to migrate libDependencies")
-
-    val scala3InputComputed = taskKey[Scala3Inputs]("show scala 3 inputs if available")
-    val scala2InputComputed = taskKey[Scala2Inputs]("show scala 2 inputs if available")
-    val storeScala3Inputs   = taskKey[StateTransform]("store scala 3 inputs")
-    val storeScala2Inputs   = taskKey[StateTransform]("store scala 2 inputs")
-    val internalMigrate     = taskKey[Unit]("migrate a specific project to scala 3")
-
+    val internalMigrate              = taskKey[Unit]("migrate a specific project to scala 3")
   }
+
   import Keys._
 
   override def requires: Plugins = JvmPlugin
@@ -193,33 +192,7 @@ object ScalaMigratePlugin extends AutoPlugin {
       internalMigrateLibs / aggregate := false,
       internalMigrate := migrateImp.value,
       internalMigrate / aggregate := false,
-      scala3InputComputed := {
-        (for {
-          inputs <- state.value.attributes.get(scala3inputsAttribute)
-        } yield Scala3Inputs(
-          inputs.projectId,
-          inputs.scalaVerson,
-          inputs.scalacOptions,
-          inputs.classpath,
-          inputs.classDirectory
-        )).get
-
-      },
-      scala3InputComputed / aggregate := false,
-      scala2InputComputed := {
-        (for {
-          inputs <- state.value.attributes.get(scala2inputsAttribute)
-        } yield Scala2Inputs(
-          inputs.projectId,
-          inputs.scalaVerson,
-          inputs.scalacOptions,
-          inputs.classpath,
-          inputs.unmanagedSources,
-          inputs.managedSources
-        )).get
-      },
-      scala2InputComputed / aggregate := false,
-      storeScala3Inputs := {
+      scala3Inputs := {
         val projectId            = thisProject.value.id
         val sv                   = scalaVersion.value
         val sOptions             = scalacOptions.value
@@ -227,20 +200,27 @@ object ScalaMigratePlugin extends AutoPlugin {
         val scala3Lib            = scalaInstance.value.libraryJars.toSeq.map(_.toPath)
         val scala3ClassDirectory = (compile / classDirectory).value.toPath
         val scalac3Options       = sanitazeScala3Options(sOptions)
-        val scala3Inputs =
-          Scala3Inputs(projectId, sv, scalac3Options, scala3Lib ++ classpath, scala3ClassDirectory)
-        StateTransform(s => s.put(scala3inputsAttribute, scala3Inputs))
+        Scala3Inputs(projectId, sv, scalac3Options, scala3Lib ++ classpath, scala3ClassDirectory)
+      },
+      scala3Inputs / aggregate := false,
+      storeScala3Inputs := {
+        val inputs = scala3Inputs.value
+        StateTransform(s => s.put(scala3inputsAttribute, inputs))
       },
       storeScala3Inputs / aggregate := false,
+      scala2Inputs := {
+        val projectId = thisProject.value.id
+        val sv        = scalaVersion.value
+        val sOptions  = scalacOptions.value
+        val classpath = fullClasspath.value.map(_.data.toPath())
+        val unmanaged = unmanagedSources.value.map(_.toPath())
+        val managed   = managedSources.value.map(_.toPath())
+        Scala2Inputs(projectId, sv, sOptions, classpath, unmanaged, managed)
+      },
+      scala2Inputs / aggregate := false,
       storeScala2Inputs := {
-        val projectId    = thisProject.value.id
-        val sv           = scalaVersion.value
-        val sOptions     = scalacOptions.value
-        val classpath    = fullClasspath.value.map(_.data.toPath())
-        val unmanaged    = unmanagedSources.value.map(_.toPath())
-        val managed      = managedSources.value.map(_.toPath())
-        val scala2Inputs = Scala2Inputs(projectId, sv, sOptions, classpath, unmanaged, managed)
-        StateTransform(s => s.put(scala2inputsAttribute, scala2Inputs))
+        val inputs = scala2Inputs.value
+        StateTransform(s => s.put(scala2inputsAttribute, inputs))
       },
       storeScala2Inputs / aggregate := false
     )
