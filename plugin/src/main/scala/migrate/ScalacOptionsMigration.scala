@@ -1,37 +1,37 @@
 package migrate
 
-import sbt.Def
 import sbt.Keys._
-import sbt.ScopeFilter
 import sbt._
 import sbt.internal.util.ManagedLogger
 
 import migrate.interfaces.ScalacOptions
 import ScalaMigratePlugin.Keys._
+import ScalaMigratePlugin.migrateAPI
 import Messages._
 
 import scala.collection.JavaConverters._
 import scala.io.AnsiColor._
 
-object ScalacOptionsMigration {
-  private[migrate] val internalImpl = Def.taskDyn {
-    val logger  = streams.value.log
-    val configs = migrationConfigs.value
+private[migrate] object ScalacOptionsMigration {
+  val internalImpl = Def.taskDyn {
+    val logger        = streams.value.log
+    val configs       = migrationConfigs.value
+    val projectRef    = thisProject.value
+    val commonOptions = scalacOptions.value
+    val _             = isScala213.value
 
-    val projectRef = thisProject.value
     logger.info(starting(projectRef.id, configs.map(_.id)))
     logger.info(warning)
     logger.info(help)
 
-    val commonOptions = scalacOptions.value
-    val filter        = ScopeFilter.apply(configurations = inConfigurations(configs: _*))
-
     if (commonOptions.nonEmpty) {
-      val migrationStatus = ScalaMigratePlugin.migrateAPI.migrateScalacOption(commonOptions.asJava)
+      val migrationStatus = migrateAPI.migrateScalacOption(commonOptions.asJava)
       reportStatus(logger, migrationStatus)
     }
 
+    val filter = ScopeFilter.apply(configurations = inConfigurations(configs: _*))
     Def.task {
+      val logger        = streams.value.log
       val configOptions = scalacOptions.all(filter).value
       for {
         (options, config) <- configOptions.zip(configs)
@@ -39,7 +39,7 @@ object ScalacOptionsMigration {
         if filteredOptions.nonEmpty
       } {
         logger.info(s"${BOLD}In configuration ${config.id}:${RESET}")
-        val migrationStatus = ScalaMigratePlugin.migrateAPI.migrateScalacOption(filteredOptions.asJava)
+        val migrationStatus = migrateAPI.migrateScalacOption(filteredOptions.asJava)
         reportStatus(logger, migrationStatus)
       }
     }
@@ -82,7 +82,7 @@ object ScalacOptionsMigration {
        |${formatValueWithSpace(removedSign, spacesHelp)} $RED: the option is not available is Scala 3$RESET
        |${formatValueWithSpace(renamedSign, spacesHelp)} $BLUE: the option has been renamed$RESET
        |${formatValueWithSpace(sameSign, spacesHelp)} $GREEN: the option is still valid$RESET
-       |${formatValueWithSpace(pluginSign, spacesHelp)} $CYAN: the option is related to a plugin$RESET
+       |${formatValueWithSpace(pluginSign, spacesHelp)} $CYAN: the option is related to a plugin, previously handled by migrate-libs$RESET
        |
        |""".stripMargin
 

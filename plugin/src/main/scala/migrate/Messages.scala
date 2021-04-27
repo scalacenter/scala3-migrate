@@ -6,8 +6,7 @@ import scala.io.AnsiColor._
 object Messages {
   def welcomeMigration(projectD: String): String =
     s"${BOLD}We are going to migrate your project $projectD to ${ScalaMigratePlugin.scala3Version}${RESET}"
-  def welcomeMigrateSyntax(projectD: String): String =
-    s"${BOLD}We are going to fix some syntax incompatibilities on $projectD${RESET}"
+
   def notScala213(scalaVersion: String, projectId: String) =
     s"""
        |
@@ -44,27 +43,6 @@ object Messages {
         |
         |""".stripMargin
   }
-
-  def successMessageMigrateSyntax(projectId: String, scala3: String) =
-    s"""|
-        |The syntax incompatibilities have been fixed on the project $projectId
-        |You can now commit the change!
-        |You can also execute the next command to try to migrate to $scala3
-        |
-        |migrate $projectId
-        |
-        |
-        |""".stripMargin
-
-  def errorMessageMigrateSyntax(projectId: String, ex: Throwable): String =
-    s"""|
-        |
-        |Failed fixing the syntax for $projectId project
-        |${ex.getMessage()}
-        |${ex.getStackTrace.mkString("\n")}
-        |
-        |
-        |""".stripMargin
 
   def migrateLibsStarting(projectId: String): String =
     s"""|

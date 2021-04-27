@@ -30,7 +30,8 @@ case class Scala2Inputs(
   scalacOptions: Seq[String],
   classpath: Seq[Path],
   unmanagedSources: Seq[Path],
-  managedSources: Seq[Path]
+  managedSources: Seq[Path],
+  semanticdbTarget: Path
 )
 
 object ScalaMigratePlugin extends AutoPlugin {
@@ -77,9 +78,18 @@ object ScalaMigratePlugin extends AutoPlugin {
         if (sv.startsWith("2.13.")) migrateSemanticdbVersion
         else semanticdbVersion.value
       },
+      isScala213 := {
+        val sv = scalaVersion.value
+        if (sv.startsWith("2.13.")) true
+        else throw new Exception(Messages.notScala213(sv, thisProject.value.id))
+      },
+      isScala213 / aggregate := false,
       migrationConfigs := migrationConfigsImpl.value,
+      migrationConfigs / aggregate := false,
       internalMigrateScalacOptions := ScalacOptionsMigration.internalImpl.value,
-      internalMigrateScalacOptions / aggregate := false
+      internalMigrateScalacOptions / aggregate := false,
+      internalMigrateSyntax := SyntaxMigration.internalImpl.value,
+      internalMigrateSyntax / aggregate := false
     ) ++
       inConfig(Compile)(configSettings) ++
       inConfig(Test)(configSettings) ++
@@ -133,19 +143,13 @@ object ScalaMigratePlugin extends AutoPlugin {
 
   lazy val migrateSyntax: Command =
     Command(migrateSyntaxCommand, migrateSyntaxBrief, migrateSyntaxDetailed)(idParser) { (state, projectId) =>
-      val commands = List(StashOnFailure, s"$projectId / isScala213") ++ onAllMigrationConfigs(state, projectId)(
-        compile,
-        storeScala2Inputs,
-        internalMigrateSyntax
-      ) ++ List(PopOnFailure)
-      commands ::: state
+      s"$projectId / internalMigrateSyntax" :: state
     }
 
   lazy val migrateScalacOptions: Command =
     Command(migrateScalacOptionsCommand, migrateScalacOptionsBrief, migrateScalacOptionsDetailed)(idParser) {
       (state, projectId) =>
-        val commands = List(s"$projectId / isScala213", s"$projectId / internalMigrateScalacOptions")
-        commands ::: state
+        s"$projectId / internalMigrateScalacOptions" :: state
     }
 
   lazy val migrateLibDependencies: Command =
@@ -168,12 +172,6 @@ object ScalaMigratePlugin extends AutoPlugin {
 
   val configSettings: Seq[Setting[_]] =
     Seq(
-      isScala213 := {
-        val sv = scalaVersion.value
-        if (sv.startsWith("2.13.")) true
-        else throw new Exception(Messages.notScala213(sv, thisProject.value.id))
-      },
-      isScala213 / aggregate := false,
       scalacOptions ++= {
         val sv       = scalaVersion.value
         val settings = scalacOptions.value
@@ -186,8 +184,6 @@ object ScalaMigratePlugin extends AutoPlugin {
           Seq(migrationOn)
         else Nil
       },
-      internalMigrateSyntax := migrateSyntaxImpl.value,
-      internalMigrateSyntax / aggregate := false,
       internalMigrateLibs := internalMigrateLibsImp.value,
       internalMigrateLibs / aggregate := false,
       internalMigrate := migrateImp.value,
@@ -209,13 +205,14 @@ object ScalaMigratePlugin extends AutoPlugin {
       },
       storeScala3Inputs / aggregate := false,
       scala2Inputs := {
-        val projectId = thisProject.value.id
-        val sv        = scalaVersion.value
-        val sOptions  = scalacOptions.value
-        val classpath = fullClasspath.value.map(_.data.toPath())
-        val unmanaged = unmanagedSources.value.map(_.toPath())
-        val managed   = managedSources.value.map(_.toPath())
-        Scala2Inputs(projectId, sv, sOptions, classpath, unmanaged, managed)
+        val projectId        = thisProject.value.id
+        val sv               = scalaVersion.value
+        val sOptions         = scalacOptions.value
+        val classpath        = fullClasspath.value.map(_.data.toPath())
+        val unmanaged        = unmanagedSources.value.map(_.toPath())
+        val managed          = managedSources.value.map(_.toPath())
+        val semanticdbTarget = semanticdbTargetRoot.value.toPath
+        Scala2Inputs(projectId, sv, sOptions, classpath, unmanaged, managed, semanticdbTarget)
       },
       scala2Inputs / aggregate := false,
       storeScala2Inputs := {
@@ -224,32 +221,6 @@ object ScalaMigratePlugin extends AutoPlugin {
       },
       storeScala2Inputs / aggregate := false
     )
-
-  def migrateSyntaxImpl = Def.task {
-    val log        = streams.value.log
-    val targetRoot = semanticdbTargetRoot.value
-    val projectId  = thisProject.value.id
-    log.info(Messages.welcomeMigrateSyntax(projectId))
-    // computed values
-    val scala2InputsValue     = state.value.attributes.get(scala2inputsAttribute).get
-    val unamangedSources      = scala2InputsValue.unmanagedSources
-    val scala2Classpath       = scala2InputsValue.classpath
-    val scala2CompilerOptions = scala2InputsValue.scalacOptions
-
-    Try {
-      migrateAPI.migrateSyntax(
-        unamangedSources.asJava,
-        targetRoot.toPath,
-        scala2Classpath.asJava,
-        scala2CompilerOptions.asJava
-      )
-    } match {
-      case Success(_) =>
-        log.info(Messages.successMessageMigrateSyntax(projectId, scala3Version))
-      case Failure(exception) =>
-        log.err(Messages.errorMessageMigrateSyntax(projectId, exception))
-    }
-  }
 
   def internalMigrateLibsImp = Def.task {
     val log       = streams.value.log

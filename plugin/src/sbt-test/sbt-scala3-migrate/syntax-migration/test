@@ -1,7 +1,5 @@
-> migrate-scalacOptions syntax-migration
-> migrate-libs syntax-migration
 > migrate-syntax syntax-migration
-> migrate syntax-migration
 
 # check scalaVersion is Scala 3 and compilation succeeds
-> syntax-migration / checkMigration
+> set `syntax-migration` / scalaVersion := "3.0.0-RC1"
+> syntax-migration / Test / compile

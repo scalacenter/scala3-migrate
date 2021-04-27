@@ -1,6 +1,6 @@
 import migrate.ScalaMigratePlugin
 
-lazy val `scalac-options` = project
+lazy val `scalac-options-migration` = project
   .in(file("."))
   .settings(
     scalaVersion := "2.13.5",
