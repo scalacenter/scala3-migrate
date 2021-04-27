@@ -4,8 +4,6 @@ import migrate.interfaces.Lib
 import scala.io.AnsiColor._
 
 object Messages {
-  def welcomeMigration(projectD: String): String =
-    s"${BOLD}We are going to migrate your project $projectD to ${ScalaMigratePlugin.scala3Version}${RESET}"
 
   def notScala213(scalaVersion: String, projectId: String) =
     s"""
@@ -18,31 +16,6 @@ object Messages {
        |
        |
        |""".stripMargin
-
-  def successOfMigration(projectId: String, scala3: String): String =
-    s"""|
-        |
-        |$projectId project has successfully been migrated to scala $scala3
-        |You can now commit the change!
-        |You can also execute the compile command:
-        |
-        |$projectId / compile
-        |
-        |
-        |""".stripMargin
-
-  def errorMesssageMigration(exceptionOpt: Option[Throwable]) = {
-    val exceptionError = exceptionOpt
-      .map(error => s"""|because of ${error.getMessage}
-                        |${error.getStackTrace.mkString("\n")}""".stripMargin)
-      .getOrElse("")
-    s"""|
-        |
-        |Migration has failed
-        |$exceptionError
-        |
-        |""".stripMargin
-  }
 
   def migrateLibsStarting(projectId: String): String =
     s"""|

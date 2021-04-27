@@ -16,11 +16,14 @@ private[migrate] object ScalacOptionsMigration {
   val internalImpl = Def.taskDyn {
     val logger        = streams.value.log
     val configs       = migrationConfigs.value
-    val projectRef    = thisProject.value
+    val projectId     = thisProject.value.id
     val commonOptions = scalacOptions.value
-    val _             = isScala213.value
+    val sv            = scalaVersion.value
 
-    logger.info(starting(projectRef.id, configs.map(_.id)))
+    if (!sv.startsWith("2.13."))
+      sys.error(Messages.notScala213(sv, projectId))
+
+    logger.info(starting(projectId, configs.map(_.id)))
     logger.info(warning)
     logger.info(help)
 
@@ -29,10 +32,9 @@ private[migrate] object ScalacOptionsMigration {
       reportStatus(logger, migrationStatus)
     }
 
-    val filter = ScopeFilter.apply(configurations = inConfigurations(configs: _*))
     Def.task {
       val logger        = streams.value.log
-      val configOptions = scalacOptions.all(filter).value
+      val configOptions = configs.map(_ / scalacOptions).join.value
       for {
         (options, config) <- configOptions.zip(configs)
         filteredOptions    = options.filterNot(opt => commonOptions.contains(opt))

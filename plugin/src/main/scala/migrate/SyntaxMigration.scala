@@ -15,13 +15,15 @@ private[migrate] object SyntaxMigration {
   val internalImpl = Def.taskDyn {
     val configs   = migrationConfigs.value
     val projectId = thisProject.value.id
-    val _         = isScala213.value
+    val sv        = scalaVersion.value
 
-    val filter = ScopeFilter.apply(configurations = inConfigurations(configs: _*))
+    if (!sv.startsWith("2.13."))
+      sys.error(Messages.notScala213(sv, projectId))
+
     Def.task {
       val logger          = streams.value.log
-      val _               = compile.all(filter).value
-      val allScala2Inputs = scala2Inputs.all(filter).value
+      val _               = configs.map(_ / compile).join.value
+      val allScala2Inputs = configs.map(_ / scala2Inputs).join.value
 
       logger.info(welcome(projectId, configs.map(_.id)))
 
@@ -71,7 +73,7 @@ private[migrate] object SyntaxMigration {
   private def nextCommand(projectId: String): String =
     s"""|
         |You can now commit the change!
-        |You can also execute the next command to try to migrate to $scala3Version
+        |Then you can run the next command:
         |
         |migrate $projectId
         |

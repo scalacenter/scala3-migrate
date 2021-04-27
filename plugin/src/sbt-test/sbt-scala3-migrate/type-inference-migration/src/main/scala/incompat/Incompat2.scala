@@ -1,4 +1,4 @@
-package hello
+package incompat
 
 object Incompat2 {
   trait Context { type Out }
