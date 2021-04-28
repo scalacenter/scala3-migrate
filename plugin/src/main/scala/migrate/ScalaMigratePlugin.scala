@@ -45,13 +45,16 @@ object ScalaMigratePlugin extends AutoPlugin {
   private[migrate] val migrateAPI               = Migrate.fetchAndClassloadInstance(migrateVersion, scalaBinaryVersion)
 
   private[migrate] val inputsStore: mutable.Map[Scope, Scala2Inputs] = mutable.Map()
+
   private[migrate] object Keys {
+    val scala2Version = AttributeKey[String]("scala2Version")
+
     val migrationConfigs = settingKey[List[Configuration]]("the ordered list of configuration to migrate")
 
     val scala2Inputs = taskKey[Scala2Inputs]("return Scala 2 inputs")
     val scala3Inputs = taskKey[Scala3Inputs]("return Scala 3 inputs")
 
-    val storeScala2Inputs            = taskKey[Unit]("store Scala 2 inputs from all migration configurations")
+    val storeScala2Inputs            = taskKey[StateTransform]("store Scala 2 inputs from all migration configurations")
     val internalMigrateSyntax        = taskKey[Unit]("fix some syntax incompatibilities with scala 3")
     val internalMigrateScalacOptions = taskKey[Unit]("log information about migratin of the scalacOptions")
     val internalMigrateLibs          = taskKey[Unit]("log information to migrate libDependencies")
@@ -87,7 +90,7 @@ object ScalaMigratePlugin extends AutoPlugin {
     internalMigrate / aggregate := false,
     internalMigrateLibs := LibsMigration.internalImpl.value,
     internalMigrateLibs / aggregate := false,
-    commands ++= Seq(migrateSyntax, migrateScalacOptions, migrateLibDependencies, migrate),
+    commands ++= Seq(migrateSyntax, migrateScalacOptions, migrateLibDependencies, migrate, fallback),
     inConfig(Compile)(configSettings),
     inConfig(Test)(configSettings)
   )
@@ -146,6 +149,8 @@ object ScalaMigratePlugin extends AutoPlugin {
         val scope = (projectRef / config / Keys.scala2Inputs).scope
         inputsStore.update(scope, scala2Inputs)
       }
+
+      StateTransform(_.put(scala2Version, sv))
     }
   }
 
@@ -197,14 +202,25 @@ object ScalaMigratePlugin extends AutoPlugin {
   lazy val migrate: Command =
     Command(migrateCommand, migrateBrief, migrateDetailed)(idParser) { (state, projectId) =>
       val commands = List(
-        StashOnFailure,
         s"$projectId / storeScala2Inputs",
-        s"""set LocalProject("$projectId") / scalaVersion := "$scala3Version"""",
+        setScalaVersion(projectId, scala3Version),
+        StashOnFailure, // prepare onFailure
+        s"$OnFailure $migrateFallback $projectId", // go back to Scala 2.13 in case of failure
         s"$projectId / internalMigrate",
-        PopOnFailure
+        FailureWall, // resume here in case of failure
+        PopOnFailure // remove onFailure
       )
       commands ::: state
     }
+
+  lazy val fallback: Command =
+    Command(migrateFallback)(idParser){ (state, projectId) => 
+      val scala2Version = state.attributes(Keys.scala2Version)
+      setScalaVersion(projectId, scala2Version) :: state
+    }
+
+  private def setScalaVersion(projectId: String, scalaVersion: String): String =
+    s"""set LocalProject("$projectId") / scalaVersion := "$scalaVersion""""
 
   private def sanitazeScala3Options(options: Seq[String]) = {
     val nonWorkingOptions = Set(syntheticsOn)

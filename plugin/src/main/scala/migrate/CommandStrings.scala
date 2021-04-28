@@ -1,7 +1,6 @@
 package migrate
 
 object CommandStrings {
-
   val migrateSyntaxCommand = "migrate-syntax"
   val migrateSyntaxBrief =
     (s"$migrateSyntaxCommand <projectId>", "Fix syntax incompatibilities for scala 3 for a specific projectId")
@@ -47,4 +46,6 @@ object CommandStrings {
         | 
         |
         |""".stripMargin
+
+  val migrateFallback = "migrate-fallback"
 }
