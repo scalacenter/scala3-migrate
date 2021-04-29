@@ -204,7 +204,7 @@ object ScalaMigratePlugin extends AutoPlugin {
       val commands = List(
         s"$projectId / storeScala2Inputs",
         setScalaVersion(projectId, scala3Version),
-        StashOnFailure, // prepare onFailure
+        StashOnFailure,                            // prepare onFailure
         s"$OnFailure $migrateFallback $projectId", // go back to Scala 2.13 in case of failure
         s"$projectId / internalMigrate",
         FailureWall, // resume here in case of failure
@@ -214,7 +214,7 @@ object ScalaMigratePlugin extends AutoPlugin {
     }
 
   lazy val fallback: Command =
-    Command(migrateFallback)(idParser){ (state, projectId) => 
+    Command(migrateFallback)(idParser) { (state, projectId) =>
       val scala2Version = state.attributes(Keys.scala2Version)
       setScalaVersion(projectId, scala2Version) :: state
     }
