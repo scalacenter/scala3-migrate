@@ -1,43 +1,49 @@
 package migrate
 
 import migrate.interfaces.CompilationException
-import ScalaMigratePlugin.{ migrateAPI, inputsStore, scala3Version, Keys }
-
+import ScalaMigratePlugin.{ Keys, inputsStore, migrateAPI, scala3Version }
+import migrate.TypeInferenceMigration.{ errorMessage, successMessage }
 import sbt.Keys._
 import sbt._
 
 import scala.io.AnsiColor._
-import scala.util.{ Try, Success, Failure }
+import scala.util.{ Failure, Success, Try }
 import scala.collection.JavaConverters._
-
 import java.nio.file.Files
 
 private[migrate] object TypeInferenceMigration {
   val internalImpl = Def.taskDyn {
-    val projectRef = thisProjectRef.value
-    val configs    = Keys.migrationConfigs.value
-    val sv         = scalaVersion.value
-
-    val projectId = projectRef.project
+    implicit val projectRef = thisProjectRef.value
+    val configs             = Keys.migrationConfigs.value
+    val sv                  = scalaVersion.value
+    implicit val projectId  = projectRef.project
 
     if (sv != scala3Version)
       sys.error(s"expecting scalaVersion to be $scala3Version")
 
+    val logger = streams.value.log
+    logger.info(welcomeMessage(projectId, configs.map(_.id)))
+
+    Def.sequential {
+      configs.map(migrateConfig(_)) :+
+        Def.task {
+          val logger = streams.value.log
+          logger.info(finalMessage(projectId))
+        }
+    }
+  }
+
+  private def migrateConfig(
+    config: Configuration
+  )(implicit projectRef: ProjectRef, projectId: String): Def.Initialize[Task[Unit]] =
     Def.task {
-      val logger          = streams.value.log
-      val allScala3Inputs = configs.map(_ / Keys.scala3Inputs).join.value
-
-      logger.info(welcomeMessage(projectId, configs.map(_.id)))
-
-      for {
-        (scala3Inputs, config) <- allScala3Inputs.zip(configs)
-        scope                   = (projectRef / config / Keys.scala2Inputs).scope
-        scala2Inputs            = inputsStore.getOrElse(scope, sys.error("no input found"))
-        if (scala2Inputs.unmanagedSources.nonEmpty)
-      } {
+      val logger       = streams.value.log
+      val scala3Inputs = (config / Keys.scala3Inputs).value
+      val scope        = (projectRef / config / Keys.scala2Inputs).scope
+      val scala2Inputs = inputsStore.getOrElse(scope, sys.error("no input found"))
+      if (scala2Inputs.unmanagedSources.nonEmpty) {
         if (!Files.exists(scala3Inputs.classDirectory))
           Files.createDirectory(scala3Inputs.classDirectory)
-
         Try {
           migrateAPI.migrate(
             scala2Inputs.unmanagedSources.asJava,
@@ -59,11 +65,8 @@ private[migrate] object TypeInferenceMigration {
             val message = errorMessage(projectId, config.id, Some(exception))
             throw new MessageOnlyException(message)
         }
-      }
-
-      logger.info(finalMessage(projectId))
+      } else logger.debug(s"There is no unmanagedSources to migrate for $config")
     }
-  }
 
   private def welcomeMessage(projectId: String, configs: Seq[String]): String =
     s"""|
