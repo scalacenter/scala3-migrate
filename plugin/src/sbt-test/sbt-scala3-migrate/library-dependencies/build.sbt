@@ -20,6 +20,6 @@ lazy val `library-dependencies` = project
 
 lazy val V = new {
   val scala213      = "2.13.5"
-  val catsCore      = "2.5.0"
+  val catsCore      = "2.6.0"
   val kindProjector = "0.11.3"
 }
