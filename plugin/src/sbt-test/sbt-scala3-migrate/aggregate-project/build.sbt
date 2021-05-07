@@ -9,7 +9,7 @@ lazy val subproject = project
 lazy val `aggregate-project` = project
   .in(file("."))
   .settings(TaskKey[Unit]("checkMigration") := {
-    assert(scalaVersion.value == "3.0.0-RC2")
+    assert(scalaVersion.value == "3.0.0-RC3")
     (Compile / compile).value
   })
   .aggregate(subproject)
