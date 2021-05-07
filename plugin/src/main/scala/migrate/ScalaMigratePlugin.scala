@@ -1,8 +1,7 @@
 package migrate
 
-import interfaceImpl.LibImpl
 import migrate.CommandStrings._
-import migrate.interfaces.{ CompilationException, Lib, Migrate, MigratedLibs }
+import migrate.interfaces.Migrate
 import sbt.BasicCommandStrings._
 import sbt.Keys._
 import sbt._
@@ -11,9 +10,7 @@ import sbt.internal.util.complete.Parser.token
 import sbt.internal.util.complete.Parsers.Space
 import sbt.plugins.JvmPlugin
 
-import java.nio.file.{ Files, Path }
-import scala.collection.JavaConverters._
-import scala.util.{ Failure, Success, Try }
+import java.nio.file.Path
 import scala.collection.mutable
 
 case class Scala3Inputs(

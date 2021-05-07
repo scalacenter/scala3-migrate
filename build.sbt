@@ -208,7 +208,7 @@ lazy val V = new {
   val scala213BinaryVersion = "2.13"
   val scala212              = "2.12.13"
   val scalatest             = "3.2.8"
-  val scala3                = "3.0.0-RC2"
+  val scala3                = "3.0.0-RC3"
   val scalafix              = "0.9.27"
   val scribe                = "3.5.4"
   val organizeImports       = "0.4.3"
@@ -218,5 +218,5 @@ lazy val V = new {
   val coursierInterface     = "1.0.3"
   val semanticdbVersion     = "4.4.10"
   val localSnapshotVersion  = "0.4.0-SNAPSHOT"
-  val zio                   = "1.0.6"
+  val zio                   = "1.0.7"
 }

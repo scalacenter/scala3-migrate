@@ -15,7 +15,7 @@ lazy val `managed-sources` = project
       Seq(file)
     },
     TaskKey[Unit]("checkMigration") := {
-      assert(scalaVersion.value == "3.0.0-RC2")
+      assert(scalaVersion.value == "3.0.0-RC3")
       (Compile / compile).value
     }
   )
