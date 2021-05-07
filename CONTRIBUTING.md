@@ -21,6 +21,12 @@ git tag -af "v$VERSION" $COMMIT_HASH -m "v$VERSION" && git push -f origin v$VERS
 ```
 While the CI is running, update the release notes at https://github.com/scalacenter/scala3-migrate/releases
 
+After the CI completes, confirm that the release has successfully finished
+
+```
+./bin/test-release.sh $VERSION
+```
+
 When scala3-migrate has completed the release, edit the release draft 
 in the GitHub web UI to point to the tag that you pushed and then click on "Publish release".
 
