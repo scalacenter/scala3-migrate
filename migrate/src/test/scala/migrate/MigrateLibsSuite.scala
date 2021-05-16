@@ -32,12 +32,12 @@ class MigrateLibsSuite extends AnyFunSuiteLike with DiffAssertions {
     val res = migrated(opentelemetry).head
     assert(isTheSame(opentelemetry, res))
   }
-  test("Available in scala 3") {
-    val migrated = Scala3Migrate.migrateLibs(Seq(cats)).libs
-    val res      = migrated(cats)
-    assert(res.nonEmpty)
-    assert(res.forall(_.crossVersion.isInstanceOf[CrossVersion.For2_13Use3]))
-  }
+//  test("Available in scala 3") {
+//    val migrated = Scala3Migrate.migrateLibs(Seq(cats)).libs
+//    val res      = migrated(cats)
+//    assert(res.nonEmpty)
+//    assert(res.forall(_.crossVersion.isInstanceOf[CrossVersion.For2_13Use3]))
+//  }
   test("Don't show older version") {
     val migrated = Scala3Migrate.migrateLibs(Seq(collection)).libs
     val res      = migrated(collection).map(_.revision)
