@@ -6,7 +6,7 @@ lazy val `integration-test` = project
     // Enable migration on IntegrationTest config
     inConfig(IntegrationTest)(Defaults.itSettings ++ ScalaMigratePlugin.configSettings),
     TaskKey[Unit]("checkMigration") := {
-      assert(scalaVersion.value == "3.0.0-RC3")
+      assert(scalaVersion.value == "3.0.0")
       (IntegrationTest / compile).value
     }
   )
