@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: olafurpg/setup-scala@v10
       - run: sbt test
-      - run: sbt compileScalafixOutputinScala3
+#      - run: sbt compileScalafixOutputinScala3
   jdk11:
     name: test jdk11
     runs-on: ubuntu-latest
@@ -26,7 +26,7 @@ jobs:
         with:
           java-version: adopt@1.11
       - run: sbt test
-      - run: sbt compileScalafixOutputinScala3
+#      - run: sbt compileScalafixOutputinScala3
   windows_213:
     name: Windows tests
     runs-on: windows-latest
