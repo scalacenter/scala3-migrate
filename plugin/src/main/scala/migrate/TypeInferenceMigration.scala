@@ -99,8 +99,8 @@ private[migrate] object TypeInferenceMigration {
         |You can now commit the change!
         |Then you can permanently change the scalaVersion of $projectId:
         |
-        |crossScalaVersions += $scala3Version  // or
-        |scalaVersion := $scala3Version
+        |crossScalaVersions += "$scala3Version"  // or
+        |scalaVersion := "$scala3Version"
         |
         |""".stripMargin
 }
