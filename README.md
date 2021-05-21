@@ -3,7 +3,7 @@ scala3-migrate
 [![Build status](https://github.com/scalacenter/scala3-migrate/workflows/CI/badge.svg)](https://github.com/scalacenter/scala3-migrate/actions?query=workflow)
 ========
 # User documentation
-For detailed documentation, refer to `scala3-migrate` [section in the migration guide](https://scalacenter.github.io/scala-3-migration-guide/docs/scala-3-migrate-tool.html)
+For detailed documentation, refer to `scala3-migrate` [section in the migration guide](https://scalacenter.github.io/scala-3-migration-guide/docs/tooling/scala-3-migrate-plugin.html)
 
 # Usage
 
