@@ -30,7 +30,7 @@ It proposes an incremental approach that can be described as follows:
 # Installation
 ```
 // project/plugins.sbt
-addSbtPlugin("ch.epfl.scala" % "sbt-scala3-migrate" % "0.4.1")
+addSbtPlugin("ch.epfl.scala" % "sbt-scala3-migrate" % "0.4.2")
 // sbt-dotty is not needed anymore since sbt 1.5.0-M1
 addSbtPlugin("ch.epfl.lamp"  % "sbt-dotty"          % "0.5.3")
 ```
@@ -73,8 +73,8 @@ lazy val main = project
 [info] Valid         : Already a valid version for Scala 3
 [info] To be updated : Need to be updated to the following version
 [info]
-[info] com.softwaremill.scalamacrodebug:macros:0.4.1:test           -> X : Contains Macros and is not yet published for 3.0.0-RC1
-[info] com.olegpy:better-monadic-for:0.3.1:plugin->default(compile) -> X : Scala 2 compiler plugins are not supported in scala 3.0.0-RC1. You need to find an alternative
+[info] com.softwaremill.scalamacrodebug:macros:0.4.1:test           -> X : Contains Macros and is not yet published for 3.0.0
+[info] com.olegpy:better-monadic-for:0.3.1:plugin->default(compile) -> X : Scala 2 compiler plugins are not supported in scala 3.0.0. You need to find an alternative
 [info] ch.epfl.scala:scalafix-interfaces:0.9.26                     -> Valid
 [info] org.typelevel:cats-core:2.2.0                                -> "org.typelevel" %% "cats-core" % "2.4.2"
 [info] ch.epfl.scala:scalafix-rules:0.9.26:test                     -> "ch.epfl.scala" % "scalafix-rules_2.13" % "0.9.26" % "test"
@@ -83,7 +83,7 @@ lazy val main = project
 
 In this case you need to find alternative to `better-monadic-for` and make the project compile without the plugin.
 For `com.softwaremill.scalamacrodebug:macros` which is a macro lib, it won't be possible to migrate until 
-it's published for `3.0.0-RC1`.
+it's published for `3.0.0`.
 
 The ported build would look like: (if we consider possible to remove `com.softwaremill.scalamacrodebug:macros`)
 ```
@@ -170,9 +170,9 @@ The command `migrate-syntax` fix number of incompatibilities by applying the fol
 [INFO ] migrate.utils.ScalafixService.fixInPlace:40 - Syntax fixed for Cats5.scala)
 [info]
 [info]
-[info] We fixed the syntax of this main to be compatible with 3.0.0-RC1
+[info] We fixed the syntax of this main to be compatible with 3.0.0
 [info] You can now commit the change!
-[info] You can also execute the next command to try to migrate to 3.0.0-RC1
+[info] You can also execute the next command to try to migrate to 3.0.0
 [info]
 [info] migrate main
 [info]
@@ -220,7 +220,7 @@ This command goal is to find the necessary types to add in order to make you cod
 [INFO ] migrate.ScalaMigrat.x$11:67 - Incompat3.scala has been successfully migrated
 [info]
 [info]
-[info] main project has successfully been migrated to scala 3.0.0-RC1
+[info] main project has successfully been migrated to scala 3.0.0
 [info] You can now commit the change!
 [info] You can also execute the compile command:
 [info]
