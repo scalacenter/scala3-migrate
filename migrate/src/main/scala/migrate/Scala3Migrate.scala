@@ -183,13 +183,13 @@ object Scala3Migrate {
   }
 
   def migrateLibs(libs: Seq[Lib]): MigratedLibsImpl = {
-    val libsCompatibleWith213 = libs.map(l => l -> Lib213.from(l)).toMap
+    val libsCompatibleWith213 = libs.map(l => l -> InitialLib.from(l)).toMap
     libsCompatibleWith213.collect { case (lib, None) =>
       scribe.info(s"Not able to parse the crossVersion of ${lib}: ${lib.getCrossVersion}")
     }
     val allParsedLibs = libsCompatibleWith213.values.flatten.toSeq
     val filteredLibs = allParsedLibs.filterNot(l =>
-      l.organization == Lib213.scalaLibrary.organization && l.name == Lib213.scalaLibrary.name
+      l.organization == InitialLib.scalaLibrary.organization && l.name == InitialLib.scalaLibrary.name
     )
     MigratedLibsImpl.from(filteredLibs.map(lib => (lib, lib.toCompatible)).toMap)
   }

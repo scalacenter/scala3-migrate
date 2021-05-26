@@ -4,8 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface MigratedLibs {
-    Lib[] getNotMigrated();
-    Map<Lib, List<Lib>> getLibsToUpdate();
-    Lib[] getValidLibs();
-    Map<Lib, String> getMigratedCompilerPlugins();
+    MigratedLib[] getUncompatibleWithScala3();
+    Map<Lib, MigratedLib> getLibsToUpdate();
+    MigratedLib[] getValidLibs();
 }
