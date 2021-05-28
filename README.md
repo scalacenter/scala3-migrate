@@ -30,7 +30,7 @@ It proposes an incremental approach that can be described as follows:
 # Installation
 ```
 // project/plugins.sbt
-addSbtPlugin("ch.epfl.scala" % "sbt-scala3-migrate" % "0.4.2")
+addSbtPlugin("ch.epfl.scala" % "sbt-scala3-migrate" % "0.4.3")
 // sbt-dotty is not needed anymore since sbt 1.5.0-M1
 addSbtPlugin("ch.epfl.lamp"  % "sbt-dotty"          % "0.5.3")
 ```
