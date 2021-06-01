@@ -199,7 +199,7 @@ object Lib213 {
       (Organization("org.scalameta"), Name("semanticdb-scalac")) -> Specific3.SemanticDB
     )
 
-  val scalaLibrary: Lib213 = Lib213.from("org.scala-lang:scala-library:2.13.5", CrossVersion.Disabled, None).get
+  val scalaLibrary: Lib213 = Lib213.from("org.scala-lang:scala-library:2.13.6", CrossVersion.Disabled, None).get
 
   val macroLibs: Map[Organization, Name] = {
     // need to complete the list
