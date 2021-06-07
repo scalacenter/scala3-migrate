@@ -19,52 +19,40 @@ case class InitialLib(
   configurations: Option[String]
 ) extends InitialLibImp {
 
-  //  def test() = this match {
-  //    case _ if isCompilerPlugin =>
-  //    case InitialLib(organization, name, revision, CrossVersion.Disabled, configurations) =>
-  //
-  def toCompatible: MigratedLibImp = {
-    val result: MigratedLibImp =
-      if (isCompilerPlugin) getMigratedLibForCompilerPlugin()
-      else {
-        crossVersion match {
-          case CrossVersion.Disabled =>
-            name.scalaVersion match {
-              case Some(value) if value.split('.').size == 2 =>
-                val modifiedName = name.value.split("_").head
-                getCompatibleWhenBinaryCrossVersion(copy(name = Name(modifiedName)))
-              case Some(_) =>
-                val modifiedName = name.value.split("_").head
-                CoursierHelper
-                  .getCompatibleForScala3Full(copy(name = Name(modifiedName)))
-                  .getOrElse(toUncompatible(Reason.FullVersionNotAvailable))
-              case None => keepTheSameLib(Reason.JavaLibrary)
-            }
+  def toCompatible: MigratedLibImp =
+    if (isCompilerPlugin) getMigratedLibForCompilerPlugin()
+    else
+      crossVersion match {
+        case CrossVersion.Disabled =>
+          name.scalaVersion match {
+            case Some(value) if value.split('.').size == 2 =>
+              val modifiedName = name.value.split("_").head
+              getCompatibleWhenBinaryCrossVersion(copy(name = Name(modifiedName)))
+            case Some(_) =>
+              val modifiedName = name.value.split("_").head
+              CoursierHelper
+                .getCompatibleForScala3Full(copy(name = Name(modifiedName)))
+                .getOrElse(toUncompatible(Reason.FullVersionNotAvailable))
+            case None => keepTheSameLib(Reason.JavaLibrary)
+          }
 
-          // look for revisions that are compatible with scala 3 binary version
-          case CrossVersion.Binary(_, _) => getCompatibleWhenBinaryCrossVersion(this)
-          // look for revisions that are compatible with scala 3 full version
-          case CrossVersion.Full(_, _) => getCompatibleWhenFullCrossVersion(this)
-          // already compatible
-          case CrossVersion.For2_13Use3(_, _) => CompatibleWithScala3Lib.from(this, Reason.IsAlreadyValid)
-          case CrossVersion.For3Use2_13(_, _) => CompatibleWithScala3Lib.from(this, Reason.IsAlreadyValid)
-          // For Patch and Constant, we search full compatible scala 3 version
-          case CrossVersion.Patch =>
-            CoursierHelper
-              .getCompatibleForScala3Full(this)
-              .getOrElse(this.toUncompatible(Reason.FullVersionNotAvailable))
-          case CrossVersion.Constant(_) =>
-            CoursierHelper
-              .getCompatibleForScala3Full(this)
-              .getOrElse(this.toUncompatible(Reason.FullVersionNotAvailable))
-        }
+        // look for revisions that are compatible with scala 3 binary version
+        case CrossVersion.Binary(_, _) => getCompatibleWhenBinaryCrossVersion(this)
+        // look for revisions that are compatible with scala 3 full version
+        case CrossVersion.Full(_, _) => getCompatibleWhenFullCrossVersion(this)
+        // already compatible
+        case CrossVersion.For2_13Use3(_, _) => CompatibleWithScala3Lib.from(this, Reason.IsAlreadyValid)
+        case CrossVersion.For3Use2_13(_, _) => CompatibleWithScala3Lib.from(this, Reason.IsAlreadyValid)
+        // For Patch and Constant, we search full compatible scala 3 version
+        case CrossVersion.Patch =>
+          CoursierHelper
+            .getCompatibleForScala3Full(this)
+            .getOrElse(this.toUncompatible(Reason.FullVersionNotAvailable))
+        case CrossVersion.Constant(_) =>
+          CoursierHelper
+            .getCompatibleForScala3Full(this)
+            .getOrElse(this.toUncompatible(Reason.FullVersionNotAvailable))
       }
-    result match {
-      case _: CompatibleWithScala3 =>
-        result // we want to keep the first newer version and the last
-      case _: UncompatibleWithScala3 => result
-    }
-  }
 
   def toUncompatible(reason: Reason): UncompatibleWithScala3 =
     UncompatibleWithScala3(organization, name, revision, crossVersion, configurations, reason)
