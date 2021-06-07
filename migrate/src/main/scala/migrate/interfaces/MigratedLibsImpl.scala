@@ -4,48 +4,43 @@ import java.{ util => jutil }
 
 import scala.jdk.CollectionConverters._
 
-import migrate.internal.CompatibleWithScala3Lib
-import migrate.internal.Lib213
-import migrate.internal.Scala3cOption
+import migrate.internal.InitialLib
+import migrate.internal.MigratedLib._
 
 case class MigratedLibsImpl(
-  libs: Map[Lib213, Seq[CompatibleWithScala3Lib]],
-  compilerPlugins: Map[Lib213, Option[Scala3cOption]]
+  compatibleWithScala3: Map[InitialLib, CompatibleWithScala3],
+  uncompatibleWithScala3: Map[InitialLib, UncompatibleWithScala3]
 ) extends MigratedLibs {
-  private val (nonMigratedLibs, migrated) = libs.partition { case (_, migrated) => migrated.isEmpty }
-  private val (compilerPluginsWithScalacOption, compilerPluginsWithout) = compilerPlugins.partition {
-    case (_, scalacOption) =>
-      scalacOption.isDefined
-  }
-  private val (validLibs, toUpdate) = migrated.partition { case (initial, compatible) =>
-    compatible.exists(initialLibSameThanCompatible(initial, _))
+
+  private val (validLibs, toUpdate) = compatibleWithScala3.partition { case (initial, compatible) =>
+    initialLibSameThanCompatible(initial, compatible)
   }
 
-  override def getNotMigrated: Array[Lib] =
-    (nonMigratedLibs.keys ++ compilerPluginsWithout.keys).map(_.asInstanceOf[Lib]).toArray
+  override def getUncompatibleWithScala3: Array[MigratedLib] =
+    uncompatibleWithScala3.values.map(_.asInstanceOf[MigratedLib]).toArray
 
-  override def getLibsToUpdate: jutil.Map[Lib, jutil.List[Lib]] =
+  override def getLibsToUpdate: jutil.Map[Lib, MigratedLib] =
     // to Java ^^
     toUpdate.map { case (initial, compatible) =>
-      initial.asInstanceOf[Lib] -> compatible.map(_.asInstanceOf[Lib]).asJava
+      initial.asInstanceOf[Lib] -> compatible.asInstanceOf[MigratedLib]
     }.asJava
 
-  override def getValidLibs: Array[Lib] = validLibs.keys.toArray
+  override def getValidLibs: Array[MigratedLib] = validLibs.values.map(_.asInstanceOf[MigratedLib]).toArray
 
-  private def initialLibSameThanCompatible(initial: Lib213, compatible: CompatibleWithScala3Lib): Boolean =
-    initial.name == compatible.name && initial.revision == compatible.revision
-
-  override def getMigratedCompilerPlugins: jutil.Map[Lib, String] = compilerPluginsWithScalacOption.collect {
-    case (initial, Some(scalacOption)) =>
-      initial.asInstanceOf[Lib] -> scalacOption.scala3Value
-  }.asJava
-
+  private def initialLibSameThanCompatible(initialLib: InitialLib, compatible: CompatibleWithScala3): Boolean =
+    compatible match {
+      case keptInitialLib: CompatibleWithScala3.KeptInitialLib
+          if initialLib.crossVersion == keptInitialLib.crossVersion =>
+        true
+      case _ => false
+    }
+  def allLibs: Map[InitialLib, MigratedLib] = compatibleWithScala3 ++ uncompatibleWithScala3
 }
 
 object MigratedLibsImpl {
-  def from(map: Map[Lib213, Either[Option[Scala3cOption], Seq[CompatibleWithScala3Lib]]]): MigratedLibsImpl = {
-    val libs            = map.collect { case (l, Right(compatible)) => l -> compatible }
-    val compilerPlugins = map.collect { case (l, Left(scalacOption)) => l -> scalacOption }
-    MigratedLibsImpl(libs, compilerPlugins)
+  def from(map: Map[InitialLib, MigratedLib]): MigratedLibsImpl = {
+    val libs         = map.collect { case (l, compatible: CompatibleWithScala3) => l -> compatible }
+    val uncompatible = map.collect { case (initial, uncompatible: UncompatibleWithScala3) => initial -> uncompatible }
+    MigratedLibsImpl(libs, uncompatible)
   }
 }

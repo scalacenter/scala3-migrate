@@ -4,13 +4,12 @@ import ScalaMigratePlugin.{ migrateAPI, scala3Version }
 import ScalaMigratePlugin.Keys._
 import Messages._
 import interfaceImpl.LibImpl
-import migrate.interfaces.{ MigratedLibs, Lib }
-
+import migrate.interfaces.{ Lib, MigratedLib, MigratedLibs }
 import sbt.Keys._
 import sbt._
 
 import scala.io.AnsiColor._
-import scala.util.{ Try, Success, Failure }
+import scala.util.{ Failure, Success, Try }
 import scala.collection.JavaConverters._
 
 private[migrate] object LibsMigration {
@@ -27,14 +26,12 @@ private[migrate] object LibsMigration {
     val libDependencies: Seq[ModuleID] = libraryDependencies.value
     val libs                           = libDependencies.map(LibImpl)
     val migratedLibs: MigratedLibs     = migrateAPI.migrateLibs(libs.map(_.asInstanceOf[Lib]).asJava)
-    val notMigrated                    = migratedLibs.getNotMigrated.toSeq
-    val libsToUpdate = migratedLibs.getLibsToUpdate.asScala.toMap.map { case (lib, migrated) =>
-      lib -> migrated.asScala
-    }
-    val validLibs                                        = migratedLibs.getValidLibs.toSeq
-    val compilerPluginWithScalacOption: Map[Lib, String] = migratedLibs.getMigratedCompilerPlugins.asScala.toMap
+    val notMigrated                    = migratedLibs.getUncompatibleWithScala3.toSeq
+    val libsToUpdate                   = migratedLibs.getLibsToUpdate.asScala.toMap
 
-    log.info(migrationMessage(notMigrated, validLibs, libsToUpdate, compilerPluginWithScalacOption))
+    val validLibs = migratedLibs.getValidLibs.toSeq
+
+    log.info(migrationMessage(notMigrated, validLibs, libsToUpdate))
   }
 
   private def welcomeMessage(projectId: String): String =
@@ -44,36 +41,28 @@ private[migrate] object LibsMigration {
         |""".stripMargin
 
   private def migrationMessage(
-    notMigrated: Seq[Lib],
-    validLibs: Seq[Lib],
-    toUpdate: Map[Lib, Seq[Lib]],
-    compilerPluginsWithScalacOption: Map[Lib, String]
+    incompatibleLibs: Seq[MigratedLib],
+    validLibs: Seq[MigratedLib],
+    toUpdate: Map[Lib, MigratedLib]
   ): String = {
     val removedSign = s"""${BOLD}${RED}X${RESET}"""
     val validSign   = s"""${BOLD}${CYAN}Valid${RESET}"""
     val toBeUpdated = s"""${BOLD}${BLUE}To be updated${RESET}"""
-    val commentMacro =
-      s"${BOLD}${YELLOW}Contains Macros and is not yet published for ${ScalaMigratePlugin.scala3Version}${RESET}"
-    val commentCompilerPlugin =
-      s"${BOLD}${YELLOW}Scala 2 compiler plugins are not supported in scala ${ScalaMigratePlugin.scala3Version}. You need to find an alternative${RESET}"
-    val commentCompilerWithScalacOption =
-      s"${BOLD}${YELLOW}This compiler plugin has a scalacOption equivalent. Add it to your scalacOptions$RESET"
 
-    val spacesForLib = computeLongestValue(
-      (notMigrated ++ validLibs ++ toUpdate.keys ++ compilerPluginsWithScalacOption.keys).map(_.toString)
-    )
+    val spacesForLib = computeLongestValue((incompatibleLibs ++ validLibs ++ toUpdate.keys).map(_.toString))
 
-    val notMigratedWithComments =
-      notMigrated.map(lib => if (lib.isCompilerPlugin) (lib, commentCompilerPlugin) else (lib, commentMacro))
-    def formatCompilerPlugins: String =
-      compilerPluginsWithScalacOption.map { case (l, scalacOption) =>
-        format(l, Seq(scalacOption), spacesForLib) + s" : $commentCompilerWithScalacOption"
-      }.mkString("\n")
-    def formatNotMigrated: String = notMigratedWithComments.map { case (lib, comment) =>
-      s"""${formatValueWithSpace(lib.toString, spacesForLib)} -> $removedSign : $comment"""
+    def formatIncompatibleLibs: String = incompatibleLibs.map { lib =>
+      s"""${formatValueWithSpace(lib.toString, spacesForLib)} -> $removedSign : ${YELLOW}${lib.getReasonWhy}${RESET}"""
     }.mkString("\n")
     def formatValid: String =
-      validLibs.map(lib => s"""${formatValueWithSpace(lib.toString, spacesForLib)} -> $validSign""").mkString("\n")
+      validLibs
+        .map(lib =>
+          s"""${formatValueWithSpace(
+            lib.toString,
+            spacesForLib
+          )} -> $validSign : ${YELLOW}${lib.getReasonWhy}${RESET}"""
+        )
+        .mkString("\n")
 
     val spacesForHelp = computeLongestValue(Seq(removedSign, validSign, toBeUpdated))
 
@@ -83,16 +72,17 @@ private[migrate] object LibsMigration {
                   |${formatValueWithSpace(toBeUpdated, spacesForHelp)} $BLUE: Need to be updated to the following version$RESET
                   |""".stripMargin
 
-    Seq(help, formatNotMigrated, formatValid, formatLibs(toUpdate, spacesForLib), formatCompilerPlugins)
+    Seq(help, formatIncompatibleLibs, formatValid, formatLibToUpdate(toUpdate, spacesForLib))
       .filterNot(_.isEmpty)
       .mkString("\n")
   }
 
-  private def formatLibs(libs: Map[Lib, Seq[Lib]], longestValue: Int): String =
-    libs.map { case (initial, migrated) => format(initial, migrated.map(_.toString), longestValue) }.mkString("\n")
+  private def formatLibToUpdate(libs: Map[Lib, MigratedLib], longestValue: Int): String =
+    libs.map { case (initial, migrated) => format(initial, migrated, longestValue) }
+      .mkString("\n")
 
-  private def format(initial: Lib, migrated: Seq[String], longestValue: Int): String = {
+  private def format(initial: Lib, migrated: MigratedLib, longestValue: Int): String = {
     val numberOfSpaces = " " * (longestValue - initial.toString.length)
-    s"""$initial$numberOfSpaces -> ${GREEN}${migrated.mkString(", ")}$RESET"""
+    s"""$initial$numberOfSpaces -> ${BLUE}${migrated.toString}$RESET : ${YELLOW}${migrated.getReasonWhy}${RESET}"""
   }
 }
