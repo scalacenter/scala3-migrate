@@ -24,10 +24,10 @@ class MigrateLibsSuite extends AnyFunSuiteLike with DiffAssertions {
   val macroLib: InitialLib = InitialLib.from("com.softwaremill.scalamacrodebug:macros:0.4.1", binary, None).get
 
   test("Not available lib") {
-    Scala3Migrate.migrateLibs(Seq(kind)).allLibs
-//    val compiler = res.compatibleWithScala3.values
-//    assert(compiler.nonEmpty)
-//    assert(compiler.values.head == ScalacOption.Specific3.KindProjector)
+    val migrated = Scala3Migrate.migrateLibs(Seq(kind)).allLibs
+    val res      = migrated(kind)
+    assert(res.isCompatibleWithScala3)
+    assert(res.isInstanceOf[CompatibleWithScala3.ScalacOption])
   }
   test("Java lib") {
     val migrated = Scala3Migrate.migrateLibs(Seq(opentelemetry)).allLibs
@@ -39,11 +39,11 @@ class MigrateLibsSuite extends AnyFunSuiteLike with DiffAssertions {
     val migrated = Scala3Migrate.migrateLibs(Seq(cats)).allLibs
     val res      = migrated(cats)
     assert(res.isCompatibleWithScala3)
-    assert(res.asInstanceOf[CompatibleWithScala3.Scala3Lib].crossVersion.isInstanceOf[CrossVersion.For2_13Use3])
+    assert(res.asInstanceOf[CompatibleWithScala3.Lib].crossVersion.isInstanceOf[CrossVersion.For2_13Use3])
   }
   test("Don't show older version") {
     val migrated = Scala3Migrate.migrateLibs(Seq(collection)).allLibs
-    val res      = migrated(collection).asInstanceOf[CompatibleWithScala3.Scala3Lib].revisions
+    val res      = migrated(collection).asInstanceOf[CompatibleWithScala3.Lib].revisions
     val revision = Revision("2.3.2")
     assert(!res.contains(revision))
   }
@@ -52,7 +52,7 @@ class MigrateLibsSuite extends AnyFunSuiteLike with DiffAssertions {
     val res        = migrateLib(scalafix)
     assert(res.isCompatibleWithScala3)
     assert(!isTheSame(scalafix, res))
-    assert(res.asInstanceOf[CompatibleWithScala3.KeptInitialLib].crossVersion.isInstanceOf[CrossVersion.For3Use2_13])
+    assert(res.asInstanceOf[CompatibleWithScala3.Lib].crossVersion.isInstanceOf[CrossVersion.For3Use2_13])
   }
   // Warning: this test may change if the lib is ported to scala 3
   test("Not migrated because macro lib") {
@@ -63,7 +63,7 @@ class MigrateLibsSuite extends AnyFunSuiteLike with DiffAssertions {
 
   private def isTheSame(lib: InitialLib, migrated: MigratedLib) =
     migrated match {
-      case migrated: CompatibleWithScala3.KeptInitialLib =>
+      case migrated: CompatibleWithScala3.Lib =>
         lib.organization == migrated.organization && lib.name == migrated.name && lib.revision == migrated.revision && lib.crossVersion == migrated.crossVersion
       case _ => false
     }

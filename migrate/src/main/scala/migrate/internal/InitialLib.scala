@@ -41,8 +41,8 @@ case class InitialLib(
         // look for revisions that are compatible with scala 3 full version
         case CrossVersion.Full(_, _) => getCompatibleWhenFullCrossVersion(this)
         // already compatible
-        case CrossVersion.For2_13Use3(_, _) => CompatibleWithScala3Lib.from(this, Reason.IsAlreadyValid)
-        case CrossVersion.For3Use2_13(_, _) => CompatibleWithScala3Lib.from(this, Reason.IsAlreadyValid)
+        case CrossVersion.For2_13Use3(_, _) => keepTheSameLib(Reason.IsAlreadyValid)
+        case CrossVersion.For3Use2_13(_, _) => keepTheSameLib(Reason.IsAlreadyValid)
         // For Patch and Constant, we search full compatible scala 3 version
         case CrossVersion.Patch =>
           CoursierHelper
@@ -54,17 +54,17 @@ case class InitialLib(
             .getOrElse(this.toUncompatible(Reason.FullVersionNotAvailable))
       }
 
-  def toUncompatible(reason: Reason): UncompatibleWithScala3 =
+  private def toUncompatible(reason: Reason): UncompatibleWithScala3 =
     UncompatibleWithScala3(organization, name, revision, crossVersion, configurations, reason)
 
-  def keepTheSameLib(reason: Reason): CompatibleWithScala3.KeptInitialLib =
-    CompatibleWithScala3.KeptInitialLib(organization, name, revision, crossVersion, configurations, reason)
+  private def keepTheSameLib(reason: Reason): CompatibleWithScala3.Lib =
+    CompatibleWithScala3.Lib(organization, name, Seq(revision), crossVersion, configurations, reason)
 
-  def for3Use2_13(reason: Reason): CompatibleWithScala3.KeptInitialLib =
-    CompatibleWithScala3.KeptInitialLib(
+  private def for3Use2_13(reason: Reason): CompatibleWithScala3.Lib =
+    CompatibleWithScala3.Lib(
       organization,
       name,
-      revision,
+      Seq(revision),
       CrossVersion.For3Use2_13("", ""),
       configurations,
       reason
@@ -97,7 +97,7 @@ case class InitialLib(
   private def getCompatibleWhenFullCrossVersion(lib: InitialLib): MigratedLibImp =
     CoursierHelper.getCompatibleForScala3Full(lib) match {
       case Some(_) =>
-        CompatibleWithScala3.Scala3Lib(
+        CompatibleWithScala3.Lib(
           lib.organization,
           Name(lib.name.value),
           Seq(lib.revision),
