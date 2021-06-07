@@ -15,7 +15,6 @@ object CoursierHelper {
   val scala3Full                            = BuildInfo.scala3Version
   val scala3Binary                          = "3"
   val scala213Binary                        = "2.13"
-  val scala213Full                          = "2.13.5" // should be taken from the project build
 
   def getCompatibleForScala3Binary(lib: InitialLib): Option[CompatibleWithScala3.Scala3Lib] = {
     val revisions = searchRevisionsFor(lib, scala3Binary)

@@ -24,7 +24,7 @@ object MigratedLib {
       configurations: Option[String],
       reason: Reason
     ) extends CompatibleWithScala3 {
-      val revision = revisions.head // todo: change
+      val revision = revisions.head // we only display the first revision available for Scala3. It's a choice.
 
       override def toString: String = {
         val configuration = configurations.map(c => " % " + withQuote(c)).getOrElse("")
