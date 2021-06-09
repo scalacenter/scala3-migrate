@@ -25,10 +25,10 @@ case class InitialLib(
       crossVersion match {
         case CrossVersion.Disabled =>
           name.scalaVersion match {
-            case Some(value) if value.split('.').size == 2 =>
+            case Some(ScalaVersion.Minor(_, _)) =>
               val modifiedName = name.value.split("_").head
               getCompatibleWhenBinaryCrossVersion(copy(name = Name(modifiedName)))
-            case Some(_) =>
+            case Some(ScalaVersion.Patch(_, _, _)) =>
               val modifiedName = name.value.split("_").head
               CoursierHelper
                 .getCompatibleForScala3Full(copy(name = Name(modifiedName)))
