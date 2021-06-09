@@ -82,7 +82,8 @@ case class InitialLib(
     val compatibleRevisionsForScala3 = CoursierHelper.getCompatibleForScala3Binary(lib)
     compatibleRevisionsForScala3 match {
       case Nil =>
-        if (macroLibs.get(lib.organization).contains(lib.name)) lib.toUncompatible(Reason.MacroLibrary)
+        if (macroLibs.exists { case (org, name) => org == lib.organization && name == lib.name })
+          lib.toUncompatible(Reason.MacroLibrary)
         else lib.withCrossVersionfor3Use2_13()
       case firstRevision :: _ =>
         if (CoursierHelper.isRevisionAvailableFor(lib, firstRevision, ScalaVersion.from("2.13").get))
@@ -146,13 +147,10 @@ object InitialLib {
       (Organization("org.scalameta"), Name("semanticdb-scalac")) -> Specific3.SemanticDB
     )
 
-  val scalaLibrary: InitialLib =
-    InitialLib.from("org.scala-lang:scala-library:2.13.5", CrossVersion.Disabled, None).get
-
-  val macroLibs: Map[Organization, Name] = {
+  val macroLibs: Set[(Organization, Name)] = {
     // need to complete the list
     // the other solution would be to download the src-jar and look for =\w*macro\w
-    Map(
+    Set(
       Organization("com.softwaremill.scalamacrodebug")            -> Name("macros"),
       Organization("com.github.ajozwik")                          -> Name("macro"),
       Organization("io.argonaut")                                 -> Name("argonaut"),
@@ -187,4 +185,15 @@ object InitialLib {
       Organization("com.geirsson")                                -> Name("metaconfig-typesafe-config")
     )
   }
+
+  // Those libs are correctly handled by sbt or scalajs plugin
+  // Showing them would confuse the user.
+  val filteredLibs: Set[(Organization, Name)] =
+    Set(
+      Organization("org.scala-js")   -> Name("scalajs-compiler"),
+      Organization("org.scala-js")   -> Name("scalajs-library"),
+      Organization("org.scala-js")   -> Name("scalajs-test-bridge"),
+      Organization("org.scala-lang") -> Name("scala-reflect"),
+      Organization("org.scala-lang") -> Name("scala-library")
+    )
 }

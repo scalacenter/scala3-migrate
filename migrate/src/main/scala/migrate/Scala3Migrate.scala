@@ -189,7 +189,7 @@ object Scala3Migrate {
     }
     val allParsedLibs = libsCompatibleWith213.values.flatten.toSeq
     val filteredLibs = allParsedLibs.filterNot(l =>
-      l.organization == InitialLib.scalaLibrary.organization && l.name == InitialLib.scalaLibrary.name
+      InitialLib.filteredLibs.exists { case (org, name) => org == l.organization && name == l.name }
     )
     MigratedLibsImpl.from(filteredLibs.map(lib => (lib, lib.toCompatible)).toMap)
   }
