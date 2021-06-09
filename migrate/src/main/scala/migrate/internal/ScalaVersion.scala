@@ -7,8 +7,11 @@ import scala.util.Try
 import migrate.internal.ScalaVersion._
 sealed trait ScalaVersion {
   val major: MajorVersion
-  val minor: Option[Int]
+  val minor: Int
   val patch: Option[Int]
+  val binary: String =
+    if (isScala3) major.value.toString
+    else s"${major.value}.${minor}"
 
   def isScala2: Boolean = major == scala2
   def isScala3: Boolean = major == scala3
@@ -24,13 +27,11 @@ object ScalaVersion {
   val scala2: MajorVersion = Major.Scala2
   val scala3: MajorVersion = Major.Scala3
 
-  case class Minor(major: MajorVersion, minorVersion: Int) extends ScalaVersion {
-    override val minor: Some[Int] = Some(minorVersion)
-    override val patch            = None
+  case class Minor(major: MajorVersion, minor: Int) extends ScalaVersion {
+    override val patch = None
 
   }
-  case class Patch(major: MajorVersion, minorVersion: Int, patchVersion: Int) extends ScalaVersion {
-    override val minor: Some[Int] = Some(minorVersion)
+  case class Patch(major: MajorVersion, minor: Int, patchVersion: Int) extends ScalaVersion {
     override val patch: Some[Int] = Some(patchVersion)
   }
 

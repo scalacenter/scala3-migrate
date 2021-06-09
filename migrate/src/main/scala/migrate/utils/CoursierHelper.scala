@@ -6,53 +6,42 @@ import scala.concurrent.ExecutionContextExecutor
 import buildinfo.BuildInfo
 import coursier.Repositories
 import migrate.interfaces.InitialLibImp._
-import migrate.interfaces.MigratedLibImp.Reason
 import migrate.internal.InitialLib
-import migrate.internal.MigratedLib._
+import migrate.internal.ScalaVersion
 
 object CoursierHelper {
   implicit val ec: ExecutionContextExecutor = ExecutionContext.global
-  val scala3Full                            = BuildInfo.scala3Version
-  val scala3Binary                          = "3"
-  val scala213Binary                        = "2.13"
+  private val scala3Full: ScalaVersion      = ScalaVersion.from(BuildInfo.scala3Version).get
 
-  def getCompatibleForScala3Binary(lib: InitialLib): Option[CompatibleWithScala3.Lib] = {
-    val revisions = searchRevisionsFor(lib, scala3Binary)
-    if (revisions.isEmpty) None
+  def getCompatibleForScala3Binary(lib: InitialLib): Seq[Revision] = {
+    val revisions = searchRevisionsFor(lib, scala3Full.binary)
+    if (revisions.isEmpty) Nil
     else {
-      val all = CompatibleWithScala3.Lib(
-        lib.organization,
-        lib.name,
-        revisions,
-        CrossVersion.For2_13Use3("", ""),
-        lib.configurations,
-        Reason.Scala3LibAvailable
-      )
-      Some(getNewerRevision(lib, all))
+      getNewerRevision(lib, revisions)
     }
   }
-  def getCompatibleForScala3Full(lib: InitialLib): Option[CompatibleWithScala3.Lib] = {
-    val revisions = searchRevisionsFor(lib, scala3Full)
-    if (revisions.isEmpty) None
+  def getCompatibleForScala3Full(lib: InitialLib): Seq[Revision] = {
+    val revisions = searchRevisionsFor(lib, scala3Full.value)
+    if (revisions.isEmpty) Nil
     else {
-      val all = CompatibleWithScala3.Lib(
-        lib.organization,
-        Name(lib.name.value + s"_${CoursierHelper.scala3Full}"),
-        revisions,
-        CrossVersion.Full("", ""),
-        lib.configurations,
-        Reason.Scala3LibAvailable
-      )
-      Some(getNewerRevision(lib, all))
+      getNewerRevision(lib, revisions)
     }
+  }
+
+  def isRevisionAvailableFor(lib: InitialLib, revision: Revision, scalaVersion: ScalaVersion): Boolean = {
+    val input = s"${lib.organization.value}:${lib.name.value}_${scalaVersion.value}:${revision.value}"
+    coursierComplete(input).nonEmpty
   }
 
   private def searchRevisionsFor(lib: InitialLib, scalaV: String): Seq[Revision] = {
     val libString = s"${lib.organization.value}:${lib.name.value}_$scalaV:"
+    coursierComplete(libString)
+  }
+  private def coursierComplete(input: String): Seq[Revision] = {
     val res = coursier.complete
       .Complete()
       .withRepositories(Seq(Repositories.central))
-      .withInput(libString)
+      .withInput(input)
       .result()
       .unsafeRun()(ec)
       .results
@@ -64,14 +53,12 @@ object CoursierHelper {
   }
 
   // Rely on coursier order
-  private def getNewerRevision(lib: InitialLib, compatibleLibs: CompatibleWithScala3.Lib): CompatibleWithScala3.Lib = {
-    val revisions = compatibleLibs.revisions
-    val index     = revisions.zipWithIndex.toMap.get(lib.revision)
+  private def getNewerRevision(lib: InitialLib, possibleRevisions: Seq[Revision]): Seq[Revision] = {
+    val index = possibleRevisions.zipWithIndex.toMap.get(lib.revision)
     index match {
       case Some(value) =>
-        val keptRevisions = revisions.drop(value)
-        compatibleLibs.copy(revisions = keptRevisions)
-      case None => compatibleLibs
+        possibleRevisions.drop(value)
+      case None => possibleRevisions
     }
   }
 
