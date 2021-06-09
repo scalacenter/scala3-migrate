@@ -2,6 +2,7 @@ package migrate
 
 import migrate.interfaces.InitialLibImp._
 import migrate.interfaces.MigratedLib
+import migrate.interfaces.MigratedLibImp
 import migrate.internal.InitialLib
 import migrate.internal.MigratedLib._
 import org.scalatest.funsuite.AnyFunSuiteLike
@@ -22,8 +23,10 @@ class MigrateLibsSuite extends AnyFunSuiteLike with DiffAssertions {
   val scalafix213: InitialLib =
     InitialLib.from("ch.epfl.scala:scalafix-core_2.13:0.9.24", CrossVersion.Disabled, None).get
   val macroLib: InitialLib = InitialLib.from("com.softwaremill.scalamacrodebug:macros:0.4.1", binary, None).get
+  val javaLib2: InitialLib =
+    InitialLib.from("org.eclipse.platform:org.eclipse.swt.win32.x86_64:3.116.0", CrossVersion.Disabled, None).get
 
-  test("Not available lib") {
+  test("compiler plugin with a scalacOption available in Scala 3") {
     val migrated = Scala3Migrate.migrateLibs(Seq(kind)).allLibs
     val res      = migrated(kind)
     assert(res.isCompatibleWithScala3)
@@ -33,7 +36,15 @@ class MigrateLibsSuite extends AnyFunSuiteLike with DiffAssertions {
     val migrated = Scala3Migrate.migrateLibs(Seq(opentelemetry)).allLibs
     val res      = migrated(opentelemetry)
     assert(res.isCompatibleWithScala3)
+    assert(res.getReasonWhy == MigratedLibImp.Reason.JavaLibrary.why)
     assert(isTheSame(opentelemetry, res))
+  }
+
+  test("java lib2") {
+    val migrated = Scala3Migrate.migrateLibs(Seq(javaLib2)).allLibs
+    val res      = migrated(javaLib2)
+    assert(res.isCompatibleWithScala3)
+    assert(isTheSame(javaLib2, res))
   }
   test("Available in scala 3") {
     val migrated = Scala3Migrate.migrateLibs(Seq(cats)).allLibs

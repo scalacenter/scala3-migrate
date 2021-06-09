@@ -5,6 +5,7 @@ import java.util.Optional
 import scala.util.Try
 
 import migrate.interfaces.InitialLibImp._
+import migrate.internal.ScalaVersion
 import migrate.utils.ScalaExtensions._
 
 trait InitialLibImp extends Lib {
@@ -26,8 +27,8 @@ object InitialLibImp {
   case class Organization(value: String)
 
   case class Name(value: String) {
-    def scalaVersion: Option[String] = value.split("_").toList match {
-      case _ :: scalaVersion :: Nil => Some(scalaVersion)
+    def scalaVersion: Option[ScalaVersion] = value.split("_").toList match {
+      case _ :: scalaVersion :: Nil => ScalaVersion.from(scalaVersion).toOption
       case _                        => None
     }
   }
