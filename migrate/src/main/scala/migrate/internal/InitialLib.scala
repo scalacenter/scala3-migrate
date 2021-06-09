@@ -30,9 +30,7 @@ case class InitialLib(
               getCompatibleWhenBinaryCrossVersion(copy(name = Name(modifiedName)))
             case Some(ScalaVersion.Patch(_, _, _)) =>
               val modifiedName = name.value.split("_").head
-              CoursierHelper
-                .getCompatibleForScala3Full(copy(name = Name(modifiedName)))
-                .getOrElse(toUncompatible(Reason.FullVersionNotAvailable))
+              getCompatibleWhenFullCrossVersion((copy(name = Name(modifiedName))))
             case None => keepTheSameLib(Reason.JavaLibrary)
           }
 
@@ -45,13 +43,9 @@ case class InitialLib(
         case CrossVersion.For3Use2_13(_, _) => keepTheSameLib(Reason.IsAlreadyValid)
         // For Patch and Constant, we search full compatible scala 3 version
         case CrossVersion.Patch =>
-          CoursierHelper
-            .getCompatibleForScala3Full(this)
-            .getOrElse(this.toUncompatible(Reason.FullVersionNotAvailable))
+          getCompatibleWhenFullCrossVersion(this)
         case CrossVersion.Constant(_) =>
-          CoursierHelper
-            .getCompatibleForScala3Full(this)
-            .getOrElse(this.toUncompatible(Reason.FullVersionNotAvailable))
+          getCompatibleWhenFullCrossVersion(this)
       }
 
   private def toUncompatible(reason: Reason): UncompatibleWithScala3 =
@@ -60,52 +54,71 @@ case class InitialLib(
   private def keepTheSameLib(reason: Reason): CompatibleWithScala3.Lib =
     CompatibleWithScala3.Lib(organization, name, Seq(revision), crossVersion, configurations, reason)
 
-  private def for3Use2_13(reason: Reason): CompatibleWithScala3.Lib =
-    CompatibleWithScala3.Lib(
-      organization,
-      name,
-      Seq(revision),
-      CrossVersion.For3Use2_13("", ""),
-      configurations,
-      reason
-    )
+  private def withCrossVersionfor3Use2_13(): CompatibleWithScala3.Lib =
+    toCompatibleLib(CrossVersion.For3Use2_13("", ""), Reason.For3Use2_13, Seq(revision))
+
+  private def toCompatibleLib(
+    crossVersion: CrossVersion,
+    reason: Reason,
+    revisions: Seq[Revision]
+  ): CompatibleWithScala3.Lib =
+    CompatibleWithScala3.Lib(organization, name, revisions, crossVersion, configurations, reason)
 
   override def toString: String =
     s"${organization.value}:${name.value}:${revision.value}${configurations.map(":" + _).getOrElse("")}"
 
-  private def getMigratedLibForCompilerPlugin(): MigratedLibImp =
-    CoursierHelper.getCompatibleForScala3Full(this) match {
-      case Some(scla3Lib) => scla3Lib
-      case None =>
-        val scalacOption = InitialLib.compilerPluginToScalacOption.get((this.organization, this.name))
-        scalacOption match {
-          case Some(value) => CompatibleWithScala3.ScalacOption(value)
-          case None        => this.toUncompatible(Reason.CompilerPlugin)
-        }
-    }
+  private def getMigratedLibForCompilerPlugin(): MigratedLibImp = {
+    val revisions = CoursierHelper.getCompatibleForScala3Full(this)
+    if (revisions.isEmpty) {
+      val scalacOption = InitialLib.compilerPluginToScalacOption.get((this.organization, this.name))
+      scalacOption match {
+        case Some(value) => CompatibleWithScala3.ScalacOption(value)
+        case None        => this.toUncompatible(Reason.CompilerPlugin)
+      }
+    } else this.toCompatibleLib(CrossVersion.Full("", ""), Reason.Scala3LibAvailable, revisions)
+  }
 
   private def getCompatibleWhenBinaryCrossVersion(lib: InitialLib): MigratedLibImp = {
-    val scala3Lib = CoursierHelper.getCompatibleForScala3Binary(lib)
-    scala3Lib match {
-      case None =>
+    val compatibleRevisionsForScala3 = CoursierHelper.getCompatibleForScala3Binary(lib)
+    compatibleRevisionsForScala3 match {
+      case Nil =>
         if (macroLibs.get(lib.organization).contains(lib.name)) lib.toUncompatible(Reason.MacroLibrary)
-        else lib.for3Use2_13(Reason.For3Use2_13)
-      case Some(compatible) => compatible
+        else lib.withCrossVersionfor3Use2_13()
+      case firstRevision :: _ =>
+        if (CoursierHelper.isRevisionAvailableFor(lib, firstRevision, ScalaVersion.from("2.13").get))
+          CompatibleWithScala3.Lib(
+            lib.organization,
+            lib.name,
+            compatibleRevisionsForScala3,
+            CrossVersion.Binary("", ""),
+            lib.configurations,
+            Reason.Scala3LibAvailable
+          )
+        else
+          CompatibleWithScala3.Lib(
+            lib.organization,
+            lib.name,
+            compatibleRevisionsForScala3,
+            CrossVersion.For2_13Use3("", ""),
+            lib.configurations,
+            Reason.Scala3LibAvailable
+          )
+
     }
   }
 
   private def getCompatibleWhenFullCrossVersion(lib: InitialLib): MigratedLibImp =
     CoursierHelper.getCompatibleForScala3Full(lib) match {
-      case Some(_) =>
+      case Nil => lib.toUncompatible(Reason.FullVersionNotAvailable)
+      case revisions =>
         CompatibleWithScala3.Lib(
           lib.organization,
           Name(lib.name.value),
-          Seq(lib.revision),
+          revisions,
           CrossVersion.For2_13Use3("", ""),
           lib.configurations,
           Reason.Scala3LibAvailable
         )
-      case None => lib.toUncompatible(Reason.FullVersionNotAvailable)
     }
 }
 

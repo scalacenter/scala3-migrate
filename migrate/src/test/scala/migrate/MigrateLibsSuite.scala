@@ -39,7 +39,6 @@ class MigrateLibsSuite extends AnyFunSuiteLike with DiffAssertions {
     assert(res.getReasonWhy == MigratedLibImp.Reason.JavaLibrary.why)
     assert(isTheSame(opentelemetry, res))
   }
-
   test("java lib2") {
     val migrated = Scala3Migrate.migrateLibs(Seq(javaLib2)).allLibs
     val res      = migrated(javaLib2)
@@ -50,7 +49,13 @@ class MigrateLibsSuite extends AnyFunSuiteLike with DiffAssertions {
     val migrated = Scala3Migrate.migrateLibs(Seq(cats)).allLibs
     val res      = migrated(cats)
     assert(res.isCompatibleWithScala3)
-    assert(res.asInstanceOf[CompatibleWithScala3.Lib].crossVersion.isInstanceOf[CrossVersion.For2_13Use3])
+    assert(res.asInstanceOf[CompatibleWithScala3.Lib].crossVersion.isInstanceOf[CrossVersion.Binary])
+  }
+  test("available in scala 3 but with crossVersion.Disabled") {
+    val migrated = Scala3Migrate.migrateLibs(Seq(cats213)).allLibs
+    val res      = migrated(cats213)
+    assert(res.isCompatibleWithScala3)
+    assert(res.asInstanceOf[CompatibleWithScala3.Lib].crossVersion.isInstanceOf[CrossVersion.Binary])
   }
   test("Don't show older version") {
     val migrated = Scala3Migrate.migrateLibs(Seq(collection)).allLibs
