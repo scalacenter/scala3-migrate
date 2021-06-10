@@ -2,7 +2,7 @@ package migrate
 
 import migrate.interfaces.InitialLibImp._
 import migrate.interfaces.MigratedLib
-import migrate.interfaces.MigratedLibImp
+import migrate.interfaces.MigratedLibImp._
 import migrate.internal.InitialLib
 import migrate.internal.MigratedLib._
 import org.scalatest.funsuite.AnyFunSuiteLike
@@ -36,7 +36,7 @@ class MigrateLibsSuite extends AnyFunSuiteLike with DiffAssertions {
     val migrated = Scala3Migrate.migrateLibs(Seq(opentelemetry)).allLibs
     val res      = migrated(opentelemetry)
     assert(res.isCompatibleWithScala3)
-    assert(res.getReasonWhy == MigratedLibImp.Reason.JavaLibrary.why)
+    assert(res.getReasonWhy == Reason.JavaLibrary.why)
     assert(isTheSame(opentelemetry, res))
   }
   test("java lib2") {
@@ -81,6 +81,15 @@ class MigrateLibsSuite extends AnyFunSuiteLike with DiffAssertions {
     val scalajs     = InitialLib.from("org.scala-js:scalajs-compiler:1.5.0", CrossVersion.Disabled, None).get
     val migratedLib = Scala3Migrate.migrateLibs(Seq(scalaLib, scalajs)).allLibs
     assert(migratedLib.isEmpty)
+  }
+  test("message for Scala3LibAvailable") {
+    val revisions = Seq(Revision("1"), Revision("2"), Revision("3"), Revision("4"))
+    val message   = Reason.Scala3LibAvailable(revisions).why
+    assert(message == "Other versions are avaialble for Scala 3: \"1\", ..., \"4\"")
+    val revisions2 = Seq(Revision("1"), Revision("2"))
+    val message2   = Reason.Scala3LibAvailable(revisions2).why
+    println(s"message2 = ${message2}")
+    assert(message2 == "Other versions are avaialble for Scala 3: \"1\", \"2\"")
   }
 
   private def isTheSame(lib: InitialLib, migrated: MigratedLib) =

@@ -11,7 +11,7 @@ import migrate.internal.ScalaVersion
 
 object CoursierHelper {
   implicit val ec: ExecutionContextExecutor = ExecutionContext.global
-  private val scala3Full: ScalaVersion      = ScalaVersion.from(BuildInfo.scala3Version).get
+  val scala3Full: ScalaVersion              = ScalaVersion.from(BuildInfo.scala3Version).get
 
   def getCompatibleForScala3Binary(lib: InitialLib): Seq[Revision] = {
     val revisions = searchRevisionsFor(lib, scala3Full.binary)

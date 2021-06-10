@@ -75,7 +75,7 @@ case class InitialLib(
         case Some(value) => CompatibleWithScala3.ScalacOption(value)
         case None        => this.toUncompatible(Reason.CompilerPlugin)
       }
-    } else this.toCompatibleLib(CrossVersion.Full("", ""), Reason.Scala3LibAvailable, revisions)
+    } else this.toCompatibleLib(CrossVersion.Full("", ""), Reason.Scala3LibAvailable(revisions.tail), revisions)
   }
 
   private def getCompatibleWhenBinaryCrossVersion(lib: InitialLib): MigratedLibImp = {
@@ -93,7 +93,7 @@ case class InitialLib(
             compatibleRevisionsForScala3,
             CrossVersion.Binary("", ""),
             lib.configurations,
-            Reason.Scala3LibAvailable
+            Reason.Scala3LibAvailable(compatibleRevisionsForScala3.tail)
           )
         else
           CompatibleWithScala3.Lib(
@@ -102,7 +102,7 @@ case class InitialLib(
             compatibleRevisionsForScala3,
             CrossVersion.For2_13Use3("", ""),
             lib.configurations,
-            Reason.Scala3LibAvailable
+            Reason.Scala3LibAvailable(compatibleRevisionsForScala3.tail)
           )
 
     }
@@ -110,7 +110,7 @@ case class InitialLib(
 
   private def getCompatibleWhenFullCrossVersion(lib: InitialLib): MigratedLibImp =
     CoursierHelper.getCompatibleForScala3Full(lib) match {
-      case Nil => lib.toUncompatible(Reason.FullVersionNotAvailable)
+      case Nil => lib.toUncompatible(Reason.FullVersionNotAvailable(CoursierHelper.scala3Full))
       case revisions =>
         CompatibleWithScala3.Lib(
           lib.organization,
@@ -118,7 +118,7 @@ case class InitialLib(
           revisions,
           CrossVersion.For2_13Use3("", ""),
           lib.configurations,
-          Reason.Scala3LibAvailable
+          Reason.Scala3LibAvailable(revisions.tail)
         )
     }
 }
