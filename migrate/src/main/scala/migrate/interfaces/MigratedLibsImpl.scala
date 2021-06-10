@@ -29,9 +29,9 @@ case class MigratedLibsImpl(
 
   private def initialLibSameThanCompatible(initialLib: InitialLib, compatible: CompatibleWithScala3): Boolean =
     compatible match {
-      case keptInitialLib: CompatibleWithScala3.Lib // maybe need to be fixed
-          if initialLib.crossVersion == keptInitialLib.crossVersion =>
-        true
+      case keptInitialLib: CompatibleWithScala3.Lib =>
+        initialLib.crossVersion == keptInitialLib.crossVersion &&
+          initialLib.revision == keptInitialLib.revision
       case _ => false
     }
 

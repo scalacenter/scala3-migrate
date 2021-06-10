@@ -1,6 +1,8 @@
 package migrate.interfaces
 
+import migrate.interfaces.InitialLibImp.Revision
 import migrate.interfaces.MigratedLibImp._
+import migrate.internal.ScalaVersion
 
 trait MigratedLibImp extends MigratedLib {
   def reason: Reason
@@ -14,15 +16,23 @@ object MigratedLibImp {
 
   object Reason {
     case object ScalacOptionEquivalent
-        extends Reason("This compiler plugin has a scalacOption equivalent. Add it to your scalacOptions")
-    case object MacroLibrary            extends Reason("Contains Macros and is not yet published for Scala 3")
-    case object FullVersionNotAvailable extends Reason("Requires a full version and is not yet for scala 3 ")
+        extends Reason("This compiler plugin has a scalacOption equivalent. Add it to your scalacOptions.")
+    case object MacroLibrary extends Reason("Contains Macros and is not yet published for Scala 3.")
+    case class FullVersionNotAvailable(scalaVersion: ScalaVersion)
+        extends Reason(s"This dependency hasn't been published for ${scalaVersion.value}.")
     case object CompilerPlugin
-        extends Reason("Scala 2 compiler plugins are not supported in scala 3. You need to find an alternative")
-    case object Scala3LibAvailable extends Reason("This dependency is published for Scala 3. ")
-    case object JavaLibrary        extends Reason("This dependency is a Java library. It can be kept as it is. ")
-    case object IsAlreadyValid     extends Reason("")
-    case object For3Use2_13
-        extends Reason("This dependency is not yet published for scala 3 but the 2.13 version can be used")
+        extends Reason("Scala 2 compiler plugins are not supported in scala 3. You need to find an alternative.")
+    case class Scala3LibAvailable(otherRevisions: Seq[Revision])
+        extends Reason(
+          if (otherRevisions.nonEmpty) s"Other versions are avaialble for Scala 3: ${printRevisions(otherRevisions)}"
+          else ""
+        )
+    case object JavaLibrary    extends Reason("Java libraries are compatible.")
+    case object IsAlreadyValid extends Reason("")
+    case object For3Use2_13    extends Reason("It's only safe to use the 2.13 version if it's inside an application.")
+
+    private def printRevisions(r: Seq[Revision]): String =
+      if (r.size >= 3) s""""${r.head.value}", ..., "${r.last.value}""""
+      else r.map(_.value).mkString("\"", "\", \"", "\"")
   }
 }

@@ -31,9 +31,13 @@ object MigratedLib {
         val orgQuoted      = withQuote(organization.value)
         val revisionQuoted = withQuote(revision.value)
         crossVersion match {
-          case CrossVersion.Disabled => s"$orgQuoted % ${withQuote(name.value)} % $revisionQuoted$configuration"
+          case CrossVersion.Disabled       => s"$orgQuoted % ${withQuote(name.value)} % $revisionQuoted$configuration"
+          case CrossVersion.Binary("", "") => s"$orgQuoted %% ${withQuote(name.value)} % $revisionQuoted$configuration"
+          case CrossVersion.Full("", "")   => s"$orgQuoted %% ${withQuote(name.value)} % $revisionQuoted$configuration"
           case CrossVersion.For3Use2_13(_, _) =>
             s"$orgQuoted %% ${withQuote(name.value)} % $revisionQuoted$configuration cross CrossVersion.for3Use2_13"
+          case CrossVersion.For2_13Use3(_, _) =>
+            s"$orgQuoted %% ${withQuote(name.value)} % $revisionQuoted$configuration cross CrossVersion.for2_13Use3"
           case _ => s"$orgQuoted % ${withQuote(name.value)} % $revisionQuoted$configuration"
         }
       }

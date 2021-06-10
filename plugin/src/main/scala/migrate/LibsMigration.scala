@@ -31,7 +31,7 @@ private[migrate] object LibsMigration {
 
     val validLibs = migratedLibs.getValidLibs.toSeq
 
-    log.info(migrationMessage(notMigrated, validLibs, libsToUpdate))
+    log.info(migrationMessage(notMigrated, validLibs, libsToUpdate.toSeq))
   }
 
   private def welcomeMessage(projectId: String): String =
@@ -43,31 +43,38 @@ private[migrate] object LibsMigration {
   private def migrationMessage(
     incompatibleLibs: Seq[MigratedLib],
     validLibs: Seq[MigratedLib],
-    toUpdate: Map[Lib, MigratedLib]
+    toUpdate: Seq[(Lib, MigratedLib)]
   ): String = {
     val removedSign = s"""${BOLD}${RED}X${RESET}"""
     val validSign   = s"""${BOLD}${CYAN}Valid${RESET}"""
     val toBeUpdated = s"""${BOLD}${BLUE}To be updated${RESET}"""
 
-    val spacesForLib                = computeLongestValue((incompatibleLibs ++ validLibs ++ toUpdate.keys).map(_.toString))
+    val spacesForLib                = computeLongestValue((incompatibleLibs ++ validLibs ++ toUpdate.map(_._1)).map(_.toString))
     def reasonWhy(lib: MigratedLib) = if (lib.getReasonWhy.isEmpty) "" else s": ${YELLOW}${lib.getReasonWhy}${RESET}"
 
-    def formatIncompatibleLibs: String = incompatibleLibs.map { lib =>
-      s"""${formatValueWithSpace(lib.toString, spacesForLib)} -> $removedSign ${reasonWhy(lib)}"""
-    }.mkString("\n")
+    def formatIncompatibleLibs: String = incompatibleLibs
+      .sortBy(_.getReasonWhy)
+      .map { lib =>
+        s"""${formatValueWithSpace(lib.toString, spacesForLib)} -> $removedSign ${reasonWhy(lib)}"""
+      }
+      .mkString("\n")
 
     def formatValid: String =
-      validLibs.map { lib =>
-        s"""${formatValueWithSpace(lib.toString, spacesForLib)} -> $validSign ${reasonWhy(lib)}"""
-      }
+      validLibs
+        .sortBy(_.getReasonWhy)
+        .map { lib =>
+          s"""${formatValueWithSpace(lib.toString, spacesForLib)} -> $validSign ${reasonWhy(lib)}"""
+        }
         .mkString("\n")
 
     def formatLibToUpdate: String =
-      toUpdate.map { case (initial, migrated) =>
-        s"""${formatValueWithSpace(initial.toString, spacesForLib)} -> ${BLUE}${migrated.toString}$RESET ${reasonWhy(
-          migrated
-        )}"""
-      }
+      toUpdate
+        .sortBy(_._2.getReasonWhy)
+        .map { case (initial, migrated) =>
+          s"""${formatValueWithSpace(initial.toString, spacesForLib)} -> ${BLUE}${migrated.toString}$RESET ${reasonWhy(
+            migrated
+          )}"""
+        }
         .mkString("\n")
 
     val spacesForHelp = computeLongestValue(Seq(removedSign, validSign, toBeUpdated))
