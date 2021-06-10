@@ -27,17 +27,20 @@ object MigratedLib {
       val revision = revisions.head // we only display the first revision available for Scala3. It's a choice.
 
       override def toString: String = {
-        val configuration  = configurations.map(c => " % " + withQuote(c)).getOrElse("")
-        val orgQuoted      = withQuote(organization.value)
-        val revisionQuoted = withQuote(revision.value)
+        val configuration              = configurations.map(c => " % " + withQuote(c)).getOrElse("")
+        val orgQuoted                  = withQuote(organization.value)
+        val revisionQuoted             = withQuote(revision.value)
+        def jsPlatform(suffix: String) = if (suffix.isEmpty) "%%" else "%%%"
         crossVersion match {
-          case CrossVersion.Disabled       => s"$orgQuoted % ${withQuote(name.value)} % $revisionQuoted$configuration"
-          case CrossVersion.Binary("", "") => s"$orgQuoted %% ${withQuote(name.value)} % $revisionQuoted$configuration"
-          case CrossVersion.Full("", "")   => s"$orgQuoted %% ${withQuote(name.value)} % $revisionQuoted$configuration"
-          case CrossVersion.For3Use2_13(_, _) =>
-            s"$orgQuoted %% ${withQuote(name.value)} % $revisionQuoted$configuration cross CrossVersion.for3Use2_13"
-          case CrossVersion.For2_13Use3(_, _) =>
-            s"$orgQuoted %% ${withQuote(name.value)} % $revisionQuoted$configuration cross CrossVersion.for2_13Use3"
+          case CrossVersion.Disabled => s"$orgQuoted % ${withQuote(name.value)} % $revisionQuoted$configuration"
+          case CrossVersion.Binary(suffix, "") =>
+            s"$orgQuoted ${jsPlatform(suffix)} ${withQuote(name.value)} % $revisionQuoted$configuration"
+          case CrossVersion.Full(suffix, "") =>
+            s"$orgQuoted ${jsPlatform(suffix)} ${withQuote(name.value)} % $revisionQuoted$configuration"
+          case CrossVersion.For3Use2_13(suffix, _) =>
+            s"$orgQuoted ${jsPlatform(suffix)} ${withQuote(name.value)} % $revisionQuoted$configuration cross CrossVersion.for3Use2_13"
+          case CrossVersion.For2_13Use3(suffix, _) =>
+            s"$orgQuoted ${jsPlatform(suffix)} ${withQuote(name.value)} % $revisionQuoted$configuration cross CrossVersion.for2_13Use3"
           case _ => s"$orgQuoted % ${withQuote(name.value)} % $revisionQuoted$configuration"
         }
       }
