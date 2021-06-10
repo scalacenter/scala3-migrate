@@ -29,12 +29,17 @@ object CoursierHelper {
   }
 
   def isRevisionAvailableFor(lib: InitialLib, revision: Revision, scalaVersion: ScalaVersion): Boolean = {
-    val input = s"${lib.organization.value}:${lib.name.value}_${scalaVersion.value}:${revision.value}"
+    val prefixAndScalaVersion =
+      if (lib.crossVersion.prefix.nonEmpty) "_" + lib.crossVersion.prefix + scalaVersion.value
+      else s"_${scalaVersion.value}"
+    val input = s"${lib.organization.value}:${lib.name.value}$prefixAndScalaVersion:${revision.value}"
     coursierComplete(input).nonEmpty
   }
 
   private def searchRevisionsFor(lib: InitialLib, scalaV: String): Seq[Revision] = {
-    val libString = s"${lib.organization.value}:${lib.name.value}_$scalaV:"
+    val prefixAndScalaVersion =
+      if (lib.crossVersion.prefix.nonEmpty) "_" + lib.crossVersion.prefix + scalaV else s"_$scalaV"
+    val libString = s"${lib.organization.value}:${lib.name.value}${prefixAndScalaVersion}:"
     coursierComplete(libString)
   }
   private def coursierComplete(input: String): Seq[Revision] = {

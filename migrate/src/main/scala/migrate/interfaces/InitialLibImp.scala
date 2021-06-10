@@ -52,16 +52,19 @@ object InitialLibImp {
       case CrossVersion.For3Use2_13(prefix: String, suffix: String) => s"For3Use2_13($prefix, $suffix)"
       case CrossVersion.For2_13Use3(prefix: String, suffix: String) => s"For3Use2_13($prefix, $suffix)"
     }
+
+    val prefix: String = ""
+    val suffix: String = ""
   }
 
   object CrossVersion {
-    case class Binary(prefix: String, suffix: String)      extends CrossVersion
-    case object Disabled                                   extends CrossVersion
-    case class Constant(value: String)                     extends CrossVersion
-    case object Patch                                      extends CrossVersion
-    case class Full(prefix: String, suffix: String)        extends CrossVersion
-    case class For3Use2_13(prefix: String, suffix: String) extends CrossVersion
-    case class For2_13Use3(prefix: String, suffix: String) extends CrossVersion
+    case class Binary(override val prefix: String, override val suffix: String)      extends CrossVersion
+    case object Disabled                                                             extends CrossVersion
+    case class Constant(value: String)                                               extends CrossVersion
+    case object Patch                                                                extends CrossVersion
+    case class Full(override val prefix: String, override val suffix: String)        extends CrossVersion
+    case class For3Use2_13(override val prefix: String, override val suffix: String) extends CrossVersion
+    case class For2_13Use3(override val prefix: String, override val suffix: String) extends CrossVersion
 
     def from(value: String): Option[CrossVersion] =
       value match {

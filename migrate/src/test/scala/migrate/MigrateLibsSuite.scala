@@ -26,6 +26,12 @@ class MigrateLibsSuite extends AnyFunSuiteLike with DiffAssertions {
   val javaLib2: InitialLib =
     InitialLib.from("org.eclipse.platform:org.eclipse.swt.win32.x86_64:3.116.0", CrossVersion.Disabled, None).get
 
+  val scalatestJS: InitialLib =
+    InitialLib.from("org.scalatest:scalatest:3.2.8", CrossVersion.Binary("sjs1_", ""), None).get
+  val domtypes: InitialLib = InitialLib.from("com.raquo:domtypes:0.14.2", CrossVersion.Binary("sjs1_", ""), None).get
+  val domutils: InitialLib =
+    InitialLib.from("com.raquo:domtestutils:0.14.7", CrossVersion.Binary("sjs1_", ""), None).get
+
   test("compiler plugin with a scalacOption available in Scala 3") {
     val migrated = Scala3Migrate.migrateLibs(Seq(kind)).allLibs
     val res      = migrated(kind)
@@ -55,6 +61,7 @@ class MigrateLibsSuite extends AnyFunSuiteLike with DiffAssertions {
     val migrated = Scala3Migrate.migrateLibs(Seq(cats213)).allLibs
     val res      = migrated(cats213)
     assert(res.isCompatibleWithScala3)
+    println(s"res = ${res}")
     assert(res.asInstanceOf[CompatibleWithScala3.Lib].crossVersion.isInstanceOf[CrossVersion.Binary])
   }
   test("Don't show older version") {
@@ -90,6 +97,22 @@ class MigrateLibsSuite extends AnyFunSuiteLike with DiffAssertions {
     val message2   = Reason.Scala3LibAvailable(revisions2).why
     println(s"message2 = ${message2}")
     assert(message2 == "Other versions are avaialble for Scala 3: \"1\", \"2\"")
+  }
+
+  test("scalajs test") {
+    val migratedLib = Scala3Migrate.migrateLibs(Seq(scalatestJS)).allLibs(scalatestJS)
+    assert(migratedLib.isCompatibleWithScala3)
+    assert(migratedLib.asInstanceOf[CompatibleWithScala3.Lib].crossVersion == scalatestJS.crossVersion)
+  }
+  test("domatype ScalaJs") {
+    val migratedLib = Scala3Migrate.migrateLibs(Seq(domtypes)).allLibs(domtypes)
+    assert(migratedLib.isCompatibleWithScala3)
+    assert(migratedLib.toString == """"com.raquo" %%% "domtypes" % "0.14.3"""")
+  }
+  test("domutils ScalaJs") {
+    val migratedLib = Scala3Migrate.migrateLibs(Seq(domutils)).allLibs(domutils)
+    assert(migratedLib.isCompatibleWithScala3)
+    assert(migratedLib.toString == """"com.raquo" %%% "domtestutils" % "0.14.8"""")
   }
 
   private def isTheSame(lib: InitialLib, migrated: MigratedLib) =
