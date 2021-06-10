@@ -388,7 +388,14 @@ object ScalacOption {
   object Renamed {
     case object Explaintypes            extends Renamed("-explaintypes", "-explain-types")
     case class Xsource(version: String) extends Renamed(s"-Xsource:$version", s"-source:$version")
-    case class Target(target: String)   extends Renamed(s"-target:$target", s"-Xtarget:$target")
+    case class Target(target: String)   extends Renamed(s"-target:$target", s"-Xtarget:${Target.parseTarget(target)}")
+    object Target {
+      def parseTarget(in: String): String =
+        in match {
+          case s"jvm-1.$number" => number
+          case in               => in
+        }
+    }
     // advanced settings
     case object Xcheckinit  extends Renamed("-Xcheckinit", "-Ycheck-init")
     case object Xverify     extends Renamed("-Xverify", "-Xverify-signatures")

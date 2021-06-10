@@ -45,4 +45,9 @@ class MigrateScalacOptionsSuite extends AnyFunSuiteLike with DiffAssertions {
     assert(res.specificScala2.map(_.scala2Value) == expectedSpecific2)
     assert((res.scala3cOptions ++ res.renamed).flatMap(_.scala3ValueForBuild) == expectedMigrated)
   }
+  test("scalacOption -target") {
+    val input = Seq("-target:jvm-1.8")
+    val res   = Scala3Migrate.migrateScalacOptions(input).renamed
+    assert(res.head.scala3Value == "-Xtarget:8")
+  }
 }
