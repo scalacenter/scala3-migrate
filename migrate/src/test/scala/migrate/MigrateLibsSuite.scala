@@ -6,9 +6,8 @@ import migrate.interfaces.MigratedLibImp._
 import migrate.internal.InitialLib
 import migrate.internal.MigratedLib._
 import org.scalatest.funsuite.AnyFunSuiteLike
-import scalafix.testkit.DiffAssertions
 
-class MigrateLibsSuite extends AnyFunSuiteLike with DiffAssertions {
+class MigrateLibsSuite extends AnyFunSuiteLike {
   val binary: CrossVersion.Binary = CrossVersion.Binary("", "")
 
   val cats: InitialLib    = InitialLib.from("org.typelevel:cats-core:2.4.0", binary, None).get
