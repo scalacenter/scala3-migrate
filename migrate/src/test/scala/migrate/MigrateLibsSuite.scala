@@ -60,7 +60,6 @@ class MigrateLibsSuite extends AnyFunSuiteLike {
     val migrated = Scala3Migrate.migrateLibs(Seq(cats213)).allLibs
     val res      = migrated(cats213)
     assert(res.isCompatibleWithScala3)
-    println(s"res = ${res}")
     assert(res.asInstanceOf[CompatibleWithScala3.Lib].crossVersion.isInstanceOf[CrossVersion.Binary])
   }
   test("Don't show older version") {
@@ -94,7 +93,6 @@ class MigrateLibsSuite extends AnyFunSuiteLike {
     assert(message == "Other versions are avaialble for Scala 3: \"1\", ..., \"4\"")
     val revisions2 = Seq(Revision("1"), Revision("2"))
     val message2   = Reason.Scala3LibAvailable(revisions2).why
-    println(s"message2 = ${message2}")
     assert(message2 == "Other versions are avaialble for Scala 3: \"1\", \"2\"")
   }
 

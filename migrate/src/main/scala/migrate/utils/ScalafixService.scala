@@ -70,13 +70,7 @@ object ScalafixService {
   private lazy val internalRules = getClassPathforMigrateRules()
   private lazy val externalRules = getClassPathforRewriteRules()
 
-  val fixSyntaxRules: Seq[String] = Seq(
-    "ProcedureSyntax",
-    "fix.scala213.ExplicitNullaryEtaExpansion",
-    "fix.scala213.ParensAroundLambda",
-    "fix.scala213.ExplicitNonNullaryApply",
-    "fix.scala213.Any2StringAdd"
-  )
+  val fixSyntaxRules: Seq[String]                     = Seq("ProcedureSyntax", "fix.scala213.Any2StringAdd", "ExplicitResultTypes")
   val addExplicitResultTypesAndImplicits: Seq[String] = Seq("MigrationRule")
 
   def from(compilerOptions: Seq[String], classpath: Classpath, targetRootSemantic: AbsolutePath): Try[ScalafixService] =
