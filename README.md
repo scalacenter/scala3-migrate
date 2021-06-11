@@ -23,16 +23,14 @@ It proposes an incremental approach that can be described as follows:
   types to explicitly annotate in order to make the Scala 3 compiler work on a project without changing its meaning.
 
 # Requirements 
-- sbt 1.4 or higher
+- sbt 1.5 or higher
 - java 8 or 11
 - scala 2.13, preferred 2.13.5
 
 # Installation
 ```
 // project/plugins.sbt
-addSbtPlugin("ch.epfl.scala" % "sbt-scala3-migrate" % "0.4.3")
-// sbt-dotty is not needed anymore since sbt 1.5.0-M1
-addSbtPlugin("ch.epfl.lamp"  % "sbt-dotty"          % "0.5.3")
+addSbtPlugin("ch.epfl.scala" % "sbt-scala3-migrate" % "0.4.4")
 ```
 
 # Porting the build
