@@ -191,7 +191,11 @@ object InitialLib {
       Organization("io.bullet")                                   -> Name("borer-core"),
       Organization("org.parboiled")                               -> Name("parboiled"),
       Organization("com.github.pureconfig")                       -> Name("pureconfig"),
-      Organization("com.geirsson")                                -> Name("metaconfig-typesafe-config")
+      Organization("com.geirsson")                                -> Name("metaconfig-typesafe-config"),
+      Organization("com.github.plokhotnyuk.jsoniter-scala")       -> Name("jsoniter-scala-core"),
+      Organization("com.thoughtworks.each")                       -> Name("each"),
+      Organization("dev.zio")                                     -> Name("zio-macros-core"),
+      Organization("com.michaelpollmeier")                        -> Name("macros")
     )
   }
 
