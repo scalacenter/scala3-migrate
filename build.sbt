@@ -5,7 +5,7 @@ inThisBuild(
   List(
     scalaVersion := V.scala213,
     semanticdbEnabled := true,
-    semanticdbVersion := scalafixSemanticdb.revision, // use Scalafix compatible version
+    semanticdbVersion := V.scalameta,
     scalafixScalaBinaryVersion := V.scala213BinaryVersion,
     scalafixDependencies ++= List("com.github.liancheng" %% "organize-imports" % V.organizeImports),
     organization := "ch.epfl.scala",
@@ -110,7 +110,7 @@ lazy val `sbt-plugin` = project
       name,
       "scala3Version"      -> V.scala3,
       "scalaBinaryVersion" -> V.scala213BinaryVersion,
-      "semanticdbVersion"  -> V.semanticdbVersion,
+      "scalametaVersion"   -> V.scalameta,
       version
     )
   )
@@ -216,7 +216,7 @@ lazy val V = new {
   val kindProjector         = "0.13.0"
   val coursierApi           = "2.0.16"
   val coursierInterface     = "1.0.4"
-  val semanticdbVersion     = "4.4.10"
+  val scalameta             = "4.4.21"
   val localSnapshotVersion  = "0.4.0-SNAPSHOT"
   val zio                   = "1.0.8"
 }

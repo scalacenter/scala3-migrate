@@ -33,13 +33,13 @@ case class Scala2Inputs(
 )
 
 object ScalaMigratePlugin extends AutoPlugin {
-  private[migrate] val syntheticsOn             = "-P:semanticdb:synthetics:on"
-  private[migrate] val migrationOn              = "-source:3.0-migration"
-  private[migrate] val scalaBinaryVersion       = BuildInfo.scalaBinaryVersion
-  private[migrate] val migrateVersion           = BuildInfo.version
-  private[migrate] val scala3Version            = BuildInfo.scala3Version
-  private[migrate] val migrateSemanticdbVersion = BuildInfo.semanticdbVersion
-  private[migrate] val migrateAPI               = Migrate.fetchAndClassloadInstance(migrateVersion, scalaBinaryVersion)
+  private[migrate] val syntheticsOn            = "-P:semanticdb:synthetics:on"
+  private[migrate] val migrationOn             = "-source:3.0-migration"
+  private[migrate] val scalaBinaryVersion      = BuildInfo.scalaBinaryVersion
+  private[migrate] val migrateVersion          = BuildInfo.version
+  private[migrate] val scala3Version           = BuildInfo.scala3Version
+  private[migrate] val migrateScalametaVersion = BuildInfo.scalametaVersion
+  private[migrate] val migrateAPI              = Migrate.fetchAndClassloadInstance(migrateVersion, scalaBinaryVersion)
 
   private[migrate] val inputsStore: mutable.Map[Scope, Scala2Inputs] = mutable.Map()
 
@@ -72,8 +72,10 @@ object ScalaMigratePlugin extends AutoPlugin {
     },
     semanticdbVersion := {
       val sv = scalaVersion.value
-      if (sv.startsWith("2.13.")) migrateSemanticdbVersion
-      else semanticdbVersion.value
+      if (sv.startsWith("2.13.")) {
+        val actual = semanticdbVersion.value
+        if (actual > migrateScalametaVersion) actual else migrateScalametaVersion
+      } else semanticdbVersion.value
     },
     migrationConfigs := migrationConfigsImpl.value,
     migrationConfigs / aggregate := false,
