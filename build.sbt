@@ -206,11 +206,11 @@ def isCI = System.getenv("CI") != null
 lazy val V = new {
   val scala213              = "2.13.6"
   val scala213BinaryVersion = "2.13"
-  val scala212              = "2.12.15"
-  val scalatest             = "3.2.9"
+  val scala212              = "2.12.14"
+  val scalatest             = "3.2.10"
   val scala3                = "3.0.0"
-  val scalafix              = "0.9.30"
-  val scribe                = "3.5.5"
+  val scalafix              = "0.9.31"
+  val scribe                = "3.6.0"
   val organizeImports       = "0.4.3"
   val catsCore              = "2.6.1"
   val kindProjector         = "0.13.2"
@@ -218,5 +218,5 @@ lazy val V = new {
   val coursierInterface     = "1.0.4"
   val scalameta             = "4.4.21"
   val localSnapshotVersion  = "0.4.0-SNAPSHOT"
-  val zio                   = "1.0.11"
+  val zio                   = "1.0.12"
 }
