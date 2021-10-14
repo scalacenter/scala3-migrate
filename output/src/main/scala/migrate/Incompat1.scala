@@ -8,6 +8,6 @@ object Incompat1 {
 
     def inner(foo: Foo): foo.Inner = ???
 
-    def bar(f: String => Int): Option[Int] = Some.apply[String](inner(foo)).map(f)
+    def bar(f: String => Int): Option[Int] = Some(inner(foo)).map(f)
   }
 }

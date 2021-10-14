@@ -1,7 +1,7 @@
 package migrate
 
 import migrate.ScalaMigratePlugin.Keys._
-import migrate.ScalaMigratePlugin.{ scala3Version }
+import migrate.ScalaMigratePlugin.scala3Version
 import ScalaMigratePlugin.migrateAPI
 
 import sbt.Keys._

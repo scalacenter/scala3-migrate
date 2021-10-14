@@ -3,15 +3,15 @@ import sbt.Keys.libraryDependencies
 
 inThisBuild(
   List(
-    scalaVersion := V.scala213,
-    semanticdbEnabled := true,
-    semanticdbVersion := V.scalameta,
+    scalaVersion               := V.scala213,
+    semanticdbEnabled          := true,
+    semanticdbVersion          := V.scalameta,
     scalafixScalaBinaryVersion := V.scala213BinaryVersion,
     scalafixDependencies ++= List("com.github.liancheng" %% "organize-imports" % V.organizeImports),
     organization := "ch.epfl.scala",
-    homepage := Some(url("https://github.com/scalacenter/scala3-migrate")),
-    licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
-    developers := Developers.list,
+    homepage     := Some(url("https://github.com/scalacenter/scala3-migrate")),
+    licenses     := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+    developers   := Developers.list,
     version ~= { dynVer =>
       if (isCI) dynVer
       else V.localSnapshotVersion // only for local publishing
@@ -24,9 +24,9 @@ lazy val `compiler-interfaces` = project
   .settings(
     scalaVersion := V.scala3,
     libraryDependencies ++= Seq("org.scala-lang" %% "scala3-compiler" % V.scala3),
-    crossPaths := false,
+    crossPaths       := false,
     autoScalaLibrary := false,
-    moduleName := "migrate-compiler-interfaces"
+    moduleName       := "migrate-compiler-interfaces"
   )
   .dependsOn(`migrate-interfaces`)
 
@@ -34,9 +34,9 @@ lazy val `migrate-interfaces` = project
   .in(file("interfaces/migrate"))
   .settings(
     libraryDependencies ++= Seq("io.get-coursier" % "interface" % V.coursierInterface),
-    crossPaths := false,
+    crossPaths       := false,
     autoScalaLibrary := false,
-    moduleName := "migrate-core-interfaces"
+    moduleName       := "migrate-core-interfaces"
   )
 
 lazy val migrate = project
@@ -53,8 +53,8 @@ lazy val migrate = project
       "org.scalatest"   %% "scalatest"           % V.scalatest % Test,
       "ch.epfl.scala"    % "scalafix-testkit"    % V.scalafix  % Test cross CrossVersion.full
     ),
-    Test / test := (Test / test).dependsOn(`scalafix-rules` / publishLocal).value,
-    Test / testOnly := (Test / testOnly).dependsOn(`scalafix-rules` / publishLocal).evaluated,
+    Test / test             := (Test / test).dependsOn(`scalafix-rules` / publishLocal).value,
+    Test / testOnly         := (Test / testOnly).dependsOn(`scalafix-rules` / publishLocal).evaluated,
     Test / buildInfoPackage := "migrate.test",
     Test / buildInfoKeys := Seq(
       "version" -> version.value,
@@ -92,7 +92,7 @@ lazy val `sbt-plugin` = project
   .enablePlugins(SbtPlugin)
   .settings(
     scalaVersion := V.scala212,
-    name := "sbt-scala3-migrate",
+    name         := "sbt-scala3-migrate",
     scriptedLaunchOpts ++= Seq(s"-Dplugin.version=${version.value}"),
     scriptedDependencies := {
       scriptedDependencies
@@ -104,7 +104,7 @@ lazy val `sbt-plugin` = project
         )
         .value
     },
-    buildInfoPackage := "migrate",
+    buildInfoPackage  := "migrate",
     scriptedBufferLog := false,
     buildInfoKeys := Seq[BuildInfoKey](
       name,
@@ -122,8 +122,8 @@ lazy val output = project
   .in(file("output"))
   .settings(
     publish / skip := true,
-    scalaVersion := V.scala3,
-    scalacOptions := Seq("-Ykind-projector"),
+    scalaVersion   := V.scala3,
+    scalacOptions  := Seq("-Ykind-projector"),
     libraryDependencies ++= Seq("org.typelevel" % "cats-core_2.13" % V.catsCore)
   )
   .disablePlugins(ScalafixPlugin)
@@ -157,7 +157,7 @@ lazy val `scalafix-input` = project
 lazy val `scalafix-output` = project
   .in(file("scalafix/output"))
   .settings(
-    publish / skip := true,
+    publish / skip     := true,
     crossScalaVersions := List(V.scala213, V.scala3),
     scalacOptions ++= (if (scalaVersion.value.startsWith("3")) Seq("-Ykind-projector") else Seq()),
     libraryDependencies ++= {
@@ -208,7 +208,7 @@ lazy val V = new {
   val scala213BinaryVersion = "2.13"
   val scala212              = "2.12.14"
   val scalatest             = "3.2.10"
-  val scala3                = "3.0.0"
+  val scala3                = "3.0.2"
   val scalafix              = "0.9.31"
   val scribe                = "3.6.0"
   val organizeImports       = "0.4.3"
