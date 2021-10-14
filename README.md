@@ -30,7 +30,7 @@ It proposes an incremental approach that can be described as follows:
 # Installation
 ```
 // project/plugins.sbt
-addSbtPlugin("ch.epfl.scala" % "sbt-scala3-migrate" % "0.4.4")
+addSbtPlugin("ch.epfl.scala" % "sbt-scala3-migrate" % "0.4.6")
 ```
 
 # Porting the build
