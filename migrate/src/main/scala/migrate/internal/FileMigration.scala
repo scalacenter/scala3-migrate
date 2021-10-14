@@ -11,8 +11,8 @@ import migrate.utils.Timer._
 import scalafix.interfaces.ScalafixPatch
 
 /**
- * Given a [[FileMigrationState]] and a [[Scala3Compiler]], the [[FileMigration]] class
- * tries to find the minimum set of patches that makes the code compile
+ * Given a [[FileMigrationState]] and a [[Scala3Compiler]], the [[FileMigration]] class tries to find the minimum set of
+ * patches that makes the code compile
  */
 private[migrate] class FileMigration(fileToMigrate: FileMigrationState.Initial, compiler: Scala3Compiler) {
 
@@ -43,8 +43,10 @@ private[migrate] class FileMigration(fileToMigrate: FileMigrationState.Initial, 
   /**
    * A instance of [[CompilingState]] is a set of patches that are sufficient to make the code compiles.
    *
-   * @param candidates         A set of patches that may or may not be necessary
-   * @param necessaryPatches   A set of necessary patches
+   * @param candidates
+   *   A set of patches that may or may not be necessary
+   * @param necessaryPatches
+   *   A set of necessary patches
    */
   private case class CompilingState(candidates: Seq[ScalafixPatch], necessaryPatches: Seq[ScalafixPatch]) {
 
@@ -78,9 +80,12 @@ private[migrate] class FileMigration(fileToMigrate: FileMigrationState.Initial, 
     /**
      * A [[CompilationStep]] is an intermediate step at which we try to compile the code
      *
-     * @param kept       The patches that we keep to make the code compile
-     * @param removed    The patches that we try to remove
-     * @param necessary  Some patch that is necessary or none
+     * @param kept
+     *   The patches that we keep to make the code compile
+     * @param removed
+     *   The patches that we try to remove
+     * @param necessary
+     *   Some patch that is necessary or none
      */
     private case class CompilationStep(
       kept: Seq[ScalafixPatch],

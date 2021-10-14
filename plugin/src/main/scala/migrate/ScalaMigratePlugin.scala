@@ -77,18 +77,18 @@ object ScalaMigratePlugin extends AutoPlugin {
         if (actual > migrateScalametaVersion) actual else migrateScalametaVersion
       } else semanticdbVersion.value
     },
-    migrationConfigs := migrationConfigsImpl.value,
-    migrationConfigs / aggregate := false,
-    storeScala2Inputs := storeScala2InputsImpl.value,
-    storeScala2Inputs / aggregate := false,
-    internalMigrateScalacOptions := ScalacOptionsMigration.internalImpl.value,
+    migrationConfigs                         := migrationConfigsImpl.value,
+    migrationConfigs / aggregate             := false,
+    storeScala2Inputs                        := storeScala2InputsImpl.value,
+    storeScala2Inputs / aggregate            := false,
+    internalMigrateScalacOptions             := ScalacOptionsMigration.internalImpl.value,
     internalMigrateScalacOptions / aggregate := false,
-    internalMigrateSyntax := SyntaxMigration.internalImpl.value,
-    internalMigrateSyntax / aggregate := false,
-    internalMigrate := TypeInferenceMigration.internalImpl.value,
-    internalMigrate / aggregate := false,
-    internalMigrateLibs := LibsMigration.internalImpl.value,
-    internalMigrateLibs / aggregate := false,
+    internalMigrateSyntax                    := SyntaxMigration.internalImpl.value,
+    internalMigrateSyntax / aggregate        := false,
+    internalMigrate                          := TypeInferenceMigration.internalImpl.value,
+    internalMigrate / aggregate              := false,
+    internalMigrateLibs                      := LibsMigration.internalImpl.value,
+    internalMigrateLibs / aggregate          := false,
     commands ++= Seq(migrateSyntax, migrateScalacOptions, migrateLibDependencies, migrate, fallback),
     inConfig(Compile)(configSettings),
     inConfig(Test)(configSettings)
@@ -154,9 +154,8 @@ object ScalaMigratePlugin extends AutoPlugin {
   }
 
   /**
-   * Return all configurations that can be migrated in a project.
-   * If config A extends config B then B appears first
-   * ex: List(Compile, Test) because Test extends Runtime which extends Compile
+   * Return all configurations that can be migrated in a project. If config A extends config B then B appears first ex:
+   * List(Compile, Test) because Test extends Runtime which extends Compile
    */
   private def migrationConfigsImpl = Def.setting {
     val project = thisProject.value
