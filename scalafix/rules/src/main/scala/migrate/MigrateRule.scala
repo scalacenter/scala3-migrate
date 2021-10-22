@@ -20,9 +20,9 @@ class MigrateRule(g: Global) extends SemanticRule("MigrationRule") {
   def this() = this(null)
 
   override def withConfiguration(config: Configuration): Configured[Rule] =
-    if (config.scalacClasspath.isEmpty) {
+    if (config.scalacClasspath.isEmpty)
       Configured.error(s"config.scalacClasspath should not be empty")
-    } else {
+    else {
       val global = CompilerService.newGlobal(config.scalacClasspath, config.scalacOptions)
       global match {
         case Success(settings) =>
@@ -40,7 +40,7 @@ class MigrateRule(g: Global) extends SemanticRule("MigrationRule") {
     }
 
   override def fix(implicit doc: SemanticDocument): Patch = {
-    lazy implicit val compilerService: CompilerService[g.type] = new CompilerService(g, doc)
+    implicit lazy val compilerService: CompilerService[g.type] = new CompilerService(g, doc)
 
     val inferType        = new InferTypes[g.type](g)
     val explicitImplicit = new ExplicitImplicitsRule[g.type](g)

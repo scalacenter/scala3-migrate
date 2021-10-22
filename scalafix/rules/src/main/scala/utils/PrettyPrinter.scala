@@ -2,7 +2,7 @@ package scala.meta.internal.pc
 
 import scala.collection.mutable.ListBuffer
 import scala.tools.nsc.interactive.Global
-import scala.{ meta => m }
+import scala.{meta => m}
 
 import utils.ScalaExtensions.TraversableOnceOptionExtension
 
@@ -13,25 +13,23 @@ class PrettyPrinter[G <: Global](val g: G) {
 
     def loop(t: Type): Option[Type] =
       if (filterType(t)) None
-      else {
+      else
         t match {
-          case TypeRef(pre, sym, args) => {
+          case TypeRef(pre, sym, args) =>
             if (sym.isExistentialSkolem) None
             else {
               val lookUp  = context.lookupSymbol(sym.name, _ => true)
               val argsOpt = args.map(loop).sequence
-              if (isTheSameSymbol(sym, lookUp, pre)) {
+              if (isTheSameSymbol(sym, lookUp, pre))
                 argsOpt.map(a => TypeRef(g.NoPrefix, sym, a))
-              } else argsOpt.map(a => TypeRef(loop(pre).get, sym, a))
+              else argsOpt.map(a => TypeRef(loop(pre).get, sym, a))
             }
-          }
-          case SingleType(pre, sym) => {
+          case SingleType(pre, sym) =>
             val lookUp = context.lookupSymbol(sym.name, _ => true)
             if (isTheSameSymbol(sym, lookUp, pre))
               Some(SingleType(NoPrefix, sym))
             else Some(SingleType(loop(pre).get, sym))
 
-          }
           case ThisType(sym) =>
             Some(new PrettyType(lookUpName(sym, context)))
           case ConstantType(Constant(_: TermSymbol)) => Some(t)
@@ -45,7 +43,7 @@ class PrettyPrinter[G <: Global](val g: G) {
             scala.util
               .Try(ExistentialType(quantified.map(sym => sym.setInfo(loop(sym.info).get)), loop(underlying).get))
               .toOption
-          case PolyType(typeParams, resultType) => {
+          case PolyType(typeParams, resultType) =>
             scala.util
               .Try(resultType.map(t => loop(t).get))
               .toOption match {
@@ -56,7 +54,6 @@ class PrettyPrinter[G <: Global](val g: G) {
                 Some(PolyType(typeParams, otherType))
               case None => None
             }
-          }
           case NullaryMethodType(resultType) =>
             loop(resultType)
           case TypeBounds(lo, hi) =>
@@ -68,7 +65,6 @@ class PrettyPrinter[G <: Global](val g: G) {
           case ErrorType        => Some(definitions.AnyTpe)
           case t                => Some(t)
         }
-      }
 
     gtype match {
       case _ if gtype.toString() == "_" => None // for topLevel WildCard.
@@ -88,11 +84,9 @@ class PrettyPrinter[G <: Global](val g: G) {
   private def lookUpName(sym: g.Symbol, context: g.Context): String = {
     // first get all owners
     val owners = getOwnersFor(sym)
-    val necessaryOwners = owners.iterator.takeWhile {
-      case sym => {
-        val lookUp = context.lookupSymbol(sym.name.toTermName, _ => true)
-        !isTheSameSymbol(sym, lookUp)
-      }
+    val necessaryOwners = owners.iterator.takeWhile { case sym =>
+      val lookUp = context.lookupSymbol(sym.name.toTermName, _ => true)
+      !isTheSameSymbol(sym, lookUp)
     }.toSeq
 
     val size = necessaryOwners.size
@@ -111,9 +105,9 @@ class PrettyPrinter[G <: Global](val g: G) {
           case LookupSucceeded(qual, _) => !qual.isEmpty
           case _                        => false
         }
-        if (inScope && top.isStatic) {
+        if (inScope && top.isStatic)
           s"${top.owner.nameSyntax}.${sym.fullNameSyntax}"
-        } else sym.fullNameSyntax
+        else sym.fullNameSyntax
     }
   }
 
@@ -148,11 +142,10 @@ class PrettyPrinter[G <: Global](val g: G) {
 
   def topPackage(s: Symbol): Symbol = {
     val owner = s.owner
-    if (s.isRoot || s.isRootPackage || s == NoSymbol || s.owner.isEffectiveRoot || s == owner) {
+    if (s.isRoot || s.isRootPackage || s == NoSymbol || s.owner.isEffectiveRoot || s == owner)
       s
-    } else {
+    else
       topPackage(owner)
-    }
   }
   def getOwnersFor(symbol: Symbol): Seq[Symbol] = {
     def loop(symbol: Symbol, b: ListBuffer[Symbol]): ListBuffer[Symbol] =
@@ -177,9 +170,9 @@ class PrettyPrinter[G <: Global](val g: G) {
       val out = new java.lang.StringBuilder
 
       def loop(s: Symbol): Unit =
-        if (s.isRoot || s.isRootPackage || s == NoSymbol || s.owner.isEffectiveRoot) {
+        if (s.isRoot || s.isRootPackage || s == NoSymbol || s.owner.isEffectiveRoot)
           out.append(Identifier(s.nameSyntax))
-        } else {
+        else {
           loop(s.effectiveOwner.enclClass)
           out.append('.').append(Identifier(s.name))
         }
@@ -192,23 +185,21 @@ class PrettyPrinter[G <: Global](val g: G) {
       if (sym.fullName == other.fullName) true
       else if (other == NoSymbol) sym == NoSymbol
       else if (sym == NoSymbol) false
-      else if (sym.hasPackageFlag) {
+      else if (sym.hasPackageFlag)
         // NOTE(olafur) hacky workaround for comparing module symbol with package symbol
         other.fullName == sym.fullName
-      } else {
+      else
         sym.dealiased == other.dealiased ||
         sym.companion == other.dealiased
-      }
 
     def dealiasedSingleType: Symbol =
-      if (sym.isValue) {
+      if (sym.isValue)
         sym.info.resultType match {
           case SingleType(_, dealias) => dealias
           case _                      => sym
         }
-      } else {
+      else
         sym
-      }
 
     def dealiased: Symbol =
       if (sym.isAliasType) sym.info.dealias.typeSymbol

@@ -1,6 +1,6 @@
 package migrate.interfaces
 
-import java.{ util => jutil }
+import java.{util => jutil}
 
 import scala.jdk.CollectionConverters._
 

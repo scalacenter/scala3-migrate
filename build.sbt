@@ -51,7 +51,7 @@ lazy val migrate = project
       "com.outr"        %% "scribe"              % V.scribe,
       "io.get-coursier" %% "coursier"            % V.coursierApi,
       "org.scalatest"   %% "scalatest"           % V.scalatest % Test,
-      "ch.epfl.scala"    % "scalafix-testkit"    % V.scalafix  % Test cross CrossVersion.full
+      ("ch.epfl.scala"   % "scalafix-testkit"    % V.scalafix  % Test).cross(CrossVersion.full)
     ),
     Test / test             := (Test / test).dependsOn(`scalafix-rules` / publishLocal).value,
     Test / testOnly         := (Test / testOnly).dependsOn(`scalafix-rules` / publishLocal).evaluated,
@@ -180,10 +180,10 @@ lazy val `scalafix-tests` = project
     publish / skip := true,
     scalacOptions ++= Seq("-Wunused", "-P:semanticdb:synthetics:on", "-deprecation"),
     libraryDependencies +=
-      "ch.epfl.scala" %
+      ("ch.epfl.scala" %
         "scalafix-testkit" %
         V.scalafix %
-        Test cross CrossVersion.full,
+        Test).cross(CrossVersion.full),
     scalafixTestkitOutputSourceDirectories :=
       (`scalafix-output` / Compile / unmanagedSourceDirectories).value,
     scalafixTestkitInputSourceDirectories :=

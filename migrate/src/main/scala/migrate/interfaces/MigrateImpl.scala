@@ -1,7 +1,7 @@
 package migrate.interfaces
 
 import java.nio.file.Path
-import java.{ util => jutil }
+import java.{util => jutil}
 
 import scala.jdk.CollectionConverters._
 

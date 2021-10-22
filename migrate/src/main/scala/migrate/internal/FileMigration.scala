@@ -54,7 +54,7 @@ private[migrate] class FileMigration(fileToMigrate: FileMigrationState.Initial, 
       // We first try to remove all candidates
       val initialStep = CompilationStep(kept = Seq.empty, removed = candidates, necessary = None)
 
-      loopUntilCompile(Success(initialStep)) map { case CompilationStep(kept, _, necessary) =>
+      loopUntilCompile(Success(initialStep)).map { case CompilationStep(kept, _, necessary) =>
         CompilingState(kept, necessaryPatches ++ necessary)
       }
     }
@@ -66,12 +66,11 @@ private[migrate] class FileMigration(fileToMigrate: FileMigrationState.Initial, 
           step.doesCompile() match {
             case Success(true) => Success(step)
             case Success(false) =>
-              if (step.removed.size == 1) {
+              if (step.removed.size == 1)
                 // the last patch is necessary
                 Success(CompilationStep(step.kept, Seq.empty, Some(step.removed.head)))
-              } else {
+              else
                 loopUntilCompile(Success(step.keepMorePatches()))
-              }
             case Failure(cause) => Failure(cause)
           }
         case failure => failure

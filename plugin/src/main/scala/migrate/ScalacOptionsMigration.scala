@@ -49,13 +49,12 @@ private[migrate] object ScalacOptionsMigration {
 
   private def reportStatus(logger: ManagedLogger, status: ScalacOptions): Unit = {
     val notParsed = status.getNotParsed.toSeq
-    if (notParsed.nonEmpty) {
+    if (notParsed.nonEmpty)
       logger.warn(s"""|
                       |We were not able to parse the following ScalacOptions:
                       |${formatScalacOptions(notParsed)}
                       |
                       |""".stripMargin)
-    }
 
     val specific2 = status.getSpecificScala2.toSeq
     val scala3    = status.getScala3cOptions.toSeq

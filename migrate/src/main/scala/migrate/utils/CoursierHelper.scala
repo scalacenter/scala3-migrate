@@ -16,16 +16,14 @@ object CoursierHelper {
   def getCompatibleForScala3Binary(lib: InitialLib): Seq[Revision] = {
     val revisions = searchRevisionsFor(lib, scala3Full.binary)
     if (revisions.isEmpty) Nil
-    else {
+    else
       getNewerRevision(lib, revisions)
-    }
   }
   def getCompatibleForScala3Full(lib: InitialLib): Seq[Revision] = {
     val revisions = searchRevisionsFor(lib, scala3Full.value)
     if (revisions.isEmpty) Nil
-    else {
+    else
       getNewerRevision(lib, revisions)
-    }
   }
 
   def isRevisionAvailableFor(lib: InitialLib, revision: Revision, scalaVersion: ScalaVersion): Boolean = {

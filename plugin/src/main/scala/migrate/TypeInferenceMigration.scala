@@ -1,13 +1,13 @@
 package migrate
 
 import migrate.interfaces.CompilationException
-import ScalaMigratePlugin.{ Keys, inputsStore, migrateAPI, scala3Version }
-import migrate.TypeInferenceMigration.{ errorMessage, successMessage }
+import ScalaMigratePlugin.{Keys, inputsStore, migrateAPI, scala3Version}
+import migrate.TypeInferenceMigration.{errorMessage, successMessage}
 import sbt.Keys._
 import sbt._
 
 import scala.io.AnsiColor._
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 import scala.collection.JavaConverters._
 import java.nio.file.Files
 

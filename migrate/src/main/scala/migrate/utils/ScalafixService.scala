@@ -32,15 +32,14 @@ final case class ScalafixService(
       val filesEvaluated = eval.getFileEvaluations.toSeq
       filesEvaluated.foreach { oneFile =>
         val absPath = AbsolutePath.from(oneFile.getEvaluatedFile).get
-        if (oneFile.isSuccessful) {
+        if (oneFile.isSuccessful)
           oneFile.previewPatchesAsUnifiedDiff().asScala match {
             case None => scribe.debug(s"Nothing to fix in $absPath)")
-            case Some(_) => {
+            case Some(_) =>
               oneFile.applyPatches()
               scribe.info(s"Syntax fixed for $absPath)")
-            }
           }
-        } else {
+        else {
           val errorMsg = oneFile.getErrorMessage.asScala.getOrElse("Unknown Error")
           scribe.info(s"Failed to run scalafix with ${fixSyntaxRules.mkString(", ")} on $absPath because $errorMsg")
         }

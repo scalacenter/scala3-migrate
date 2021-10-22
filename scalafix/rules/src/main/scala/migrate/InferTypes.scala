@@ -26,9 +26,8 @@ class InferTypes[G <: Global](g: G) {
 
   private def addExplicitResultType()(implicit doc: SemanticDocument, compilerSrv: CompilerService[g.type]): Patch =
     doc.tree.collect {
-      case t @ Defn.Val(_, Pat.Var(name) :: Nil, None, body) => {
+      case t @ Defn.Val(_, Pat.Var(name) :: Nil, None, body) =>
         fixDefinition(t, name, body)
-      }
       case t @ Defn.Var(_, Pat.Var(name) :: Nil, None, Some(body)) =>
         fixDefinition(t, name, body)
 

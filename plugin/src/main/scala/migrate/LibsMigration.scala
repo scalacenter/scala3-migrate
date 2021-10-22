@@ -1,15 +1,15 @@
 package migrate
 
-import ScalaMigratePlugin.{ migrateAPI, scala3Version }
+import ScalaMigratePlugin.{migrateAPI, scala3Version}
 import ScalaMigratePlugin.Keys._
 import Messages._
 import interfaceImpl.LibImpl
-import migrate.interfaces.{ Lib, MigratedLib, MigratedLibs }
+import migrate.interfaces.{Lib, MigratedLib, MigratedLibs}
 import sbt.Keys._
 import sbt._
 
 import scala.io.AnsiColor._
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 import scala.collection.JavaConverters._
 
 private[migrate] object LibsMigration {
