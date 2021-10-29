@@ -140,7 +140,7 @@ class PrettyPrinter[G <: Global](val g: G) {
         true // remove super types: we don't infer them
       case f if f.toString().contains("#") && f.toString().contains(".type") =>
         true // don't annotate types that look like fix.WidenSingleType#strings.type
-      //Todo: add a special case for structural type: remove implicit and replace lazy val by a def
+      // Todo: add a special case for structural type: remove implicit and replace lazy val by a def
       case f if f.isStructuralRefinement && (f.toString().contains("implicit") || f.toString().contains("lazy val")) =>
         true
       case _ => false
