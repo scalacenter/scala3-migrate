@@ -70,7 +70,7 @@ object ScalacOption {
       case s"-Ystop-after:$phases"                  => Shared.YstopAfter(phases)
       case s"-Ystop-before:$phases"                 => Shared.YstopBefore(phases)
 
-      //Scala.js Settings
+      // Scala.js Settings
       case "-P:scalajs:genStaticForwardersForNonTopLevelObjects" |
           "-scalajs-genStaticForwardersForNonTopLevelObjects" =>
         Renamed.ScalaJsStatic
@@ -86,7 +86,7 @@ object ScalacOption {
       case "-Vdebug"                      => Renamed.Vdebug
       case "-Vprint-pos"                  => Renamed.VprintPos
 
-      //Specific to scala 2
+      // Specific to scala 2
       case _ if s.startsWith("-D")                                                      => Specific2.Scala2Specific(s)
       case _ if s.startsWith("-J")                                                      => Specific2.Scala2Specific(s)
       case _ if s.startsWith("-dependencyfile")                                         => Specific2.Scala2Specific(s)
@@ -400,7 +400,7 @@ object ScalacOption {
     case object Xcheckinit  extends Renamed("-Xcheckinit", "-Ycheck-init")
     case object Xverify     extends Renamed("-Xverify", "-Xverify-signatures")
     case object VprintTypes extends Renamed("-Vprint-types", "-Xprint-types")
-    //Scala.js Settings
+    // Scala.js Settings
     case object ScalaJsStatic
         extends Renamed(
           "-P:scalajs:genStaticForwardersForNonTopLevelObjects",

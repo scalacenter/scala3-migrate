@@ -1,8 +1,8 @@
 package hello
 
 object MigrateSyntax {
-  //ProcedureSyntax
-  //fix.scala213.ConstructorProcedureSyntax
+  // ProcedureSyntax
+  // fix.scala213.ConstructorProcedureSyntax
   trait Foo {
     def print()
   }
@@ -13,6 +13,6 @@ object MigrateSyntax {
     }
   }
 
-  //fix.scala213.Any2StringAdd
+  // fix.scala213.Any2StringAdd
   val str = new AnyRef + "foo"
 }
