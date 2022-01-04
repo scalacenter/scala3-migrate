@@ -156,7 +156,7 @@ object InitialLib {
       (Organization("org.scalameta"), Name("semanticdb-scalac")) -> Specific3.SemanticDB
     )
 
-  val macroLibs: Set[(Organization, Name)] = {
+  val macroLibs: Set[(Organization, Name)] =
     // need to complete the list
     // the other solution would be to download the src-jar and look for =\w*macro\w
     Set(
@@ -197,7 +197,6 @@ object InitialLib {
       Organization("dev.zio")                                     -> Name("zio-macros-core"),
       Organization("com.michaelpollmeier")                        -> Name("macros")
     )
-  }
 
   // Those libs are correctly handled by sbt or scalajs plugin
   // Showing them would confuse the user.

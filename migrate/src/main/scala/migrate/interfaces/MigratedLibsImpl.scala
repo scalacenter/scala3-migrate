@@ -1,6 +1,6 @@
 package migrate.interfaces
 
-import java.{ util => jutil }
+import java.{util => jutil}
 
 import scala.jdk.CollectionConverters._
 
@@ -31,7 +31,7 @@ case class MigratedLibsImpl(
     compatible match {
       case keptInitialLib: CompatibleWithScala3.Lib =>
         initialLib.crossVersion == keptInitialLib.crossVersion &&
-          initialLib.revision == keptInitialLib.revision
+        initialLib.revision == keptInitialLib.revision
       case _ => false
     }
 

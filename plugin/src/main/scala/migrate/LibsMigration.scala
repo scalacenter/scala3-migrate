@@ -1,15 +1,15 @@
 package migrate
 
-import ScalaMigratePlugin.{ migrateAPI, scala3Version }
+import ScalaMigratePlugin.{migrateAPI, scala3Version}
 import ScalaMigratePlugin.Keys._
 import Messages._
 import interfaceImpl.LibImpl
-import migrate.interfaces.{ Lib, MigratedLib, MigratedLibs }
+import migrate.interfaces.{Lib, MigratedLib, MigratedLibs}
 import sbt.Keys._
 import sbt._
 
 import scala.io.AnsiColor._
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 import scala.collection.JavaConverters._
 
 private[migrate] object LibsMigration {
@@ -79,11 +79,12 @@ private[migrate] object LibsMigration {
 
     val spacesForHelp = computeLongestValue(Seq(removedSign, validSign, toBeUpdated))
 
-    val help = s"""
-                  |${formatValueWithSpace(removedSign, spacesForHelp)} $RED: Cannot be updated to scala 3$RESET
-                  |${formatValueWithSpace(validSign, spacesForHelp)} $CYAN: Already a valid version for Scala 3$RESET
-                  |${formatValueWithSpace(toBeUpdated, spacesForHelp)} $BLUE: Need to be updated to the following version$RESET
-                  |""".stripMargin
+    val help =
+      s"""
+         |${formatValueWithSpace(removedSign, spacesForHelp)} $RED: Cannot be updated to scala 3$RESET
+         |${formatValueWithSpace(validSign, spacesForHelp)} $CYAN: Already a valid version for Scala 3$RESET
+         |${formatValueWithSpace(toBeUpdated, spacesForHelp)} $BLUE: Need to be updated to the following version$RESET
+         |""".stripMargin
 
     Seq(help, formatIncompatibleLibs, formatValid, formatLibToUpdate)
       .filterNot(_.isEmpty)

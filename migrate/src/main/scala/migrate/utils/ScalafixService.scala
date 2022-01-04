@@ -35,10 +35,9 @@ final case class ScalafixService(
         if (oneFile.isSuccessful) {
           oneFile.previewPatchesAsUnifiedDiff().asScala match {
             case None => scribe.debug(s"Nothing to fix in $absPath)")
-            case Some(_) => {
+            case Some(_) =>
               oneFile.applyPatches()
               scribe.info(s"Syntax fixed for $absPath)")
-            }
           }
         } else {
           val errorMsg = oneFile.getErrorMessage.asScala.getOrElse("Unknown Error")
