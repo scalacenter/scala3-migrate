@@ -1,3 +1,3 @@
 lazy val `syntax-migration` = project
   .in(file("."))
-  .settings(scalaVersion := "2.13.5")
+  .settings(scalaVersion := "2.13.7")
