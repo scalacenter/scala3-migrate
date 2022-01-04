@@ -20,7 +20,7 @@ public class MigrateReporter extends AbstractReporter {
         if (dia.level() == Diagnostic.ERROR) {
             Message message = dia.msg();
             StringBuilder rendered = new StringBuilder();
-            rendered.append(messageAndPos(message, dia.pos(), diagnosticLevel(dia), ctx));
+            rendered.append(messageAndPos(dia, ctx));
 
             boolean shouldExplain = dotty.tools.dotc.reporting.Diagnostic.shouldExplain(dia, ctx);
             if (shouldExplain && !message.explanation().isEmpty()) {
