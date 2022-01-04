@@ -40,7 +40,7 @@ class MigrateRule(g: Global) extends SemanticRule("MigrationRule") {
     }
 
   override def fix(implicit doc: SemanticDocument): Patch = {
-    lazy implicit val compilerService: CompilerService[g.type] = new CompilerService(g, doc)
+    implicit lazy val compilerService: CompilerService[g.type] = new CompilerService(g, doc)
 
     val inferType        = new InferTypes[g.type](g)
     val explicitImplicit = new ExplicitImplicitsRule[g.type](g)

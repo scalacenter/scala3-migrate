@@ -88,10 +88,9 @@ class ExplicitImplicitsRule[G <: Global](g: G) {
       // at the same position we are supposed to have maximum one ApplyToImplicitArgs
       // except it there is also an implicit conversion that takes implicits.
       // See Mix.scala example
-      case g.Apply(fun, args) if !fun.isInstanceOf[g.ApplyImplicitView] => {
+      case g.Apply(fun, args) if !fun.isInstanceOf[g.ApplyImplicitView] =>
         val listOfArgs = args.map(_.symbol.asInstanceOf[g.Symbol])
         (fun, listOfArgs)
-      }
     }
 
   }
@@ -104,7 +103,7 @@ class ExplicitImplicitsRule[G <: Global](g: G) {
       // we don't wont to handle this rewrite.
       case g.Apply(g.Apply(_, _), _) if original.isInstanceOf[Name] || original.isInstanceOf[Term.Select] =>
         None
-      case g.Apply(_, args) if original.isInstanceOf[Name] || original.isInstanceOf[Term.Select] => {
+      case g.Apply(_, args) if original.isInstanceOf[Name] || original.isInstanceOf[Term.Select] =>
         val isTermEta        = original.parent.exists(_.isInstanceOf[Term.Eta])
         val etaExpansionArgs = (1 to args.size).map(_ => "_")
         if (isTermEta) {
@@ -120,7 +119,6 @@ class ExplicitImplicitsRule[G <: Global](g: G) {
             Patch
               .addRight(original, s"(${etaExpansionArgs.mkString(", ")})" + "(" + implicitsParams.mkString(", ") + ")")
           )
-      }
       case _ => Some(Patch.addRight(original, "(" + implicitsParams.mkString(", ") + ")"))
     }
 }

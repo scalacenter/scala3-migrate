@@ -2,7 +2,7 @@ package scala.meta.internal.pc
 
 import scala.collection.mutable.ListBuffer
 import scala.tools.nsc.interactive.Global
-import scala.{ meta => m }
+import scala.{meta => m}
 
 import utils.ScalaExtensions.TraversableOnceOptionExtension
 
@@ -15,7 +15,7 @@ class PrettyPrinter[G <: Global](val g: G) {
       if (filterType(t)) None
       else {
         t match {
-          case TypeRef(pre, sym, args) => {
+          case TypeRef(pre, sym, args) =>
             if (sym.isExistentialSkolem) None
             else {
               val lookUp  = context.lookupSymbol(sym.name, _ => true)
@@ -24,14 +24,12 @@ class PrettyPrinter[G <: Global](val g: G) {
                 argsOpt.map(a => TypeRef(g.NoPrefix, sym, a))
               } else argsOpt.map(a => TypeRef(loop(pre).get, sym, a))
             }
-          }
-          case SingleType(pre, sym) => {
+          case SingleType(pre, sym) =>
             val lookUp = context.lookupSymbol(sym.name, _ => true)
             if (isTheSameSymbol(sym, lookUp, pre))
               Some(SingleType(NoPrefix, sym))
             else Some(SingleType(loop(pre).get, sym))
 
-          }
           case ThisType(sym) =>
             Some(new PrettyType(lookUpName(sym, context)))
           case ConstantType(Constant(_: TermSymbol)) => Some(t)
@@ -45,7 +43,7 @@ class PrettyPrinter[G <: Global](val g: G) {
             scala.util
               .Try(ExistentialType(quantified.map(sym => sym.setInfo(loop(sym.info).get)), loop(underlying).get))
               .toOption
-          case PolyType(typeParams, resultType) => {
+          case PolyType(typeParams, resultType) =>
             scala.util
               .Try(resultType.map(t => loop(t).get))
               .toOption match {
@@ -56,7 +54,6 @@ class PrettyPrinter[G <: Global](val g: G) {
                 Some(PolyType(typeParams, otherType))
               case None => None
             }
-          }
           case NullaryMethodType(resultType) =>
             loop(resultType)
           case TypeBounds(lo, hi) =>
@@ -88,11 +85,9 @@ class PrettyPrinter[G <: Global](val g: G) {
   private def lookUpName(sym: g.Symbol, context: g.Context): String = {
     // first get all owners
     val owners = getOwnersFor(sym)
-    val necessaryOwners = owners.iterator.takeWhile {
-      case sym => {
-        val lookUp = context.lookupSymbol(sym.name.toTermName, _ => true)
-        !isTheSameSymbol(sym, lookUp)
-      }
+    val necessaryOwners = owners.iterator.takeWhile { case sym =>
+      val lookUp = context.lookupSymbol(sym.name.toTermName, _ => true)
+      !isTheSameSymbol(sym, lookUp)
     }.toSeq
 
     val size = necessaryOwners.size

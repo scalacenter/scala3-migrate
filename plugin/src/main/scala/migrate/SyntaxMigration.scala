@@ -8,7 +8,7 @@ import sbt.Keys._
 import sbt._
 
 import scala.io.AnsiColor._
-import scala.util.{ Try, Success, Failure }
+import scala.util.{Try, Success, Failure}
 import scala.collection.JavaConverters._
 
 private[migrate] object SyntaxMigration {

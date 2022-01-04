@@ -3,7 +3,7 @@ package utils
 import java.io.File
 
 import scala.reflect.internal.util.SourceFile
-import scala.reflect.internal.util.{ Position => ReflectPos }
+import scala.reflect.internal.util.{Position => ReflectPos}
 import scala.reflect.io.VirtualDirectory
 import scala.tools.nsc.Settings
 import scala.tools.nsc.interactive.Global

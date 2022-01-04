@@ -79,6 +79,7 @@ private[migrate] object ScalacOptionsMigration {
   private val pluginSign  = s"""${BOLD}${CYAN}Plugin${RESET}"""
   private val spacesHelp  = computeLongestValue(Seq(removedSign, renamedSign, sameSign, pluginSign))
 
+  // format: off
   private val help =
     s"""
        |${formatValueWithSpace(removedSign, spacesHelp)} $RED: the option is not available is Scala 3$RESET
@@ -87,6 +88,7 @@ private[migrate] object ScalacOptionsMigration {
        |${formatValueWithSpace(pluginSign, spacesHelp)} $CYAN: the option is related to a plugin, previously handled by migrate-libs$RESET
        |
        |""".stripMargin
+  // format: on
 
   private def message(
     removed: Seq[String],
