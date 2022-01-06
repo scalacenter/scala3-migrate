@@ -20,6 +20,11 @@ import scalafix.interfaces.ScalafixEvaluation
 
 class Scala3Migrate(scalafixSrv: ScalafixService) {
   private val reporter = ScalaMigrateLogger
+  // modify the default formatter
+  scribe.Logger.root
+    .clearHandlers()
+    .withHandler(formatter = scribe.format.Formatter.compact)
+    .replace()
 
   def previewMigration(
     unmanagedSources: Seq[AbsolutePath],
