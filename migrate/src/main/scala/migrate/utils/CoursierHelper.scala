@@ -54,7 +54,7 @@ object CoursierHelper {
       case (_, Right(revisions)) => revisions
       case _                     => Nil
     }
-    revisions.map(Revision(_))
+    revisions.map(Revision.apply)
   }
 
   // Rely on coursier order
