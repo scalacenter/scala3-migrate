@@ -8,7 +8,7 @@ private[migrate] object Messages {
        |
        |Your project must be in 2.13 and not in $scalaVersion
        |Please change the scalaVersion following this command
-       |set LocalProject("$projectId") / scalaVersion := "2.13.7"
+       |set LocalProject("$projectId") / scalaVersion := "2.13.8"
        |
        |
        |""".stripMargin

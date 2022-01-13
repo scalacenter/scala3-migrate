@@ -1,9 +1,9 @@
-ThisBuild / scalaVersion := "2.13.7"
+ThisBuild / scalaVersion := "2.13.8"
 
 lazy val subproject = project
   .in(file("subproject"))
   .settings(TaskKey[Unit]("checkNotMigrated") := {
-    assert(scalaVersion.value == "2.13.7")
+    assert(scalaVersion.value == "2.13.8")
   })
 
 lazy val `aggregate-project` = project
