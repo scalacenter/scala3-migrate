@@ -72,8 +72,8 @@ private[migrate] object LibsMigration {
         .sortBy(_._2.getReasonWhy)
         .map { case (initial, migrated) =>
           s"""${formatValueWithSpace(initial.toString, spacesForLib)} -> ${BLUE}${migrated.toString}$RESET ${reasonWhy(
-            migrated
-          )}"""
+              migrated
+            )}"""
         }
         .mkString("\n")
 
