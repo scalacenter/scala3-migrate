@@ -178,7 +178,7 @@ object Scala3Migrate {
     val scalaSettings                          = sanitized.map(ScalacOption.from)
     val notParsed: Seq[ScalacOption.NotParsed] = scalaSettings.collect { case x: ScalacOption.NotParsed => x }
     val scala3cOption: Seq[Scala3cOption] = scalaSettings.collect {
-      case x: ScalacOption.Specific3 => x;
+      case x: ScalacOption.Specific3 => x
       case x: ScalacOption.Shared    => x
     }
     val pluginsSettings: Seq[PluginSpecific] = scalaSettings.collect { case x: ScalacOption.PluginSpecific => x }

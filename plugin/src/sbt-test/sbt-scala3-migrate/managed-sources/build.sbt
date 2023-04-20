@@ -1,7 +1,7 @@
 lazy val `managed-sources` = project
   .in(file("."))
   .settings(
-    scalaVersion := "2.13.8",
+    scalaVersion := "2.13.10",
     Compile / sourceGenerators += Def.task {
       val file = (Compile / sourceManaged).value / "buildinfo" / "BuildInfo.scala"
       val buildInfo = s"""|
@@ -15,7 +15,7 @@ lazy val `managed-sources` = project
       Seq(file)
     },
     TaskKey[Unit]("checkMigration") := {
-      assert(scalaVersion.value == "3.1.1", s"Wrong scala version ${scalaVersion.value}. Expected 3.1.1")
+      assert(scalaVersion.value == "3.2.2", s"Wrong scala version ${scalaVersion.value}. Expected 3.2.2")
       (Compile / compile).value
     }
   )

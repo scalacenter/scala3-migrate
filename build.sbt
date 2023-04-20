@@ -44,7 +44,7 @@ lazy val migrate = project
   .settings(addBuildInfoToConfig(Test))
   .settings(
     moduleName := "migrate-core",
-    scalacOptions ++= Seq("-Wunused", "-P:semanticdb:synthetics:on", "-deprecation"),
+    scalacOptions ++= Seq("-Wunused", "-P:semanticdb:synthetics:on", "-deprecation", "-feature"),
     libraryDependencies ++= Seq(
       "org.scala-lang"   % "scala-compiler"      % scalaVersion.value,
       "ch.epfl.scala"    % "scalafix-interfaces" % V.scalafix,
@@ -204,19 +204,19 @@ addCommandAlias("compileScalafixOutputinScala3", s"""set `scalafix-output`/scala
 def isCI = System.getenv("CI") != null
 
 lazy val V = new {
-  val scala213              = "2.13.8"
+  val scala213              = "2.13.10"
   val scala213BinaryVersion = "2.13"
-  val scala212              = "2.12.15"
-  val scalatest             = "3.2.11"
-  val scala3                = "3.1.1"
-  val scalafix              = "0.9.34"
+  val scala212              = "2.12.17"
+  val scalatest             = "3.2.15"
+  val scala3                = "3.2.2"
+  val scalafix              = "0.10.4"
   val scribe                = "3.8.2"
-  val organizeImports       = "0.4.3"
+  val organizeImports       = "0.5.0"
   val catsCore              = "2.7.0"
   val kindProjector         = "0.13.2"
   val coursierApi           = "2.0.16"
   val coursierInterface     = "1.0.7"
-  val scalameta             = "4.4.32"
+  val scalameta             = "4.7.6"
   val localSnapshotVersion  = "0.5.0-SNAPSHOT"
   val zio                   = "1.0.14"
 }

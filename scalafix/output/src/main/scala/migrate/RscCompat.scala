@@ -12,7 +12,7 @@ object RscCompat {
   }
 
   class Patterns {
-    val List() = List.apply[Nothing]()
+    val List() = List()
     val List(x2) = List.apply[Int](2)
     val List(x3, y3) = List.apply[Int](3, 3)
     val x4, y4 = 4

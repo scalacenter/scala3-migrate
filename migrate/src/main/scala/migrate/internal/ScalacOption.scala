@@ -1,6 +1,6 @@
 package migrate.internal
 
-import scala.tools.cmd.CommandLineParser
+import scala.cmd.CommandLineParser
 
 trait ScalacOption extends Product with Serializable {
   def toScala3: Option[Scala3cOption] = this match {
@@ -55,6 +55,7 @@ object ScalacOption {
       case s"-Xprompt"                         => Shared.Xprompt
       case s"-Xverify" | "-Xverify-signatures" => Renamed.Xverify
       case s"-Vprint-types" | "-Xprint-types"  => Renamed.VprintTypes
+      case s"-Xmacro-settings:$settings"       => Shared.XmacroSettings(settings)
 
       // Private settings
       case "-Y"                                     => Shared.YHelp
@@ -228,6 +229,7 @@ object ScalacOption {
       case _ if s.startsWith("-semanticdb-target")          => Specific3.Scala3Specific(s)
       case _ if s.startsWith("-siteroot")                   => Specific3.Scala3Specific(s)
       case _ if s.startsWith("-sourceroot")                 => Specific3.Scala3Specific(s)
+      case _ if s.startsWith("-coverage-out")               => Specific3.Scala3Specific(s)
       case _ if s.startsWith("-Xignore-scala2-macros")      => Specific3.Scala3Specific(s)
       case _ if s.startsWith("-Ximport-suggestion-timeout") => Specific3.Scala3Specific(s)
       case _ if s.startsWith("-Xmax-inlined-trees")         => Specific3.Scala3Specific(s)
@@ -237,6 +239,7 @@ object ScalacOption {
       case _ if s.startsWith("-Xprint-inline")              => Specific3.Scala3Specific(s)
       case _ if s.startsWith("-Xprint-suspension")          => Specific3.Scala3Specific(s)
       case _ if s.startsWith("-Xrepl-disable-display")      => Specific3.Scala3Specific(s)
+      case _ if s.startsWith("-Ximplicit-search-limit")     => Specific3.Scala3Specific(s)
       case _ if s.startsWith("-Xwiki-syntax")               => Specific3.Scala3Specific(s)
       case _ if s.startsWith("-Ycheck-all-patmat")          => Specific3.Scala3Specific(s)
       case _ if s.startsWith("-Ycheck-mods")                => Specific3.Scala3Specific(s)
@@ -274,6 +277,9 @@ object ScalacOption {
       case _ if s.startsWith("-Yprint-pos-syms")            => Specific3.Scala3Specific(s)
       case _ if s.startsWith("-Yprint-syms")                => Specific3.Scala3Specific(s)
       case _ if s.startsWith("-Yrequire-targetName")        => Specific3.Scala3Specific(s)
+      case _ if s.startsWith("-Yrecheck-test")              => Specific3.Scala3Specific(s)
+      case _ if s.startsWith("-Ycc-debug")                  => Specific3.Scala3Specific(s)
+      case _ if s.startsWith("-Ycc-no-abbrev")              => Specific3.Scala3Specific(s)
       case _ if s.startsWith("-Yretain-trees")              => Specific3.Scala3Specific(s)
       case _ if s.startsWith("-Yscala2-unpickler")          => Specific3.Scala3Specific(s)
       case _ if s.startsWith("-Yshow-print-errors")         => Specific3.Scala3Specific(s)
@@ -354,11 +360,12 @@ object ScalacOption {
     case object Verbose                        extends Shared("-verbose")
     case object Version                        extends Shared("-version")
     // advanced settings
-    case object XHelp                 extends Shared("-X")
-    case object Xmigration            extends Shared("-Xmigration")
-    case object XmixinForceForwarders extends Shared("-Xmixin-force-forwarders")
-    case object XnoForwarders         extends Shared("-Xno-forwarders")
-    case object Xprompt               extends Shared("-Xprompt")
+    case object XHelp                           extends Shared("-X")
+    case object Xmigration                      extends Shared("-Xmigration")
+    case object XmixinForceForwarders           extends Shared("-Xmixin-force-forwarders")
+    case object XnoForwarders                   extends Shared("-Xno-forwarders")
+    case object Xprompt                         extends Shared("-Xprompt")
+    case class XmacroSettings(settings: String) extends Shared(s"-Xmacro-settings:$settings")
     // Private settings
     case object YHelp                                 extends Shared("-Y")
     case class Ycheck(phases: String)                 extends Shared(s"-Ycheck:$phases")
