@@ -22,7 +22,7 @@ case class AbsolutePath private (value: String) {
 }
 
 object AbsolutePath {
-  def from(value: String): Try[AbsolutePath] = Try(AbsolutePath(value))
+  def from(value: String): Try[AbsolutePath] = Try(AbsolutePath(Paths.get(value).toString))
   def from(path: Path): Try[AbsolutePath]    = Try(AbsolutePath(path.toString))
   def from(file: File): AbsolutePath         = AbsolutePath(file.toString)
 }
