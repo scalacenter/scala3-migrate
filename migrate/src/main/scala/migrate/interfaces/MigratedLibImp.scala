@@ -24,7 +24,7 @@ object MigratedLibImp {
         extends Reason("Scala 2 compiler plugins are not supported in scala 3. You need to find an alternative.")
     case class Scala3LibAvailable(otherRevisions: Seq[Revision])
         extends Reason(
-          if (otherRevisions.nonEmpty) s"Other versions are avaialble for Scala 3: ${printRevisions(otherRevisions)}"
+          if (otherRevisions.nonEmpty) s"Other versions are available for Scala 3: ${printRevisions(otherRevisions)}"
           else ""
         )
     case object JavaLibrary    extends Reason("Java libraries are compatible.")
