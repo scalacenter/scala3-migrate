@@ -52,7 +52,7 @@ private[migrate] object SyntaxMigration {
   private def welcome(projectId: String, configs: Seq[String]): String =
     s"""|
         |${BOLD}We are going to fix some syntax incompatibilities in $projectId / ${configs
-      .mkString("[", ", ", "]")}${RESET}
+         .mkString("[", ", ", "]")}${RESET}
         |
         |""".stripMargin
 
