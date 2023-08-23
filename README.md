@@ -25,7 +25,7 @@ It proposes an incremental approach that can be described as follows:
 # Requirements 
 - sbt 1.5 or higher
 - java 8 or 11
-- scala 2.13, preferred 2.13.5
+- scala 2.13, preferred 2.13.11
 
 # Installation
 ```
@@ -227,7 +227,7 @@ This command goal is to find the necessary types to add in order to make you cod
 
 # What to do next ?
 You can start again with another module `MODULE2`. If `MODULE2` depends on the last module migrated, you need
-either to add `-Ytasty-reader` to `MODULE2` scalacOptions, or `reload` or `set MODULE-MIGRATED/scalaVersion := "2.13.5"`
+either to add `-Ytasty-reader` to `MODULE2` scalacOptions, or `reload` or `set MODULE-MIGRATED/scalaVersion := "2.13.11"`
 
 Once you're done, you can remove `scala3-migrate` from your plugins.
 
