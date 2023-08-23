@@ -1,7 +1,5 @@
 package migrate.internal
 
-import scala.tools.cmd.CommandLineParser
-
 trait ScalacOption extends Product with Serializable {
   def toScala3: Option[Scala3cOption] = this match {
     case opt: Scala3cOption => Some(opt)
