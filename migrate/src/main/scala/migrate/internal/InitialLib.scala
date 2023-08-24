@@ -6,7 +6,9 @@ import migrate.interfaces.MigratedLibImp
 import migrate.interfaces.MigratedLibImp._
 import migrate.internal.InitialLib.macroLibs
 import migrate.internal.MigratedLib._
-import migrate.internal.ScalacOption.Specific3
+import migrate.internal.ScalacOption.CoverageOut
+import migrate.internal.ScalacOption.KindProjector
+import migrate.internal.ScalacOption.SemanticDB
 import migrate.utils.CoursierHelper
 import migrate.utils.ScalaExtensions._
 
@@ -152,8 +154,9 @@ object InitialLib {
 
   val compilerPluginToScalacOption: Map[(Organization, Name), Scala3cOption] =
     Map(
-      (Organization("org.typelevel"), Name("kind-projector"))    -> Specific3.KindProjector,
-      (Organization("org.scalameta"), Name("semanticdb-scalac")) -> Specific3.SemanticDB
+      (Organization("org.typelevel"), Name("kind-projector"))          -> KindProjector,
+      (Organization("org.scalameta"), Name("semanticdb-scalac"))       -> SemanticDB,
+      (Organization("org.scoverage"), Name("scalac-scoverage-plugin")) -> CoverageOut(":.")
     )
 
   val macroLibs: Set[(Organization, Name)] =

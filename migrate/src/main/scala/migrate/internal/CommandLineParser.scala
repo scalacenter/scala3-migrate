@@ -19,7 +19,7 @@ import scala.annotation.tailrec
  *
  * Copied from scala/scala
  */
-private object CommandLineParser {
+private[migrate] object CommandLineParser {
   final private val DQ = '"'
   final private val SQ = '\''
 
