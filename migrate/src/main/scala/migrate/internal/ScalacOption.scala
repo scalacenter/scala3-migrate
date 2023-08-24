@@ -346,13 +346,13 @@ object ScalacOption {
     val tokens = CommandLineParser.tokenize(line) // could throw an exception
 
     @tailrec
-    def loop(args: Seq[String], res: Seq[String]): Seq[String] =
+    def loop(args: List[String], res: List[String]): List[String] =
       args match {
-        case Nil => res
+        case Nil => res.reverse
         case first :: second :: tail if first.startsWith("-") && !second.startsWith("-") =>
-          loop(tail, res :+ (s"$first $second"))
+          loop(tail, (s"$first $second") :: res)
 
-        case first :: tail => loop(tail, res :+ first)
+        case first :: tail => loop(tail, first :: res)
       }
     loop(tokens, Nil)
   }
