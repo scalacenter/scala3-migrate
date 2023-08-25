@@ -13,13 +13,13 @@ lazy val `library-dependencies` = project
       else Seq(compilerPlugin("org.typelevel" % "kind-projector" % V.kindProjector cross CrossVersion.full))
     },
     TaskKey[Unit]("checkMigration") := {
-      assert(scalaVersion.value == "3.1.1", s"Wrong scala version ${scalaVersion.value}. Expected 3.1.1")
+      assert(scalaVersion.value == "3.3.0", s"Wrong scala version ${scalaVersion.value}. Expected 3.3.0")
       (Compile / compile).value
     }
   )
 
 lazy val V = new {
-  val scala213      = "2.13.8"
+  val scala213      = "2.13.11"
   val catsCore      = "2.7.0"
   val kindProjector = "0.13.2"
 }
