@@ -82,7 +82,7 @@ class MigrateLibsSuite extends AnyFunSuiteLike {
     assert(!res.isCompatibleWithScala3)
   }
   test("filtered libs") {
-    val scalaLib    = InitialLib.from("org.scala-lang:scala-library:2.13.5", CrossVersion.Disabled, None).get
+    val scalaLib    = InitialLib.from("org.scala-lang:scala-library:2.13.11", CrossVersion.Disabled, None).get
     val scalajs     = InitialLib.from("org.scala-js:scalajs-compiler:1.5.0", CrossVersion.Disabled, None).get
     val migratedLib = Scala3Migrate.migrateLibs(Seq(scalaLib, scalajs)).allLibs
     assert(migratedLib.isEmpty)

@@ -7,11 +7,11 @@ import java.io.FileWriter
 import scala.meta.XtensionTokenizeInputLike
 import scala.meta.io.AbsolutePath
 
-import org.scalatest.FunSuiteLike
+import org.scalatest.funsuite.AnyFunSuiteLike
 import scalafix.internal.patch.PatchInternals
 import scalafix.testkit._
 
-class RuleSuite extends AbstractSemanticRuleSuite with FunSuiteLike {
+class RuleSuite extends AbstractSemanticRuleSuite with AnyFunSuiteLike {
   val (passing, failing) = testsToRun.partition(!_.path.testName.contains("_fails"))
   passing.foreach(runOn)
 //  runSpecificTests("Cats5")
