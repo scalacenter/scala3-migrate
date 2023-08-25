@@ -10,7 +10,6 @@ import migrate.interfaces.Lib
 import migrate.interfaces.MigratedLibsImpl
 import migrate.interfaces.MigratedScalacOptions
 import migrate.internal.ScalaMigrateLogger
-import migrate.internal.ScalacOption.PluginSpecific
 import migrate.internal._
 import migrate.utils.FileUtils
 import migrate.utils.ScalaExtensions._
@@ -174,16 +173,16 @@ class Scala3Migrate(scalafixSrv: ScalafixService) {
 
 object Scala3Migrate {
   def migrateScalacOptions(scalacOptions: Seq[String]): MigratedScalacOptions = {
-    val sanitized                              = ScalacOption.sanitizeScalacOption(scalacOptions)
-    val scalaSettings                          = sanitized.map(ScalacOption.from)
-    val notParsed: Seq[ScalacOption.NotParsed] = scalaSettings.collect { case x: ScalacOption.NotParsed => x }
-    val scala3cOption: Seq[Scala3cOption] = scalaSettings.collect {
-      case x: ScalacOption.Specific3 => x;
+    val sanitized     = ScalacOption.sanitize(scalacOptions)
+    val scalaSettings = sanitized.map(ScalacOption.from)
+    val notParsed     = scalaSettings.collect { case x: ScalacOption.NotParsed => x }
+    val scala3cOption = scalaSettings.collect {
+      case x: ScalacOption.Specific3 => x
       case x: ScalacOption.Shared    => x
     }
-    val pluginsSettings: Seq[PluginSpecific] = scalaSettings.collect { case x: ScalacOption.PluginSpecific => x }
-    val renamed                              = scalaSettings.collect { case x: ScalacOption.Renamed => x }
-    val specific2                            = scalaSettings.collect { case x: ScalacOption.Specific2 => x }
+    val pluginsSettings = scalaSettings.collect { case x: ScalacOption.PluginSpecific => x }
+    val renamed         = scalaSettings.collect { case x: ScalacOption.Renamed => x }
+    val specific2       = scalaSettings.collect { case x: ScalacOption.Specific2 => x }
     MigratedScalacOptions(notParsed, specific2, scala3cOption, renamed, pluginsSettings)
   }
 

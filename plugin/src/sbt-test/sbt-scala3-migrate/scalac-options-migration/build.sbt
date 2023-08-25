@@ -3,7 +3,7 @@ import migrate.ScalaMigratePlugin
 lazy val `scalac-options-migration` = project
   .in(file("."))
   .settings(
-    scalaVersion := "2.13.8",
+    scalaVersion := "2.13.11",
     scalacOptions ++= Seq(
       "-encoding",
       "UTF-8",

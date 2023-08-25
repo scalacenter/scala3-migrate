@@ -6,7 +6,9 @@ import migrate.interfaces.MigratedLibImp
 import migrate.interfaces.MigratedLibImp._
 import migrate.internal.InitialLib.macroLibs
 import migrate.internal.MigratedLib._
-import migrate.internal.ScalacOption.Specific3
+import migrate.internal.ScalacOption.CoverageOut
+import migrate.internal.ScalacOption.KindProjector
+import migrate.internal.ScalacOption.SemanticDB
 import migrate.utils.CoursierHelper
 import migrate.utils.ScalaExtensions._
 
@@ -152,8 +154,9 @@ object InitialLib {
 
   val compilerPluginToScalacOption: Map[(Organization, Name), Scala3cOption] =
     Map(
-      (Organization("org.typelevel"), Name("kind-projector"))    -> Specific3.KindProjector,
-      (Organization("org.scalameta"), Name("semanticdb-scalac")) -> Specific3.SemanticDB
+      (Organization("org.typelevel"), Name("kind-projector"))          -> KindProjector,
+      (Organization("org.scalameta"), Name("semanticdb-scalac"))       -> SemanticDB,
+      (Organization("org.scoverage"), Name("scalac-scoverage-plugin")) -> CoverageOut(":.")
     )
 
   val macroLibs: Set[(Organization, Name)] =
@@ -162,34 +165,21 @@ object InitialLib {
     Set(
       Organization("com.softwaremill.scalamacrodebug")            -> Name("macros"),
       Organization("com.github.ajozwik")                          -> Name("macro"),
-      Organization("io.argonaut")                                 -> Name("argonaut"),
       Organization("eu.timepit")                                  -> Name("refined"),
       Organization("org.backuity")                                -> Name("ansi-interpolator"),
-      Organization("org.typelevel")                               -> Name("log4cats-slf4j"),
-      Organization("org.typelevel")                               -> Name("log4cats-core"),
       Organization("com.github.dmytromitin")                      -> Name("auxify-macros"),
       Organization("biz.enef")                                    -> Name("slogging"),
       Organization("io.getquill")                                 -> Name("quill-jdbc"),
-      Organization("com.phylage")                                 -> Name("refuel-container"),
-      Organization("com.typesafe.scala-logging")                  -> Name("scala-logging"),
-      Organization("com.lihaoyi")                                 -> Name("macro"),
       Organization("com.lihaoyi")                                 -> Name("fastparse"),
       Organization("com.github.kmizu")                            -> Name("macro_peg"),
       Organization("com.michaelpollmeier")                        -> Name("macros"),
       Organization("me.lyh")                                      -> Name("parquet-avro-extra"),
       Organization("org.spire-math")                              -> Name("imp"),
-      Organization("com.typesafe.play")                           -> Name("play-json"),
       Organization("com.github.plokhotnyuk.expression-evaluator") -> Name("expression-evaluator"),
       Organization("com.github.plokhotnyuk.fsi")                  -> Name("fsi-macros"),
-      Organization("com.propensive")                              -> Name("magnolia"),
-      Organization("org.wvlet.airframe")                          -> Name("airframe"),
       Organization("com.wix")                                     -> Name("accord-api"),
-      Organization("org.typelevel")                               -> Name("spire"),
       Organization("org.typelevel")                               -> Name("claimant"),
-      Organization("com.softwaremill.macwire")                    -> Name("util"),
       Organization("com.typesafe.slick")                          -> Name("slick"),
-      Organization("io.bullet")                                   -> Name("borer-core"),
-      Organization("org.parboiled")                               -> Name("parboiled"),
       Organization("com.github.pureconfig")                       -> Name("pureconfig"),
       Organization("com.geirsson")                                -> Name("metaconfig-typesafe-config"),
       Organization("com.thoughtworks.each")                       -> Name("each"),
