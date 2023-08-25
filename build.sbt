@@ -206,7 +206,7 @@ def isCI = System.getenv("CI") != null
 lazy val V = new {
   val scala213              = "2.13.11"
   val scala213BinaryVersion = "2.13"
-  val scala212              = "2.12.15"
+  val scala212              = "2.12.18"
   val scalatest             = "3.2.13"
   val scala3                = "3.3.0"
   val scalafix              = "0.11.0"
