@@ -1,11 +1,11 @@
 package migrate
 
+import scala.jdk.OptionConverters._
 import scala.tools.nsc.io.File
 
 import migrate.Values._
 import migrate.internal.AbsolutePath
 import migrate.utils.FileUtils._
-import migrate.utils.ScalaExtensions._
 import org.scalatest.funsuite.AnyFunSuiteLike
 import scalafix.interfaces.ScalafixEvaluation
 import scalafix.testkit.DiffAssertions
@@ -32,6 +32,6 @@ class MigrateSyntaxSuite extends AnyFunSuiteLike with DiffAssertions {
   def previewSyntaxFix(path: AbsolutePath, evaluation: ScalafixEvaluation): Option[String] =
     evaluation.getFileEvaluations.toList
       .find(_.getEvaluatedFile == path.toNio)
-      .flatMap(_.previewPatches().asScala)
+      .flatMap(_.previewPatches.toScala)
 
 }

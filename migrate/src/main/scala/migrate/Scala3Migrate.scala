@@ -6,8 +6,6 @@ import scala.util.Try
 
 import compiler.interfaces.CompilationUnit
 import compiler.interfaces.Scala3Compiler
-import migrate.interfaces.Lib
-import migrate.interfaces.MigratedLibsImpl
 import migrate.interfaces.MigratedScalacOptions
 import migrate.internal.ScalaMigrateLogger
 import migrate.internal._
@@ -184,17 +182,6 @@ object Scala3Migrate {
     val renamed         = scalaSettings.collect { case x: ScalacOption.Renamed => x }
     val specific2       = scalaSettings.collect { case x: ScalacOption.Specific2 => x }
     MigratedScalacOptions(notParsed, specific2, scala3cOption, renamed, pluginsSettings)
-  }
-
-  def migrateLibs(libs: Seq[Lib]): MigratedLibsImpl = {
-    val libsCompatibleWith213 = libs.map(l => l -> InitialLib.from(l)).toMap
-    libsCompatibleWith213.collect { case (lib, None) =>
-      scribe.info(s"Not able to parse the crossVersion of ${lib}: ${lib.getCrossVersion}")
-    }
-    val allParsedLibs = libsCompatibleWith213.values.flatten.toSeq
-    val filteredLibs = allParsedLibs.filterNot(l =>
-      InitialLib.filteredLibs.exists { case (org, name) => org == l.organization && name == l.name })
-    MigratedLibsImpl.from(filteredLibs.map(lib => (lib, lib.toCompatible)).toMap)
   }
 
 }

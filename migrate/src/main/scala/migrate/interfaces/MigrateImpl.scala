@@ -5,13 +5,19 @@ import java.{util => jutil}
 
 import scala.jdk.CollectionConverters._
 
+import migrate.LibraryMigration
 import migrate.Scala3Migrate
+import migrate.interfaces.Lib
+import migrate.interfaces.Migrate
+import migrate.interfaces.MigratedLibs
+import migrate.interfaces.ScalacOptions
 import migrate.internal.AbsolutePath
 import migrate.internal.Classpath
+import migrate.internal.InitialLib
 import migrate.utils.ScalaExtensions._
 import migrate.utils.ScalafixService
 
-final class MigrateImpl() extends Migrate {
+final class MigrateImpl extends Migrate {
 
   override def migrate(
     unmanagedSources: jutil.List[Path],
@@ -51,8 +57,8 @@ final class MigrateImpl() extends Migrate {
   }
 
   override def migrateLibs(libs: jutil.List[Lib]): MigratedLibs = {
-    val initialLibs = libs.asScala.toList
-    Scala3Migrate.migrateLibs(initialLibs)
+    val initialLibs = libs.asScala.map(InitialLib.apply).toSeq
+    LibraryMigration.migrateLibs(initialLibs)
   }
 
   override def migrateSyntax(

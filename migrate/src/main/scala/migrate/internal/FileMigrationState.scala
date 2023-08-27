@@ -1,5 +1,6 @@
 package migrate.internal
 
+import scala.jdk.OptionConverters._
 import scala.util.Try
 
 import compiler.interfaces.CompilationUnit
@@ -20,10 +21,14 @@ sealed trait FileMigrationState {
       .map { content =>
         new CompilationUnit(source.value, content)
       }
-      .asScala
-      .toTry(new ScalafixException(s"""Cannot apply patch on file $source because: 
-                                      |${evaluation.getErrorMessage.asScala
-        .getOrElse("Unexpected error")}""".stripMargin))
+      .toScala
+      .toTry {
+        val msg =
+          s"""|Cannot apply patch on file $source because:
+              |${evaluation.getErrorMessage.toScala.getOrElse("Unexpected error")}
+              |""".stripMargin
+        new ScalafixException(msg)
+      }
 
   def previewPatches(patches: Seq[ScalafixPatch]): Try[CompilationUnit] =
     evaluation
@@ -31,11 +36,14 @@ sealed trait FileMigrationState {
       .map { content =>
         new CompilationUnit(source.value, content)
       }
-      .asScala
-      .toTry(new ScalafixException(s"""Cannot apply patch on file $source because:
-                                      |${evaluation.getErrorMessage.asScala
-        .getOrElse("Unexpected error")}""".stripMargin))
-
+      .toScala
+      .toTry {
+        val msg =
+          s"""|Cannot apply patch on file $source because:
+              |${evaluation.getErrorMessage.toScala.getOrElse("Unexpected error")}
+              |""".stripMargin
+        new ScalafixException(msg)
+      }
 }
 
 object FileMigrationState {
