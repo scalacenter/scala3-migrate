@@ -1,13 +1,13 @@
 package migrate.utils
 
 import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
 import scala.util.Try
 
 import buildinfo.BuildInfo
 import coursier._
 import migrate.internal.AbsolutePath
 import migrate.internal.Classpath
-import migrate.utils.ScalaExtensions.OptionalExtension
 import scalafix.interfaces.Scalafix
 import scalafix.interfaces.ScalafixEvaluation
 
@@ -33,19 +33,19 @@ final case class ScalafixService(
       filesEvaluated.foreach { oneFile =>
         val absPath = AbsolutePath.from(oneFile.getEvaluatedFile).get
         if (oneFile.isSuccessful) {
-          oneFile.previewPatchesAsUnifiedDiff().asScala match {
+          oneFile.previewPatchesAsUnifiedDiff.toScala match {
             case None => scribe.debug(s"Nothing to fix in $absPath)")
             case Some(_) =>
               oneFile.applyPatches()
               scribe.info(s"Syntax fixed for $absPath)")
           }
         } else {
-          val errorMsg = oneFile.getErrorMessage.asScala.getOrElse("Unknown Error")
+          val errorMsg = oneFile.getErrorMessage.toScala.getOrElse("Unknown Error")
           scribe.info(s"Failed to run scalafix with ${fixSyntaxRules.mkString(", ")} on $absPath because $errorMsg")
         }
       }
     } else {
-      val errorMsg = eval.getErrorMessage.asScala.getOrElse("Unknown Error")
+      val errorMsg = eval.getErrorMessage.toScala.getOrElse("Unknown Error")
       scribe.info(s"Failed to run scalafix with ${fixSyntaxRules.mkString(", ")} because $errorMsg")
 
     }
