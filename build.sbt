@@ -7,11 +7,10 @@ inThisBuild(
     semanticdbEnabled          := true,
     semanticdbVersion          := V.scalameta,
     scalafixScalaBinaryVersion := V.scala213BinaryVersion,
-    scalafixDependencies ++= List("com.github.liancheng" %% "organize-imports" % V.organizeImports),
-    organization := "ch.epfl.scala",
-    homepage     := Some(url("https://github.com/scalacenter/scala3-migrate")),
-    licenses     := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
-    developers   := Developers.list,
+    organization               := "ch.epfl.scala",
+    homepage                   := Some(url("https://github.com/scalacenter/scala3-migrate")),
+    licenses                   := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+    developers                 := Developers.list,
     version ~= { dynVer =>
       if (isCI) dynVer
       else V.localSnapshotVersion // only for local publishing
