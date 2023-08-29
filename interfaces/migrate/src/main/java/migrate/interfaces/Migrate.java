@@ -37,20 +37,21 @@ public interface Migrate {
 
     // Todo: Maybe using ServiceLoader could simplify this code a bit:
     // https://www.baeldung.com/java-spi
-    static Migrate fetchAndClassloadInstance(String migrateVersion, String scalaVersion) throws Exception {
+    static Migrate fetchAndClassloadInstance(String migrateVersion, String scalaVersion, Logger logger) throws Exception {
         List<URL> jars = getJars(migrateVersion, scalaVersion);
 
         ClassLoader parent = new MigrateClassloader(Migrate.class.getClassLoader());
         URLClassLoader classLoader = new URLClassLoader(jars.stream().toArray(URL[]::new), parent);
 
-        return classloadInstance(classLoader);
+        return classloadInstance(classLoader, logger);
     }
 
-    static Migrate classloadInstance(URLClassLoader classLoader) throws Exception {
+    static Migrate classloadInstance(URLClassLoader classLoader, Logger logger) throws Exception {
+        Class<?> loggerCls = classLoader.loadClass("migrate.interfaces.Logger");
         Class<?> cls = classLoader.loadClass("migrate.interfaces.MigrateImpl");
-        Constructor<?> ctor = cls.getDeclaredConstructor();
+        Constructor<?> ctor = cls.getDeclaredConstructor(loggerCls);
         ctor.setAccessible(true);
-        return (Migrate) ctor.newInstance();
+        return (Migrate) ctor.newInstance(logger);
     }
 
     // put all needed dependecies here.

@@ -39,7 +39,11 @@ object ScalaMigratePlugin extends AutoPlugin {
   private[migrate] val migrateVersion          = BuildInfo.version
   private[migrate] val scala3Version           = BuildInfo.scala3Version
   private[migrate] val migrateScalametaVersion = BuildInfo.scalametaVersion
-  private[migrate] val migrateAPI              = Migrate.fetchAndClassloadInstance(migrateVersion, scalaBinaryVersion)
+
+  private[migrate] def getMigrateInstance(logger: Logger) = {
+    val migrateLogger = new ScalaMigrateLogger(logger)
+    Migrate.fetchAndClassloadInstance(migrateVersion, scalaBinaryVersion, migrateLogger)
+  }
 
   private[migrate] val inputsStore: mutable.Map[Scope, Scala2Inputs] = mutable.Map()
 

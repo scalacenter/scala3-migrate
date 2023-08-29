@@ -1,7 +1,7 @@
 package migrate
 
 import migrate.interfaces.CompilationException
-import ScalaMigratePlugin.{Keys, inputsStore, migrateAPI, scala3Version}
+import ScalaMigratePlugin.{Keys, inputsStore, scala3Version}
 import migrate.TypeInferenceMigration.{errorMessage, successMessage}
 import sbt.Keys._
 import sbt._
@@ -41,10 +41,11 @@ private[migrate] object TypeInferenceMigration {
       val scala3Inputs = (config / Keys.scala3Inputs).value
       val scope        = (projectRef / config / Keys.scala2Inputs).scope
       val scala2Inputs = inputsStore.getOrElse(scope, sys.error("no input found"))
+
       if (scala2Inputs.unmanagedSources.nonEmpty) {
-        if (!Files.exists(scala3Inputs.classDirectory))
-          Files.createDirectory(scala3Inputs.classDirectory)
+        if (!Files.exists(scala3Inputs.classDirectory)) Files.createDirectory(scala3Inputs.classDirectory)
         Try {
+          val migrateAPI = ScalaMigratePlugin.getMigrateInstance(logger)
           migrateAPI.migrate(
             scala2Inputs.unmanagedSources.asJava,
             scala2Inputs.managedSources.asJava,

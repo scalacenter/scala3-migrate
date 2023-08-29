@@ -2,7 +2,6 @@ package migrate
 
 import migrate.ScalaMigratePlugin.Keys._
 import migrate.ScalaMigratePlugin.scala3Version
-import ScalaMigratePlugin.migrateAPI
 
 import sbt.Keys._
 import sbt._
@@ -27,7 +26,8 @@ private[migrate] object SyntaxMigration {
       val log             = streams.value.log
       val _               = configs.map(_ / compile).join.value
       val allScala2Inputs = configs.map(_ / scala2Inputs).join.value
-
+      
+      val migrateAPI = ScalaMigratePlugin.getMigrateInstance(log)
       for {
         (scala2Inputs, config) <- allScala2Inputs.zip(configs)
         if scala2Inputs.unmanagedSources.nonEmpty

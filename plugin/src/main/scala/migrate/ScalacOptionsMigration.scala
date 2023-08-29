@@ -4,7 +4,6 @@ import sbt._
 import sbt.internal.util.ManagedLogger
 
 import ScalaMigratePlugin.Keys._
-import ScalaMigratePlugin.migrateAPI
 import Messages._
 
 import scala.collection.JavaConverters._
@@ -23,7 +22,8 @@ private[migrate] object ScalacOptionsMigration {
 
     logger.info(startingMessage(projectId))
 
-    val migrated = migrateAPI.migrateScalacOption(allScalacOptions.asJava)
+    val migrateAPI = ScalaMigratePlugin.getMigrateInstance(logger)
+    val migrated   = migrateAPI.migrateScalacOption(allScalacOptions.asJava)
 
     if (migrated.getValid.nonEmpty) {
       logger.info(validMessage(migrated.getValid))

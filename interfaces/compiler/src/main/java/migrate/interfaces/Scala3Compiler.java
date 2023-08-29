@@ -1,4 +1,4 @@
-package compiler.interfaces;
+package migrate.interfaces;
 
 import dotty.tools.dotc.Compiler;
 import dotty.tools.dotc.Run;
@@ -14,6 +14,7 @@ import scala.io.Codec;
 import scala.io.Codec$;
 import scala.runtime.AbstractFunction1;
 
+import migrate.interfaces.Logger;
 import migrate.interfaces.CompilationException;
 
 import java.util.HashSet;

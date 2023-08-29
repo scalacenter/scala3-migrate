@@ -6,6 +6,7 @@ import scala.util.Try
 
 import buildinfo.BuildInfo
 import coursier._
+import migrate.interfaces.Logger
 import migrate.internal.AbsolutePath
 import migrate.internal.Classpath
 import scalafix.interfaces.Scalafix
@@ -16,7 +17,8 @@ final case class ScalafixService(
   compilerOptions: Seq[String],
   classpath: Classpath,
   targetRootSemantic: AbsolutePath,
-  toolClasspath: Classpath
+  toolClasspath: Classpath,
+  logger: Logger
 ) {
   import ScalafixService._
   lazy val scalafixClassLoader: ClassLoader = scalafix.getClass().getClassLoader()
@@ -34,20 +36,19 @@ final case class ScalafixService(
         val absPath = AbsolutePath.from(oneFile.getEvaluatedFile).get
         if (oneFile.isSuccessful) {
           oneFile.previewPatchesAsUnifiedDiff.toScala match {
-            case None => scribe.debug(s"Nothing to fix in $absPath)")
+            case None =>
             case Some(_) =>
               oneFile.applyPatches()
-              scribe.info(s"Syntax fixed for $absPath)")
+              logger.info(s"Syntax fixed for $absPath)")
           }
         } else {
-          val errorMsg = oneFile.getErrorMessage.toScala.getOrElse("Unknown Error")
-          scribe.info(s"Failed to run scalafix with ${fixSyntaxRules.mkString(", ")} on $absPath because $errorMsg")
+          val errorMsg = oneFile.getErrorMessage.toScala.getOrElse("unknown error")
+          logger.error(s"Failed to fix syntax in ${absPath} because of $errorMsg.")
         }
       }
     } else {
-      val errorMsg = eval.getErrorMessage.toScala.getOrElse("Unknown Error")
-      scribe.info(s"Failed to run scalafix with ${fixSyntaxRules.mkString(", ")} because $errorMsg")
-
+      val errorMsg = eval.getErrorMessage.toScala.getOrElse("unknown error")
+      logger.error(s"Failed to fix syntax because of $errorMsg")
     }
 
   private def evaluate(rules: Seq[String], sources: Seq[AbsolutePath]): Try[ScalafixEvaluation] = Try {
@@ -61,7 +62,6 @@ final case class ScalafixService(
       .withToolClasspath(toolClasspath.toUrlClassLoader(scalafixClassLoader))
     args.evaluate()
   }
-
 }
 
 object ScalafixService {
@@ -72,12 +72,22 @@ object ScalafixService {
   val fixSyntaxRules: Seq[String]                     = Seq("ProcedureSyntax", "fix.scala213.Any2StringAdd", "ExplicitResultTypes")
   val addExplicitResultTypesAndImplicits: Seq[String] = Seq("MigrationRule")
 
-  def from(compilerOptions: Seq[String], classpath: Classpath, targetRootSemantic: AbsolutePath): Try[ScalafixService] =
+  def from(
+    compilerOptions: Seq[String],
+    classpath: Classpath,
+    targetRootSemantic: AbsolutePath,
+    logger: Logger): Try[ScalafixService] =
     for {
       scalafix      <- scalafix
       internalRules <- internalRules
       externalRules <- externalRules
-    } yield ScalafixService(scalafix, compilerOptions, classpath, targetRootSemantic, internalRules ++ externalRules)
+    } yield ScalafixService(
+      scalafix,
+      compilerOptions,
+      classpath,
+      targetRootSemantic,
+      internalRules ++ externalRules,
+      logger)
 
   private def getClassPathforRewriteRules(): Try[Classpath] =
     Try {

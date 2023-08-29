@@ -14,7 +14,7 @@ import migrate.internal.InitialLib
 import migrate.utils.ScalaExtensions._
 import migrate.utils.ScalafixService
 
-final class MigrateImpl extends Migrate {
+final class MigrateImpl(logger: Logger) extends Migrate {
 
   override def migrate(
     unmanagedSources: jutil.List[Path],
@@ -36,8 +36,8 @@ final class MigrateImpl extends Migrate {
       scala3Classpath          = Classpath(scala3CpAbs: _*)
       scala3ClassDirectoryAbs <- AbsolutePath.from(scala3ClassDirectory)
       configuredScalafixSrv <-
-        ScalafixService.from(scala2CompilerOptions.asScala.toList, scala2Classpath, targetRootAbs)
-      scalaMigrate = new Scala3Migrate(configuredScalafixSrv)
+        ScalafixService.from(scala2CompilerOptions.asScala.toList, scala2Classpath, targetRootAbs, logger)
+      scalaMigrate = new Scala3Migrate(configuredScalafixSrv, logger)
       _ <- scalaMigrate
              .migrate(
                unmanagedSources = unmanagedSourcesAbs,
@@ -68,8 +68,8 @@ final class MigrateImpl extends Migrate {
       scala2CpAbs         <- scala2Cp.asScala.toList.map(AbsolutePath.from).sequence
       scala2Classpath      = Classpath(scala2CpAbs: _*)
       configuredScalafixSrv <-
-        ScalafixService.from(scala2CompilerOptions.asScala.toList, scala2Classpath, targetRootAbs)
-      scalaMigrate = new Scala3Migrate(configuredScalafixSrv)
+        ScalafixService.from(scala2CompilerOptions.asScala.toList, scala2Classpath, targetRootAbs, logger)
+      scalaMigrate = new Scala3Migrate(configuredScalafixSrv, logger)
       _           <- scalaMigrate.migrateSyntax(unmanagedSourcesAbs)
     } yield ()).get
 
