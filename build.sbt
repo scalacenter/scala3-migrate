@@ -70,6 +70,7 @@ lazy val migrate = project
       fromScalacOptions("scala3CompilerOptions", output / Compile / scalacOptions),
       "scala3ClassDirectory" -> (output / Compile / compile / classDirectory).value
     ),
+    buildInfoPackage        := "migrate.buildinfo",
     Compile / buildInfoKeys := Seq("version" -> version.value, "scala3Version" -> V.scala3)
   )
   .enablePlugins(BuildInfoPlugin)

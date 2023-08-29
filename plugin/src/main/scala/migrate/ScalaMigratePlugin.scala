@@ -33,16 +33,12 @@ case class Scala2Inputs(
 )
 
 object ScalaMigratePlugin extends AutoPlugin {
-  private[migrate] val syntheticsOn            = "-P:semanticdb:synthetics:on"
-  private[migrate] val migrationOn             = "-source:3.0-migration"
-  private[migrate] val scalaBinaryVersion      = BuildInfo.scalaBinaryVersion
-  private[migrate] val migrateVersion          = BuildInfo.version
-  private[migrate] val scala3Version           = BuildInfo.scala3Version
-  private[migrate] val migrateScalametaVersion = BuildInfo.scalametaVersion
+  private[migrate] val syntheticsOn = "-P:semanticdb:synthetics:on"
+  private[migrate] val migrationOn  = "-source:3.0-migration"
 
   private[migrate] def getMigrateInstance(logger: Logger) = {
     val migrateLogger = new ScalaMigrateLogger(logger)
-    Migrate.fetchAndClassloadInstance(migrateVersion, scalaBinaryVersion, migrateLogger)
+    Migrate.fetchAndClassloadInstance(BuildInfo.version, BuildInfo.scalaBinaryVersion, migrateLogger)
   }
 
   private[migrate] val inputsStore: mutable.Map[Scope, Scala2Inputs] = mutable.Map()
@@ -81,7 +77,7 @@ object ScalaMigratePlugin extends AutoPlugin {
       val sv = scalaVersion.value
       if (sv.startsWith("2.13.")) {
         val actual = semanticdbVersion.value
-        if (actual > migrateScalametaVersion) actual else migrateScalametaVersion
+        if (actual > BuildInfo.scalametaVersion) actual else BuildInfo.scalametaVersion
       } else semanticdbVersion.value
     },
     migrationConfigs                         := migrationConfigsImpl.value,
@@ -208,7 +204,7 @@ object ScalaMigratePlugin extends AutoPlugin {
     Command(migrateCommand, migrateBrief, migrateDetailed)(idParser) { (state, projectId) =>
       val commands = List(
         s"$projectId / storeScala2Inputs",
-        setScalaVersion(projectId, scala3Version),
+        setScalaVersion(projectId, BuildInfo.scala3Version),
         StashOnFailure,                            // prepare onFailure
         s"$OnFailure $migrateFallback $projectId", // go back to Scala 2.13 in case of failure
         s"$projectId / internalMigrateTypes",

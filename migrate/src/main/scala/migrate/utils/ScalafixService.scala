@@ -4,8 +4,8 @@ import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
 import scala.util.Try
 
-import buildinfo.BuildInfo
 import coursier._
+import migrate.buildinfo.BuildInfo
 import migrate.interfaces.Logger
 import migrate.internal.AbsolutePath
 import migrate.internal.Classpath

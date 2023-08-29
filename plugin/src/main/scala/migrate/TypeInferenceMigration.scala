@@ -1,7 +1,7 @@
 package migrate
 
 import migrate.interfaces.CompilationException
-import ScalaMigratePlugin.{Keys, inputsStore, scala3Version}
+import ScalaMigratePlugin.{Keys, inputsStore}
 import migrate.TypeInferenceMigration.{errorMessage, successMessage}
 import sbt.Keys._
 import sbt._
@@ -18,8 +18,8 @@ private[migrate] object TypeInferenceMigration {
     val sv                  = scalaVersion.value
     implicit val projectId  = projectRef.project
 
-    if (sv != scala3Version)
-      sys.error(s"expecting scalaVersion to be $scala3Version")
+    if (sv != BuildInfo.scala3Version)
+      sys.error(s"Expecting scalaVersion to be ${BuildInfo.scala3Version}")
 
     val logger = streams.value.log
     logger.info(welcomeMessage(projectId, configs.map(_.id)))
@@ -71,13 +71,16 @@ private[migrate] object TypeInferenceMigration {
 
   private def welcomeMessage(projectId: String, configs: Seq[String]): String =
     s"""|
-        |${BOLD}We are going to migrate $projectId / ${configs.mkString("[", ", ", "]")} to $scala3Version${RESET}
+        |${BOLD}We are going to migrate $projectId / ${configs.mkString(
+      "[",
+      ", ",
+      "]")} to ${BuildInfo.scala3Version}${RESET}
         |
         |""".stripMargin
 
   private def successMessage(projectId: String, config: String): String =
     s"""|
-        |$projectId / $config has been successfully migrated to Scala $scala3Version
+        |$projectId / $config has been successfully migrated to Scala ${BuildInfo.scala3Version}
         |
         |""".stripMargin
 
@@ -100,8 +103,8 @@ private[migrate] object TypeInferenceMigration {
         |You can now commit the change!
         |Then you can permanently change the scalaVersion of $projectId:
         |
-        |crossScalaVersions += "$scala3Version"  // or
-        |scalaVersion := "$scala3Version"
+        |crossScalaVersions += "${BuildInfo.scala3Version}"  // or
+        |scalaVersion := "${BuildInfo.scala3Version}"
         |
         |""".stripMargin
 }

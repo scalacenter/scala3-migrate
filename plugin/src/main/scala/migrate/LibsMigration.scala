@@ -1,6 +1,5 @@
 package migrate
 
-import ScalaMigratePlugin.scala3Version
 import ScalaMigratePlugin.Keys._
 import Messages._
 import migrate.interfaces.{Lib, MigratedLib, MigratedLibs}
