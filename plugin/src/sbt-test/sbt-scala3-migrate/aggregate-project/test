@@ -1,7 +1,7 @@
-> migrate-scalacOptions aggregate-project
-> migrate-libs aggregate-project
-> migrate-syntax aggregate-project
-> migrate aggregate-project
+> migrateScalacOptions aggregate-project
+> migrateDependencies aggregate-project
+> migrateSyntax aggregate-project
+> migrateTypes aggregate-project
 
 # check aggregate-project is migrated
 > aggregate-project / checkMigration
