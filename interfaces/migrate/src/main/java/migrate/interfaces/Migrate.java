@@ -26,7 +26,7 @@ public interface Migrate {
                  List<String> scala3CompilerOptions,
                  Path scala3ClassDirectory);
     
-    ScalacOptions migrateScalacOption(List<String> scala3CompilerOptions);
+    MigratedScalacOptions migrateScalacOption(List<String> scala3CompilerOptions);
     MigratedLibs migrateLibs(List<Lib> libs);
 
     void migrateSyntax(List<Path> unmanagedSources,

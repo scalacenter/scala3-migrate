@@ -7,10 +7,7 @@ import scala.jdk.CollectionConverters._
 
 import migrate.LibraryMigration
 import migrate.Scala3Migrate
-import migrate.interfaces.Lib
-import migrate.interfaces.Migrate
-import migrate.interfaces.MigratedLibs
-import migrate.interfaces.ScalacOptions
+import migrate.ScalacOptionsMigration
 import migrate.internal.AbsolutePath
 import migrate.internal.Classpath
 import migrate.internal.InitialLib
@@ -51,10 +48,8 @@ final class MigrateImpl extends Migrate {
              )
     } yield ()).get
 
-  override def migrateScalacOption(scala3CompilerOptions: jutil.List[String]): ScalacOptions = {
-    val s = scala3CompilerOptions.asScala.toList // .mkString(" ")
-    Scala3Migrate.migrateScalacOptions(s)
-  }
+  override def migrateScalacOption(scalacOptions: jutil.List[String]): MigratedScalacOptions =
+    ScalacOptionsMigration.migrate(scalacOptions.asScala.toSeq)
 
   override def migrateLibs(libs: jutil.List[Lib]): MigratedLibs = {
     val initialLibs = libs.asScala.map(InitialLib.apply).toSeq

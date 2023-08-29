@@ -19,10 +19,10 @@ private[migrate] object LibsMigration {
     val scalaVersion        = Keys.scalaVersion.value
     val libraryDependencies = Keys.libraryDependencies.value
 
-    if (!scalaVersion.startsWith("2.13."))
+    if (!scalaVersion.startsWith("2.13.") && !scalaVersion.startsWith("3."))
       throw new MessageOnlyException(notScala213(scalaVersion, projectId))
 
-    log.info(welcomeMessage(projectId))
+    log.info(startingMessage(projectId))
 
     val migrated = migrateAPI.migrateLibs(libraryDependencies.map(LibImpl.apply).asJava)
 
@@ -59,7 +59,7 @@ private[migrate] object LibsMigration {
     log.info("\n")
   }
 
-  private def welcomeMessage(projectId: String): String =
+  private def startingMessage(projectId: String): String =
     s"""|
         |${BOLD}Starting migration of libraries and compiler plugins of project $projectId${RESET}
         |""".stripMargin
