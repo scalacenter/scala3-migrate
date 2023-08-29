@@ -1,7 +1,7 @@
-> migrate-scalacOptions managed-sources
-> migrate-libs managed-sources
-> migrate-syntax managed-sources
-> migrate managed-sources
+> migrateScalacOptions managed-sources
+> migrateDependencies managed-sources
+> migrateSyntax managed-sources
+> migrateTypes managed-sources
 
 # check scalaVersion is Scala 3 and compilation succeeds
 > managed-sources / checkMigration

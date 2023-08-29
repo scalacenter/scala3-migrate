@@ -75,8 +75,6 @@ private[migrate] object SyntaxMigration {
         |You can now commit the change!
         |Then you can run the next command:
         |
-        |migrate $projectId
-        |
-        |
+        |migrateTypes $projectId
         |""".stripMargin
 }

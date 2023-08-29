@@ -1,50 +1,57 @@
 package migrate
 
 object CommandStrings {
-  val migrateSyntaxCommand = "migrate-syntax"
+  val migrateSyntaxCommand = "migrateSyntax"
   val migrateSyntaxBrief =
-    (s"$migrateSyntaxCommand <projectId>", "Fix syntax incompatibilities for scala 3 for a specific projectId")
+    (s"$migrateSyntaxCommand <projectId>", "Fix the syntax incompatibilities for Scala 3 in a projectId")
   val migrateSyntaxDetailed =
     s"""|Usage : $migrateSyntaxCommand <projectId>
         |
-        |Fix syntax incompatibilities of the projectId.
+        |Fix the syntax incompatibilities for Scala 3 in the given project.
         |
         |""".stripMargin
 
-  val migrateCommand = "migrate"
+  val migrateCommand = "migrateTypes"
   val migrateBrief =
     (
       s"$migrateCommand <projectId>",
-      "Migrate the project to scala 3 by inferring necessary types or implicits of a specific project"
+      "Migrate the project to Scala 3 by infering necessary types and implicits"
     )
   val migrateDetailed =
     s"""|Usage : $migrateCommand <projectId>
         |
-        |Add necessary types or implicits to make the projectId compiles in scala 3.
-        |If the command succeeded, the project is compiling successfully in scala 3
+        |Add necessary types or implicits to make the project compile in Scala 3.
         |
         |""".stripMargin
 
-  val migrateScalacOptionsCommand = "migrate-scalacOptions"
+  val migrateScalacOptionsCommand = "migrateScalacOptions"
   val migrateScalacOptionsBrief =
-    (s"$migrateScalacOptionsCommand <projectId>", "Print scalacOptions that should be used for scala 3.")
+    (s"$migrateScalacOptionsCommand <projectId>", "Report the migration status of each scalac option of a project.")
   val migrateScalacOptionsDetailed =
     s"""|Usage : $migrateScalacOptionsCommand <projectId>
         |
-        |Print the migrated scalacOptions for Scala 3 so you can update you scalacOptions
-        | 
-        |
+        |$migrateScalacOptionsBrief
+        |The status of a scalac option can be:
+        |- Valid: it can be used in Scala 3
+        |- Renamed: it must be renamed
+        |- Removed: it is no longer supported
+        |- Unknown: sbt-scala3-migrate does not know this option
         |""".stripMargin
 
-  val migrateLibs      = "migrate-libs"
-  val migrateLibsBrief = (s"$migrateLibs <projectId>", "Print the new versions of libs in order to migrate to Scala 3")
+  val migrateLibs = "migrateDependencies"
+  val migrateLibsBrief = (
+    s"$migrateLibs <projectId>",
+    "Report the migration status of the library dependencies and compiler plugins of a project")
   val migrateLibsDetailed =
     s"""|Usage : $migrateLibs <projectId>
         |
-        |Coursier is used to find, for each dependency, a Scala 3 version.
-        |If the lib is not published for Scala 3 yet, versions compatible with 2.13 are reported, in case the lib does not contain macros.
-        | 
-        |
+        |$migrateLibsBrief
+        |The status of a dependency can be:
+        |- Valid: it can be used in Scala 3
+        |- Updated version: the version needs to be updated
+        |- For 3 use 2.13: it is compatible with Scala 3 using CrossVersion.for3Use2.13
+        |- Incompatible: it is incompatible with Scala 3 because it is a macro library or a compiler plugin
+        |- Unclassified: sbt-scala3-migrate does not know how to migrate this dependency
         |""".stripMargin
 
   val migrateFallback = "migrate-fallback"
