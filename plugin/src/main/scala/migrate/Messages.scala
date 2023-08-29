@@ -1,5 +1,7 @@
 package migrate
 
+import Console._
+
 private[migrate] object Messages {
   def notScala213(scalaVersion: String, projectId: String) =
     s"""
@@ -7,8 +9,8 @@ private[migrate] object Messages {
        |Error:
        |
        |Your project must be in 2.13 and not in $scalaVersion
-       |Please change the scalaVersion following this command
-       |set LocalProject("$projectId") / scalaVersion := "2.13.8"
+       |Please change the scalaVersion:
+       |${YELLOW}scalaVersion := "2.13.11"${RESET}
        |
        |
        |""".stripMargin

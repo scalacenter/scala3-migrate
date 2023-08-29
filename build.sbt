@@ -7,11 +7,10 @@ inThisBuild(
     semanticdbEnabled          := true,
     semanticdbVersion          := V.scalameta,
     scalafixScalaBinaryVersion := V.scala213BinaryVersion,
-    scalafixDependencies ++= List("com.github.liancheng" %% "organize-imports" % V.organizeImports),
-    organization := "ch.epfl.scala",
-    homepage     := Some(url("https://github.com/scalacenter/scala3-migrate")),
-    licenses     := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
-    developers   := Developers.list,
+    organization               := "ch.epfl.scala",
+    homepage                   := Some(url("https://github.com/scalacenter/scala3-migrate")),
+    licenses                   := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+    developers                 := Developers.list,
     version ~= { dynVer =>
       if (isCI) dynVer
       else V.localSnapshotVersion // only for local publishing
@@ -204,19 +203,19 @@ addCommandAlias("compileScalafixOutputinScala3", s"""set `scalafix-output`/scala
 def isCI = System.getenv("CI") != null
 
 lazy val V = new {
-  val scala213              = "2.13.8"
+  val scala213              = "2.13.11"
   val scala213BinaryVersion = "2.13"
   val scala212              = "2.12.15"
-  val scalatest             = "3.2.11"
-  val scala3                = "3.1.1"
-  val scalafix              = "0.9.34"
+  val scalatest             = "3.2.13"
+  val scala3                = "3.3.0"
+  val scalafix              = "0.11.0"
   val scribe                = "3.8.2"
   val organizeImports       = "0.4.3"
   val catsCore              = "2.7.0"
   val kindProjector         = "0.13.2"
   val coursierApi           = "2.0.16"
   val coursierInterface     = "1.0.7"
-  val scalameta             = "4.4.32"
-  val localSnapshotVersion  = "0.5.0-SNAPSHOT"
+  val scalameta             = "4.8.8"
+  val localSnapshotVersion  = "0.6.0-SNAPSHOT"
   val zio                   = "1.0.14"
 }

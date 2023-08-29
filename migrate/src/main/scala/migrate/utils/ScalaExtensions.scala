@@ -35,8 +35,4 @@ private[migrate] object ScalaExtensions {
       case None    => Failure(e)
     }
   }
-
-  implicit class OptionalExtension[A](val in: Optional[A]) extends AnyVal {
-    def asScala: Option[A] = if (in.isPresent) Some(in.get()) else None
-  }
 }

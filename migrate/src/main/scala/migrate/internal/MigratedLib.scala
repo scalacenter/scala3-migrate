@@ -1,77 +1,108 @@
 package migrate.internal
 
-import migrate.interfaces.InitialLibImp._
-import migrate.interfaces.MigratedLibImp
-import migrate.interfaces.MigratedLibImp._
+import scala.Console._
 
-object MigratedLib {
-  sealed trait CompatibleWithScala3 extends MigratedLibImp {
-    override def isCompatibleWithScala3: Boolean = true
-  }
+import migrate.interfaces.MigratedLib
+import migrate.internal.InitialLib
 
-  object CompatibleWithScala3 {
-    case class ScalacOption(value: Scala3cOption) extends CompatibleWithScala3 {
-      override def reason: Reason = Reason.ScalacOptionEquivalent
+case class ValidLibrary(
+  lib: InitialLib
+) extends MigratedLib {
+  override def formatted: String =
+    MigratedLibFormatting.formatLibrary(lib)
+}
 
-      override def toString: String = value.scala3Value
+case class UpdatedVersion(
+  lib: InitialLib,
+  versions: Seq[String]
+) extends MigratedLib {
+  override def formatted: String =
+    MigratedLibFormatting.formatLibrary(
+      lib.organization,
+      lib.name,
+      s"$YELLOW${versions.head}$RESET",
+      lib.crossVersion,
+      lib.configurations) + otherVersions
+
+  private def otherVersions: String =
+    versions.tail match {
+      case Nil                 => ""
+      case head :: Nil         => s" $YELLOW(Other version: $head)$RESET"
+      case head :: last :: Nil => s" $YELLOW(Other versions: $head, $last)$RESET"
+      case head :: tail        => s" $YELLOW(Other versions: $head, ..., ${tail.last})$RESET"
     }
+}
 
-    case class Lib(
-      organization: Organization,
-      name: Name,
-      revisions: Seq[Revision],
-      crossVersion: CrossVersion,
-      configurations: Option[String],
-      reason: Reason
-    ) extends CompatibleWithScala3 {
-      val revision = revisions.head // we only display the first revision available for Scala3. It's a choice.
-
-      override def toString: String = {
-        val configuration              = configurations.map(c => " % " + withQuote(c)).getOrElse("")
-        val orgQuoted                  = withQuote(organization.value)
-        val revisionQuoted             = withQuote(revision.value)
-        def jsPlatform(suffix: String) = if (suffix.isEmpty) "%%" else "%%%"
-        crossVersion match {
-          case CrossVersion.Disabled => s"$orgQuoted % ${withQuote(name.value)} % $revisionQuoted$configuration"
-          case CrossVersion.Binary(suffix, "") =>
-            s"$orgQuoted ${jsPlatform(suffix)} ${withQuote(name.value)} % $revisionQuoted$configuration"
-          case CrossVersion.Full(suffix, "") =>
-            s"$orgQuoted ${jsPlatform(suffix)} ${withQuote(name.value)} % $revisionQuoted$configuration"
-          case CrossVersion.For3Use2_13(suffix, _) =>
-            s"$orgQuoted ${jsPlatform(suffix)} ${withQuote(name.value)} % $revisionQuoted$configuration cross CrossVersion.for3Use2_13"
-          case CrossVersion.For2_13Use3(suffix, _) =>
-            s"$orgQuoted ${jsPlatform(suffix)} ${withQuote(name.value)} % $revisionQuoted$configuration cross CrossVersion.for2_13Use3"
-          case _ => s"$orgQuoted % ${withQuote(name.value)} % $revisionQuoted$configuration"
-        }
-      }
-
-      private def withQuote(s: String) = "\"" + s + "\""
+case class CrossCompatibleLibrary(lib: InitialLib) extends MigratedLib {
+  override def formatted: String = {
+    val formattedConfigs = lib.configurations.map(c => " % " + MigratedLibFormatting.formatConfigs(c)).getOrElse("")
+    lib.crossVersion match {
+      case CrossVersion.Binary("", "") =>
+        s"""("${lib.organization}" %% "${lib.name}" % "${lib.version}"$formattedConfigs)$YELLOW.cross(CrossVersion.for3Use2_13)$RESET"""
+      case CrossVersion.Binary(_, _) =>
+        s"""("${lib.organization}" %%% "${lib.name}" % "${lib.version}"$formattedConfigs)$YELLOW.cross(CrossVersion.for3Use2_13)$RESET"""
+      case _ =>
+        s"""("${lib.organization}" %% "${lib.name}" % "${lib.version}"$formattedConfigs)$YELLOW.cross(CrossVersion.for3Use2_13)$RESET"""
     }
   }
+}
 
-  case class UncompatibleWithScala3(
-    organization: Organization,
-    name: Name,
-    revision: Revision,
+case class IntegratedPlugin(lib: InitialLib, scalacOption: String) extends MigratedLib {
+  override def formatted: String =
+    MigratedLibFormatting.formatLibrary(lib) +
+      "\n" +
+      s"""replaced by ${YELLOW}scalacOptions += "$scalacOption"$RESET"""
+}
+
+case class UnclassifiedLibrary(lib: InitialLib, reason: String) extends MigratedLib {
+  override def formatted: String = MigratedLibFormatting.formatLibrary(lib) + s" $YELLOW($reason)$RESET"
+}
+
+case class IncompatibleLibrary(lib: InitialLib, reason: String) extends MigratedLib {
+  override def formatted: String = MigratedLibFormatting.formatLibrary(lib) + s" $RED($reason)$RESET"
+}
+
+object MigratedLibFormatting {
+  def formatLibrary(lib: InitialLib): String =
+    formatLibrary(lib.organization, lib.name, lib.version.toString, lib.crossVersion, lib.configurations)
+
+  def formatLibrary(
+    org: String,
+    name: String,
+    version: String,
     crossVersion: CrossVersion,
-    configurations: Option[String],
-    reason: Reason
-  ) extends MigratedLibImp {
-    override def isCompatibleWithScala3: Boolean = false
-    override def toString: String =
-      s"${organization.value}:${name.value}:${revision.value}${configurations.map(":" + _).getOrElse("")}"
+    configs: Option[String]): String =
+    if (configs.contains("plugin->default(compile)"))
+      s"addCompilerPlugin(${formatRegularLibrary(org, name, version, crossVersion, None)})"
+    else formatRegularLibrary(org, name, version, crossVersion, configs)
+
+  def formatRegularLibrary(
+    org: String,
+    name: String,
+    version: String,
+    crossVersion: CrossVersion,
+    configs: Option[String]): String = {
+    val formattedConfigs = configs.map(c => " % " + formatConfigs(c)).getOrElse("")
+    crossVersion match {
+      case CrossVersion.Binary("", "") => s""""$org" %% "$name" % "$version"$formattedConfigs"""
+      case CrossVersion.Binary(_, _)   => s""""$org" %%% "$name" % "$version"$formattedConfigs"""
+      case CrossVersion.Disabled       => s""""$org" % "$name" % "$version"$formattedConfigs"""
+      case crossVersion =>
+        val crossVersionFmt = crossVersion match {
+          case _: CrossVersion.Full        => "full"
+          case _: CrossVersion.For3Use2_13 => "for3Use2_13"
+          case _: CrossVersion.For2_13Use3 => "for2_13Use3"
+          case other                       => other.toString
+        }
+        s"""("$org" %% "$name" % "$version"$formattedConfigs).cross(CrossVersion.$crossVersionFmt)"""
+    }
   }
 
-  object CompatibleWithScala3Lib {
-    def from(lib: InitialLib, reason: Reason): CompatibleWithScala3.Lib =
-      CompatibleWithScala3.Lib(
-        lib.organization,
-        lib.name,
-        Seq(lib.revision),
-        lib.crossVersion,
-        lib.configurations,
-        reason
-      )
-
-  }
+  def formatConfigs(configs: String): String =
+    configs match {
+      case "test"    => "Test"
+      case "it"      => "IntegrationTest"
+      case "compile" => "Compile"
+      case configs   => s"\"$configs\""
+    }
 }
