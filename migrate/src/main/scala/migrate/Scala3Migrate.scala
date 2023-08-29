@@ -9,6 +9,7 @@ import migrate.interfaces.Logger
 import migrate.interfaces.Scala3Compiler
 import migrate.internal._
 import migrate.utils.FileUtils
+import migrate.utils.Format._
 import migrate.utils.ScalaExtensions._
 import migrate.utils.ScalafixService
 import migrate.utils.Timer._
@@ -68,7 +69,7 @@ class Scala3Migrate(scalafixSrv: ScalafixService, logger: Logger) {
       scalafixEval <- timeAndLog(scalafixSrv.fixSyntaxForScala3(unmanagedSources)) {
                         case (finiteDuration, Success(_)) =>
                           logger.info(
-                            s"Run syntactic rules in ${unmanagedSources.size} files successfully after $finiteDuration")
+                            s"Run syntactic rules in ${plural(unmanagedSources.size, "file")} successfully after $finiteDuration")
                         case (_, Failure(e)) =>
                           logger.info(s"Failed running syntactic rules because: ${e.getMessage}")
                       }
@@ -100,7 +101,7 @@ class Scala3Migrate(scalafixSrv: ScalafixService, logger: Logger) {
     unmanaged: Seq[AbsolutePath],
     managed: Seq[AbsolutePath]
   ): Try[Unit] = {
-    logger.info(s"Finalizing the migration: compiling in scala 3 with -rewrite option")
+    logger.info(s"Compiling in scala 3 with -rewrite option")
     for {
       compilerWithRewrite <- setupScala3Compiler(classpath3, classDir3, settings3 :+ "-rewrite")
       _                   <- Try(compilerWithRewrite.compileWithRewrite((unmanaged ++ managed).map(_.value).toList))
@@ -117,9 +118,9 @@ class Scala3Migrate(scalafixSrv: ScalafixService, logger: Logger) {
       cuManagedSources    = managedSources.map(path => new CompilationUnit(path.value, FileUtils.read(path)))
       _ <- timeAndLog(Try(compiler.compileAndReport((cuUnmanagedSources ++ cuManagedSources).toList, logger))) {
              case (finiteDuration, Success(_)) =>
-               logger.info(s"Successfully compiled with scala 3 in $finiteDuration")
+               logger.info(s"Scala 3 compilation succeeded after $finiteDuration")
              case (_, Failure(_)) =>
-               logger.error("Compilation with scala 3 failed. Try to fix the error manually")
+               logger.error("Scala 3 compilation failed. Try to fix the error(s) manually")
            }
     } yield ()
 
@@ -140,10 +141,11 @@ class Scala3Migrate(scalafixSrv: ScalafixService, logger: Logger) {
           timeAndLog(scalafixSrv.inferTypesAndImplicits(unmanagedSources)) {
             case (duration, Success(files)) =>
               val fileEvaluationsSeq = files.getFileEvaluations().toSeq
-              val patchesCount       = fileEvaluationsSeq.map(_.getPatches().size).sum
-              logger.info(s"Found ${patchesCount} patch(es) in ${unmanagedSources.size} file(s) after $duration")
+              val count              = fileEvaluationsSeq.map(_.getPatches().size).sum
+              logger.info(
+                s"Found ${plural(count, "patch", "patches")} in ${plural(unmanagedSources.size, "file")} after $duration")
             case (_, Failure(e)) =>
-              logger.error(s"Failed inferring types because: ${e.getMessage()}.")
+              logger.error(s"Failed infering types because: ${e.getMessage()}.")
           }
         fileEvaluationMap <- fileEvaluations
                                .getFileEvaluations()

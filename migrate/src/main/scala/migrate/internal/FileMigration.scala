@@ -8,6 +8,7 @@ import scala.util.control.NonFatal
 
 import migrate.interfaces.Logger
 import migrate.interfaces.Scala3Compiler
+import migrate.utils.Format._
 import migrate.utils.Timer._
 import scalafix.interfaces.ScalafixPatch
 
@@ -39,7 +40,7 @@ private[migrate] class FileMigration(
   private def loopUntilNoCandidates(state: Try[CompilingState]): Try[CompilingState] =
     state match {
       case Success(state) if state.candidates.nonEmpty =>
-        logger.info(s"${state.candidates.size} remaining candidate(s)")
+        logger.info(plural(state.candidates.size, "remaining candidate"))
         loopUntilNoCandidates(state.next())
       case finalState => finalState
     }
