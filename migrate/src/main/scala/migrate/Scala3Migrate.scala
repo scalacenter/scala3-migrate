@@ -145,7 +145,7 @@ class Scala3Migrate(scalafixSrv: ScalafixService, logger: Logger) {
               logger.info(
                 s"Found ${plural(count, "patch", "patches")} in ${plural(unmanagedSources.size, "file")} after $duration")
             case (_, Failure(e)) =>
-              logger.error(s"Failed infering types because: ${e.getMessage()}.")
+              logger.error(s"Failed inferring types because: ${e.getMessage()}.")
           }
         fileEvaluationMap <- fileEvaluations
                                .getFileEvaluations()

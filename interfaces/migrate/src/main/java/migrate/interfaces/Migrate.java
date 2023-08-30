@@ -47,9 +47,8 @@ public interface Migrate {
     }
 
     static Migrate classloadInstance(URLClassLoader classLoader, Logger logger) throws Exception {
-        Class<?> loggerCls = classLoader.loadClass("migrate.interfaces.Logger");
         Class<?> cls = classLoader.loadClass("migrate.interfaces.MigrateImpl");
-        Constructor<?> ctor = cls.getDeclaredConstructor(loggerCls);
+        Constructor<?> ctor = cls.getDeclaredConstructor(Logger.class);
         ctor.setAccessible(true);
         return (Migrate) ctor.newInstance(logger);
     }
@@ -57,7 +56,7 @@ public interface Migrate {
     // put all needed dependecies here.
     static List<URL> getJars(String migrateVersion, String scalaVersion) throws Exception {
         ScalaVersion scalaV = ScalaVersion.of(scalaVersion);
-        Dependency migrate = Dependency.parse("ch.epfl.scala:::migrate-core:" + migrateVersion, scalaV);
+        Dependency migrate = Dependency.parse("ch.epfl.scala::scala3-migrate-core:" + migrateVersion, scalaV);
         return fetch(Collections.singletonList(migrate), ResolutionParams.create());
     }
 
