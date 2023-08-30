@@ -133,7 +133,7 @@ lazy val `scalafix-rules` = project
   .in(file("scalafix/rules"))
   .settings(
     scalacOptions ++= List("-Wunused", "-P:semanticdb:synthetics:on"),
-    moduleName := "migrate-rules",
+    moduleName := "scala3-migrate-rules",
     libraryDependencies ++= Seq(
       "ch.epfl.scala" %% "scalafix-core"  % V.scalafix,
       "ch.epfl.scala" %% "scalafix-rules" % V.scalafix

@@ -69,7 +69,14 @@ object ScalafixService {
   private lazy val internalRules = getClassPathforMigrateRules()
   private lazy val externalRules = getClassPathforRewriteRules()
 
-  val fixSyntaxRules: Seq[String]                     = Seq("ProcedureSyntax", "fix.scala213.Any2StringAdd", "ExplicitResultTypes")
+  val fixSyntaxRules: Seq[String] = Seq(
+    "ProcedureSyntax",
+    "fix.scala213.ExplicitNullaryEtaExpansion",
+    "fix.scala213.ParensAroundLambda",
+    "fix.scala213.ExplicitNonNullaryApply",
+    "fix.scala213.Any2StringAdd",
+    "ExplicitResultTypes"
+  )
   val addExplicitResultTypesAndImplicits: Seq[String] = Seq("MigrationRule")
 
   def from(
@@ -91,14 +98,14 @@ object ScalafixService {
 
   private def getClassPathforRewriteRules(): Try[Classpath] =
     Try {
-      val paths1 = downloadDependecies(dep"org.scala-lang:scala-rewrites_2.13:0.1.2")
-      val paths2 = downloadDependecies(dep"com.sandinh:scala-rewrites_2.13:0.1.10-sd")
+      val paths1 = downloadDependecies(dep"org.scala-lang:scala-rewrites_2.13:0.1.5")
+      val paths2 = downloadDependecies(dep"com.sandinh:scala-rewrites_2.13:1.1.0-M1")
       Classpath((paths1 ++ paths2): _*)
     }
 
   private def getClassPathforMigrateRules(): Try[Classpath] = {
     val dependency =
-      Dependency(Module(Organization("ch.epfl.scala"), ModuleName(s"migrate-rules_2.13")), BuildInfo.version)
+      Dependency(Module(Organization("ch.epfl.scala"), ModuleName(s"scala3-migrate-rules_2.13")), BuildInfo.version)
 
     Try {
       val paths1 = downloadDependecies(dependency)
