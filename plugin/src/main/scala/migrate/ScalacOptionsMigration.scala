@@ -52,7 +52,6 @@ private[migrate] object ScalacOptionsMigration {
         .value
         .collect { case Value(scalacOptions) => scalacOptions }
         .flatten
-        .distinct
     }
   }
 

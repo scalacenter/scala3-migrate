@@ -31,7 +31,7 @@ object ScalacOptionsMigration {
 
         case first :: tail => loop(tail, first :: res)
       }
-    loop(tokens, Nil)
+    loop(tokens, Nil).distinct
   }
 
   private def migrate(scalacOption: String): MigratedScalacOption =
@@ -338,10 +338,10 @@ object ScalacOptionsMigration {
       case s"-Ytest-pickler$_"                  => Valid(scalacOption)
       case s"-Yunsound-match-types$_"           => Valid(scalacOption)
       case "-Xcheck-macros" | "--Xcheck-macros" => Valid(scalacOption)
-      case "-Xsemanticdb" | "-Ysemanticdb"      => Ignored
-      case "-Ykind-projector"                   => Ignored
-      case s"-coverage-out$_"                   => Ignored
-      case s"--coverage-out$_"                  => Ignored
+      case "-Xsemanticdb" | "-Ysemanticdb"      => Valid(scalacOption)
+      case "-Ykind-projector"                   => Valid(scalacOption)
+      case s"-coverage-out$_"                   => Valid(scalacOption)
+      case s"--coverage-out$_"                  => Valid(scalacOption)
 
       // plugin specific scalacOption
       case s"-P$_"               => Ignored

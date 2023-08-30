@@ -15,7 +15,7 @@ object CommandStrings {
   val migrateBrief =
     (
       s"$migrateCommand <projectId>",
-      "Migrate the project to Scala 3 by infering necessary types and implicits"
+      "Migrate the project to Scala 3 by inferring necessary types and implicits"
     )
   val migrateDetailed =
     s"""|Usage : $migrateCommand <projectId>
@@ -49,7 +49,7 @@ object CommandStrings {
         |The status of a dependency can be:
         |- Valid: it can be used in Scala 3
         |- Updated version: the version needs to be updated
-        |- For 3 use 2.13: it is compatible with Scala 3 using CrossVersion.for3Use2.13
+        |- For 3 use 2.13: it is compatible with Scala 3 using CrossVersion.for3Use2_13
         |- Incompatible: it is incompatible with Scala 3 because it is a macro library or a compiler plugin
         |- Unclassified: sbt-scala3-migrate does not know how to migrate this dependency
         |""".stripMargin
