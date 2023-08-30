@@ -4,9 +4,9 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-import migrate.interfaces.CompilationUnit
+import migrate.compiler.interfaces.CompilationUnit
+import migrate.compiler.interfaces.Scala3Compiler
 import migrate.interfaces.Logger
-import migrate.interfaces.Scala3Compiler
 import migrate.internal._
 import migrate.utils.FileUtils
 import migrate.utils.Format._

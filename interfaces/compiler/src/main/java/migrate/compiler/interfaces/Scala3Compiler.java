@@ -1,4 +1,4 @@
-package migrate.interfaces;
+package migrate.compiler.interfaces;
 
 import dotty.tools.dotc.Compiler;
 import dotty.tools.dotc.Run;

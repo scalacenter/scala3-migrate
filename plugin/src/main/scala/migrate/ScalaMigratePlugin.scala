@@ -33,12 +33,13 @@ case class Scala2Inputs(
 )
 
 object ScalaMigratePlugin extends AutoPlugin {
-  private[migrate] val syntheticsOn = "-P:semanticdb:synthetics:on"
-  private[migrate] val migrationOn  = "-source:3.0-migration"
+  private val syntheticsOn = "-P:semanticdb:synthetics:on"
+  private val migrationOn  = "-source:3.0-migration"
+  private val classLoader  = Migrate.getClassLoader(BuildInfo.version, BuildInfo.scalaBinaryVersion)
 
   private[migrate] def getMigrateInstance(logger: Logger) = {
     val migrateLogger = new ScalaMigrateLogger(logger)
-    Migrate.fetchAndClassloadInstance(BuildInfo.version, BuildInfo.scalaBinaryVersion, migrateLogger)
+    Migrate.getInstance(classLoader, migrateLogger)
   }
 
   private[migrate] val inputsStore: mutable.Map[Scope, Scala2Inputs] = mutable.Map()

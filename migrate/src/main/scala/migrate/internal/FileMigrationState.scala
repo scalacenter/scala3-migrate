@@ -3,9 +3,9 @@ package migrate.internal
 import scala.jdk.OptionConverters._
 import scala.util.Try
 
-import migrate.interfaces.CompilationUnit
+import migrate.compiler.interfaces.CompilationUnit
+import migrate.compiler.interfaces.Scala3Compiler
 import migrate.interfaces.Logger
-import migrate.interfaces.Scala3Compiler
 import migrate.utils.ScalaExtensions._
 import scalafix.interfaces._
 

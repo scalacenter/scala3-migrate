@@ -6,8 +6,8 @@ import scala.util.Success
 import scala.util.Try
 import scala.util.control.NonFatal
 
+import migrate.compiler.interfaces.Scala3Compiler
 import migrate.interfaces.Logger
-import migrate.interfaces.Scala3Compiler
 import migrate.utils.Format._
 import migrate.utils.Timer._
 import scalafix.interfaces.ScalafixPatch

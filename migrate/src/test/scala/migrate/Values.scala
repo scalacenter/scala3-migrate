@@ -1,6 +1,6 @@
 package migrate
 
-import migrate.interfaces.Scala3Compiler
+import migrate.compiler.interfaces.Scala3Compiler
 import migrate.internal.AbsolutePath
 import migrate.internal.Classpath
 import migrate.test.BuildInfo
