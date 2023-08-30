@@ -15,28 +15,26 @@ import migrate.utils.ScalafixService
 import migrate.utils.Timer._
 import scalafix.interfaces.ScalafixEvaluation
 
-class Scala3Migrate(scalafixSrv: ScalafixService, logger: Logger) {
+class Scala3Migrate(scalafixSrv: ScalafixService, baseDirectory: AbsolutePath, logger: Logger) {
 
   def previewMigration(
     unmanagedSources: Seq[AbsolutePath],
     managedSources: Seq[AbsolutePath],
     compiler: Scala3Compiler
   ): Try[Map[AbsolutePath, FileMigrationState.FinalState]] = {
-    unmanagedSources.foreach(f => logger.info(s"Migrating $f"))
     val (scalaFiles, javaFiles) = unmanagedSources.partition(_.value.endsWith("scala"))
     // first try to compile without adding any patch
     val filesWithErr = compileInScala3AndGetFilesWithErrors(unmanagedSources ++ managedSources, compiler)
-    if (filesWithErr.isEmpty) {
-      logger.info("The project compiles successfully in Scala 3")
-      Success(Map[AbsolutePath, FileMigrationState.FinalState]())
-    } else {
+    if (filesWithErr.isEmpty) { Success(Map[AbsolutePath, FileMigrationState.FinalState]()) }
+    else {
       val filesWithoutErrors = scalaFiles.diff(filesWithErr)
-      (for {
+      for {
         initialFileToMigrate <- buildMigrationFiles(filesWithErr)
         _                    <- compileInScala3(initialFileToMigrate, filesWithoutErrors ++ javaFiles ++ managedSources, compiler)
-        migratedFiles <-
-          initialFileToMigrate.map(f => f.migrate(compiler, logger).map(success => (f.source, success))).sequence
-      } yield migratedFiles.toMap)
+        migratedFiles <- initialFileToMigrate
+                           .map(f => f.migrate(compiler, logger).map(success => (f.source, success)))
+                           .sequence
+      } yield migratedFiles.toMap
     }
   }
 
@@ -48,13 +46,11 @@ class Scala3Migrate(scalafixSrv: ScalafixService, logger: Logger) {
     scala3ClassDirectory: AbsolutePath
   ): Try[Unit] =
     for {
-      compiler <- setupScala3Compiler(scala3Classpath, scala3ClassDirectory, scala3CompilerOptions)
-      migratedFiles <-
-        previewMigration(unmanagedSources, managedSources, compiler)
+      compiler      <- setupScala3Compiler(scala3Classpath, scala3ClassDirectory, scala3CompilerOptions)
+      migratedFiles <- previewMigration(unmanagedSources, managedSources, compiler)
       _ <- migratedFiles.map { case (file, migrated) =>
              migrated.newFileContent.flatMap(FileUtils.writeFile(file, _))
            }.sequence
-      _ = migratedFiles.keys.map(file => logger.info(s"${file.value} has been successfully migrated"))
       _ <- compileWithRewrite(
              scala3Classpath,
              scala3ClassDirectory,
@@ -67,11 +63,11 @@ class Scala3Migrate(scalafixSrv: ScalafixService, logger: Logger) {
   def previewSyntaxMigration(unmanagedSources: Seq[AbsolutePath]): Try[ScalafixEvaluation] =
     for {
       scalafixEval <- timeAndLog(scalafixSrv.fixSyntaxForScala3(unmanagedSources)) {
-                        case (finiteDuration, Success(_)) =>
+                        case (_, Success(_)) =>
                           logger.info(
-                            s"Run syntactic rules in ${plural(unmanagedSources.size, "file")} successfully after $finiteDuration")
+                            s"Run syntactic rules in ${plural(unmanagedSources.size, "Scala source")} successfully")
                         case (_, Failure(e)) =>
-                          logger.info(s"Failed running syntactic rules because: ${e.getMessage}")
+                          logger.error(s"Failed running syntactic rules because: ${e.getMessage}")
                       }
     } yield scalafixEval
 
@@ -101,7 +97,7 @@ class Scala3Migrate(scalafixSrv: ScalafixService, logger: Logger) {
     unmanaged: Seq[AbsolutePath],
     managed: Seq[AbsolutePath]
   ): Try[Unit] = {
-    logger.info(s"Compiling in scala 3 with -rewrite option")
+    logger.info(s"Compiling to Scala 3 with -source:3.0-migration -rewrite")
     for {
       compilerWithRewrite <- setupScala3Compiler(classpath3, classDir3, settings3 :+ "-rewrite")
       _                   <- Try(compilerWithRewrite.compileWithRewrite((unmanaged ++ managed).map(_.value).toList))
@@ -117,10 +113,13 @@ class Scala3Migrate(scalafixSrv: ScalafixService, logger: Logger) {
       cuUnmanagedSources <- migrationFiles.map(_.previewAllPatches()).sequence
       cuManagedSources    = managedSources.map(path => new CompilationUnit(path.value, FileUtils.read(path), path.toNio))
       _ <- timeAndLog(Try(compiler.compileAndReport((cuUnmanagedSources ++ cuManagedSources).toList, logger))) {
-             case (finiteDuration, Success(_)) =>
-               logger.info(s"Scala 3 compilation succeeded after $finiteDuration")
              case (_, Failure(_)) =>
-               logger.error("Scala 3 compilation failed. Try to fix the error(s) manually")
+               logger.error("Failed inferring meaningful types because: Scala 3 compilation error")
+             case _ =>
+               val count = migrationFiles.map(_.patches.size).sum
+               val message =
+                 s"Found ${plural(count, "patch", "patches")} in ${plural(migrationFiles.size, "Scala source")}"
+               logger.info(message)
            }
     } yield ()
 
@@ -137,23 +136,18 @@ class Scala3Migrate(scalafixSrv: ScalafixService, logger: Logger) {
     if (unmanagedSources.isEmpty) Success(Seq())
     else
       for {
-        fileEvaluations <-
-          timeAndLog(scalafixSrv.inferTypesAndImplicits(unmanagedSources)) {
-            case (duration, Success(files)) =>
-              val fileEvaluationsSeq = files.getFileEvaluations().toSeq
-              val count              = fileEvaluationsSeq.map(_.getPatches().size).sum
-              logger.info(
-                s"Found ${plural(count, "patch", "patches")} in ${plural(unmanagedSources.size, "file")} after $duration")
-            case (_, Failure(e)) =>
-              logger.error(s"Failed inferring types because: ${e.getMessage()}.")
-          }
-        fileEvaluationMap <- fileEvaluations
-                               .getFileEvaluations()
-                               .toSeq
-                               .map(e => AbsolutePath.from(e.getEvaluatedFile()).map(file => file -> e))
+        fileEvaluations <- timeAndLog(scalafixSrv.inferTypesAndImplicits(unmanagedSources)) {
+                             case (_, Failure(e)) =>
+                               logger.error(s"Failed inferring types because: ${e.getMessage}")
+                             case _ =>
+                           }
+        fileEvaluationMap <- fileEvaluations.getFileEvaluations.toSeq
+                               .map(e => AbsolutePath.from(e.getEvaluatedFile).map(file => file -> e))
                                .sequence
                                .map(_.toMap)
         fileToMigrate <-
-          unmanagedSources.map(src => fileEvaluationMap.get(src).map(FileMigrationState.Initial).toTry).sequence
+          unmanagedSources
+            .map(src => fileEvaluationMap.get(src).map(FileMigrationState.Initial(_, baseDirectory)).toTry)
+            .sequence
       } yield fileToMigrate
 }

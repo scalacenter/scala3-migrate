@@ -8,6 +8,7 @@ import scala.util.control.NonFatal
 
 import migrate.compiler.interfaces.Scala3Compiler
 import migrate.interfaces.Logger
+import migrate.utils.Format
 import migrate.utils.Format._
 import migrate.utils.Timer._
 import scalafix.interfaces.ScalafixPatch
@@ -22,17 +23,15 @@ private[migrate] class FileMigration(
   logger: Logger) {
 
   def migrate(): Try[FileMigrationState.FinalState] = {
+    logger.info(s"Starting migration of ${fileToMigrate.relativePath}")
     val initialState = CompilingState(fileToMigrate.patches, Seq.empty)
 
     timeAndLog(loopUntilNoCandidates(Success(initialState))) {
-      case (timeMs, Success(finalState)) =>
-        logger.info(
-          s"Found ${finalState.necessaryPatches.size} required patch(es) in ${fileToMigrate.source} after $timeMs ms"
-        )
-      case (timeMs, Failure(e)) =>
-        logger.info(
-          s"Failed finding the required patches in ${fileToMigrate.source} after $timeMs ms because ${e.getMessage()}"
-        )
+      case (_, Success(finalState)) =>
+        val formattedPatches = Format.plural(finalState.necessaryPatches.size, "required patch", "required patches")
+        logger.info(s"Found $formattedPatches in ${fileToMigrate.relativePath}")
+      case (_, Failure(e)) =>
+        logger.error(s"Failed to reduce the patches in ${fileToMigrate.relativePath} because: ${e.getMessage}")
     }.map(finalState => fileToMigrate.success(finalState.necessaryPatches))
   }
 
