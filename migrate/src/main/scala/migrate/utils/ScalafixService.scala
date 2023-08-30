@@ -39,11 +39,11 @@ final case class ScalafixService(
             case None =>
             case Some(_) =>
               oneFile.applyPatches()
-              logger.info(s"Syntax fixed for $absPath)")
+              logger.info(s"Applied ${Format.plural(oneFile.getPatches.size, "patch", "patches")} in $absPath")
           }
         } else {
           val errorMsg = oneFile.getErrorMessage.toScala.getOrElse("unknown error")
-          logger.error(s"Failed to fix syntax in ${absPath} because of $errorMsg.")
+          logger.error(s"Failed to fix syntax in ${absPath} because: $errorMsg.")
         }
       }
     } else {
