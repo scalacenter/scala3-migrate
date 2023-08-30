@@ -16,6 +16,7 @@ import utils.ScalaExtensions._
 import utils.SyntheticHelper
 
 class ExplicitImplicitsRule[G <: Global](g: G) {
+  private val printer = new PrettyPrinter[g.type](g)
 
   def fix(implicit doc: SemanticDocument, compilerService: CompilerService[g.type]): Patch = {
     val implicitParams = doc.synthetics.collect {
@@ -50,32 +51,35 @@ class ExplicitImplicitsRule[G <: Global](g: G) {
       for {
         context             <- compilerSrv.getContext(originalTree)
         (funcTree, symbols) <- collectImplicit(context.tree, originalTree)
-        pretty               = new PrettyPrinter[g.type](g)
-        args                <- symbols.map(gsym => pretty.print(gsym, context)).sequence
+        args                <- symbols.map(gsym => printer.print(gsym, context)).sequence
         patch               <- implicitParamsPatch(funcTree, originalTree, args)
       } yield patch
 
   def getImplicitConversions(originalTree: Tree)(implicit compilerSrv: CompilerService[g.type]): Option[String] =
     for {
       (tree, _) <- compilerSrv.getGlobalTree(originalTree)
-      function  <- collectImplicitConversion(tree, originalTree)
+      function  <- collectImplicitConverter(tree, originalTree)
     } yield function
 
-  private def collectImplicitConversion(globalTree: g.Tree, original: Tree): Option[String] = {
-    val collectedTree: Seq[g.Tree] =
-      globalTree.collect {
-        case t if CompilerService.equalForPositions(t.pos, original.pos) => t
-      }.filter(_.isInstanceOf[g.ApplyImplicitView])
-
-    collectedTree.collectFirst {
-      case g.Apply(fun: g.Select, _) =>
-        if (fun.qualifier.symbol.isStatic) fun.name.toString
-        else fun.toString
-      case g.Apply(fun: g.TypeApply, _) =>
-        if (fun.symbol.isStatic) fun.symbol.fullName.toString
-        else fun.symbol.name.toString
+  private def collectImplicitConverter(globalTree: g.Tree, originalTree: Tree): Option[String] = {
+    def funOf(tree: g.Tree): g.Tree = tree match {
+      case g.Apply(fun, _)     => funOf(fun)
+      case g.TypeApply(fun, _) => funOf(fun)
+      case tree                => tree
     }
 
+    def skipPackageObject(sym: g.Symbol): g.Symbol =
+      if (sym.isPackageObject) sym.owner
+      else sym
+
+    globalTree.collect {
+      case t: g.ApplyImplicitView if CompilerService.equalForPositions(t.pos, originalTree.pos) =>
+        funOf(t) match {
+          case fun @ g.Select(qual, _) if qual.symbol.isStatic =>
+            skipPackageObject(qual.symbol).fullName.toString + "." + fun.name.toString
+          case fun => fun.toString
+        }
+    }.headOption
   }
 
   private def collectImplicit(globalTree: g.Tree, original: Tree): Option[(G#Tree, List[g.Symbol])] = {

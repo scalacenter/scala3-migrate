@@ -8,7 +8,7 @@ object Mix {
   
   def firstFunction()(implicit listAge: List[Int], name: String): String =  s"$name"
   
-  val test: Int = FromStrinToInt(firstFunction()(listInt, name))
+  val test: Int = implicits.OptionalConversion.FromStrinToInt(firstFunction()(listInt, name))
 }
 
 
