@@ -6,7 +6,9 @@ import scala.util.Success
 import scala.util.Try
 import scala.util.control.NonFatal
 
-import compiler.interfaces.Scala3Compiler
+import migrate.interfaces.Logger
+import migrate.interfaces.Scala3Compiler
+import migrate.utils.Format._
 import migrate.utils.Timer._
 import scalafix.interfaces.ScalafixPatch
 
@@ -14,18 +16,21 @@ import scalafix.interfaces.ScalafixPatch
  * Given a [[FileMigrationState]] and a [[Scala3Compiler]], the [[FileMigration]] class tries to find the minimum set of
  * patches that makes the code compile
  */
-private[migrate] class FileMigration(fileToMigrate: FileMigrationState.Initial, compiler: Scala3Compiler) {
+private[migrate] class FileMigration(
+  fileToMigrate: FileMigrationState.Initial,
+  compiler: Scala3Compiler,
+  logger: Logger) {
 
   def migrate(): Try[FileMigrationState.FinalState] = {
     val initialState = CompilingState(fileToMigrate.patches, Seq.empty)
 
     timeAndLog(loopUntilNoCandidates(Success(initialState))) {
       case (timeMs, Success(finalState)) =>
-        scribe.info(
+        logger.info(
           s"Found ${finalState.necessaryPatches.size} required patch(es) in ${fileToMigrate.source} after $timeMs ms"
         )
       case (timeMs, Failure(e)) =>
-        scribe.info(
+        logger.info(
           s"Failed finding the required patches in ${fileToMigrate.source} after $timeMs ms because ${e.getMessage()}"
         )
     }.map(finalState => fileToMigrate.success(finalState.necessaryPatches))
@@ -35,7 +40,7 @@ private[migrate] class FileMigration(fileToMigrate: FileMigrationState.Initial, 
   private def loopUntilNoCandidates(state: Try[CompilingState]): Try[CompilingState] =
     state match {
       case Success(state) if state.candidates.nonEmpty =>
-        scribe.info(s"${state.candidates.size} remaining candidate(s)")
+        logger.info(plural(state.candidates.size, "remaining candidate"))
         loopUntilNoCandidates(state.next())
       case finalState => finalState
     }

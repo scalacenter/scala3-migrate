@@ -1,6 +1,5 @@
 package migrate
 
-import ScalaMigratePlugin.{migrateAPI, scala3Version}
 import ScalaMigratePlugin.Keys._
 import Messages._
 import migrate.interfaces.{Lib, MigratedLib, MigratedLibs}
@@ -24,7 +23,8 @@ private[migrate] object LibsMigration {
 
     log.info(startingMessage(projectId))
 
-    val migrated = migrateAPI.migrateLibs(libraryDependencies.map(LibImpl.apply).asJava)
+    val migrateAPI = ScalaMigratePlugin.getMigrateInstance(log)
+    val migrated   = migrateAPI.migrateLibs(libraryDependencies.map(LibImpl.apply).asJava)
 
     val validLibs = migrated.getValidLibraries
     if (validLibs.nonEmpty) {

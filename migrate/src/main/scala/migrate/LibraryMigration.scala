@@ -1,6 +1,6 @@
 package migrate
 
-import buildinfo.BuildInfo
+import migrate.buildinfo.BuildInfo
 import migrate.interfaces.MigratedLib
 import migrate.interfaces.MigratedLibs
 import migrate.internal.CrossCompatibleLibrary

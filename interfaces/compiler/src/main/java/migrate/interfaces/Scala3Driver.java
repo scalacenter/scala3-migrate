@@ -1,4 +1,4 @@
-package compiler.interfaces;
+package migrate.interfaces;
 
 import dotty.tools.dotc.Driver;
 import dotty.tools.dotc.core.Contexts.Context;

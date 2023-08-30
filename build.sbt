@@ -18,36 +18,38 @@ inThisBuild(
   )
 )
 
-lazy val `compiler-interfaces` = project
+lazy val `migrate-interface` = project
+  .in(file("interfaces/migrate"))
+  .settings(
+    scalaVersion := V.scala3,
+    libraryDependencies ++= Seq(
+      "io.get-coursier" % "interface" % V.coursierInterface
+    ),
+    crossPaths       := false,
+    autoScalaLibrary := false,
+    moduleName       := "scala3-migrate-interface"
+  )
+
+lazy val `compiler-interface` = project
   .in(file("interfaces/compiler"))
   .settings(
     scalaVersion := V.scala3,
     libraryDependencies ++= Seq("org.scala-lang" %% "scala3-compiler" % V.scala3),
     crossPaths       := false,
     autoScalaLibrary := false,
-    moduleName       := "migrate-compiler-interfaces"
+    moduleName       := "scala3-migrate-compiler-interface"
   )
-  .dependsOn(`migrate-interfaces`)
-
-lazy val `migrate-interfaces` = project
-  .in(file("interfaces/migrate"))
-  .settings(
-    libraryDependencies ++= Seq("io.get-coursier" % "interface" % V.coursierInterface),
-    crossPaths       := false,
-    autoScalaLibrary := false,
-    moduleName       := "migrate-core-interfaces"
-  )
+  .dependsOn(`migrate-interface`)
 
 lazy val migrate = project
   .in(file("migrate"))
   .settings(addBuildInfoToConfig(Test))
   .settings(
-    moduleName := "migrate-core",
+    moduleName := "scala3-migrate-core",
     scalacOptions ++= Seq("-Wunused", "-P:semanticdb:synthetics:on", "-deprecation"),
     libraryDependencies ++= Seq(
       "org.scala-lang"   % "scala-compiler"      % scalaVersion.value,
       "ch.epfl.scala"    % "scalafix-interfaces" % V.scalafix,
-      "com.outr"        %% "scribe"              % V.scribe,
       "io.get-coursier" %% "coursier"            % V.coursierApi,
       "org.scalatest"   %% "scalatest"           % V.scalatest % Test,
       "ch.epfl.scala"    % "scalafix-testkit"    % V.scalafix  % Test cross CrossVersion.full
@@ -66,13 +68,15 @@ lazy val migrate = project
       fromScalacOptions("scala2CompilerOptions", input / Compile / scalacOptions),
       fromClasspath("scala3Classpath", output / Compile / fullClasspath),
       fromScalacOptions("scala3CompilerOptions", output / Compile / scalacOptions),
-      "scala3ClassDirectory" -> (output / Compile / compile / classDirectory).value
+      "scala3ClassDirectory" -> (output / Compile / compile / classDirectory).value,
+      "baseDirectory"        -> (input / baseDirectory).value
     ),
+    buildInfoPackage        := "migrate.buildinfo",
     Compile / buildInfoKeys := Seq("version" -> version.value, "scala3Version" -> V.scala3)
   )
   .enablePlugins(BuildInfoPlugin)
-  .dependsOn(`compiler-interfaces`)
-  .dependsOn(`migrate-interfaces`)
+  .dependsOn(`migrate-interface`)
+  .dependsOn(`compiler-interface`)
 
 lazy val input = project
   .in(file("input"))
@@ -96,8 +100,8 @@ lazy val `sbt-plugin` = project
     scriptedDependencies := {
       scriptedDependencies
         .dependsOn(
-          `migrate-interfaces` / publishLocal,
-          `compiler-interfaces` / publishLocal,
+          `migrate-interface` / publishLocal,
+          `compiler-interface` / publishLocal,
           migrate / publishLocal,
           `scalafix-rules` / publishLocal
         )
@@ -113,7 +117,7 @@ lazy val `sbt-plugin` = project
       version
     )
   )
-  .dependsOn(`migrate-interfaces`)
+  .dependsOn(`migrate-interface`)
   .disablePlugins(ScalafixPlugin)
   .enablePlugins(BuildInfoPlugin)
 
@@ -131,7 +135,7 @@ lazy val `scalafix-rules` = project
   .in(file("scalafix/rules"))
   .settings(
     scalacOptions ++= List("-Wunused", "-P:semanticdb:synthetics:on"),
-    moduleName := "migrate-rules",
+    moduleName := "scala3-migrate-rules",
     libraryDependencies ++= Seq(
       "ch.epfl.scala" %% "scalafix-core"  % V.scalafix,
       "ch.epfl.scala" %% "scalafix-rules" % V.scalafix
@@ -209,7 +213,6 @@ lazy val V = new {
   val scalatest             = "3.2.13"
   val scala3                = "3.3.0"
   val scalafix              = "0.11.0"
-  val scribe                = "3.8.2"
   val organizeImports       = "0.4.3"
   val catsCore              = "2.7.0"
   val kindProjector         = "0.13.2"
