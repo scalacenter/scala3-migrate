@@ -56,7 +56,7 @@ object ScalaMigratePlugin extends AutoPlugin {
 
     val internalMigrateSyntax =
       taskKey[Unit]("fix some syntax incompatibilities with scala 3").withRank(KeyRanks.Invisible)
-    val internalMigrateScalacOptions = taskKey[Unit]("igrate of the scalacOptions").withRank(KeyRanks.Invisible)
+    val internalMigrateScalacOptions = taskKey[Unit]("migrate of the scalacOptions").withRank(KeyRanks.Invisible)
     val internalMigrateDependencies  = taskKey[Unit]("migrate dependencies").withRank(KeyRanks.Invisible)
     val internalMigrateTypes         = taskKey[Unit]("migrate types to scala 3").withRank(KeyRanks.Invisible)
   }

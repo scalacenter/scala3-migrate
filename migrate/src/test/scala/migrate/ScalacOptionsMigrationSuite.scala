@@ -14,7 +14,9 @@ class ScalacOpionsMigrationSuite extends AnyFunSuiteLike with DiffAssertions {
       "-language:existentials",
       "-Xlint:_,-type-parameter-shadow",
       "-Xfatal-warnings",
-      "-Wunused patvars"
+      "-Wunused patvars",
+      "-encoding",
+      "UTF-8"
     )
     val expected = Seq(
       "-encoding UTF-8",
