@@ -100,6 +100,7 @@ lazy val `sbt-plugin` = project
       scriptedDependencies
         .dependsOn(
           `migrate-interface` / publishLocal,
+          `compiler-interface` / publishLocal,
           migrate / publishLocal,
           `scalafix-rules` / publishLocal
         )
