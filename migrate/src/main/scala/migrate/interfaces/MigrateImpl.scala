@@ -24,7 +24,8 @@ final class MigrateImpl(logger: Logger) extends Migrate {
     scala2CompilerOptions: jutil.List[String],
     scala3Cp: jutil.List[Path],
     scala3CompilerOptions: jutil.List[String],
-    scala3ClassDirectory: Path
+    scala3ClassDirectory: Path,
+    baseDirectory: Path
   ): Unit =
     (for {
       unmanagedSourcesAbs     <- unmanagedSources.asScala.toSeq.map(AbsolutePath.from).sequence
@@ -34,9 +35,15 @@ final class MigrateImpl(logger: Logger) extends Migrate {
       scala2Classpath          = Classpath(scala2CpAbs: _*)
       scala3CpAbs             <- scala3Cp.asScala.toList.map(AbsolutePath.from).sequence
       scala3Classpath          = Classpath(scala3CpAbs: _*)
+      baseDirectory           <- AbsolutePath.from(baseDirectory)
       scala3ClassDirectoryAbs <- AbsolutePath.from(scala3ClassDirectory)
       configuredScalafixSrv <-
-        ScalafixService.from(scala2CompilerOptions.asScala.toList, scala2Classpath, targetRootAbs, logger)
+        ScalafixService.from(
+          scala2CompilerOptions.asScala.toList,
+          scala2Classpath,
+          targetRootAbs,
+          baseDirectory,
+          logger)
       scalaMigrate = new Scala3Migrate(configuredScalafixSrv, logger)
       _ <- scalaMigrate
              .migrate(
@@ -60,17 +67,23 @@ final class MigrateImpl(logger: Logger) extends Migrate {
     unmanagedSources: jutil.List[Path],
     targetRoot: Path,
     scala2Cp: jutil.List[Path],
-    scala2CompilerOptions: jutil.List[String]
+    scala2CompilerOptions: jutil.List[String],
+    baseDirectory: Path
   ): Unit =
     (for {
       unmanagedSourcesAbs <- unmanagedSources.asScala.toSeq.map(AbsolutePath.from).sequence
       targetRootAbs       <- AbsolutePath.from(targetRoot)
       scala2CpAbs         <- scala2Cp.asScala.toList.map(AbsolutePath.from).sequence
       scala2Classpath      = Classpath(scala2CpAbs: _*)
+      baseDirectory       <- AbsolutePath.from(baseDirectory)
       configuredScalafixSrv <-
-        ScalafixService.from(scala2CompilerOptions.asScala.toList, scala2Classpath, targetRootAbs, logger)
+        ScalafixService.from(
+          scala2CompilerOptions.asScala.toList,
+          scala2Classpath,
+          targetRootAbs,
+          baseDirectory,
+          logger)
       scalaMigrate = new Scala3Migrate(configuredScalafixSrv, logger)
       _           <- scalaMigrate.migrateSyntax(unmanagedSourcesAbs)
     } yield ()).get
-
 }

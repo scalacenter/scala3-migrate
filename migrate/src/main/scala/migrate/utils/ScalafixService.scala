@@ -12,12 +12,13 @@ import migrate.internal.Classpath
 import scalafix.interfaces.Scalafix
 import scalafix.interfaces.ScalafixEvaluation
 
-final case class ScalafixService(
+final class ScalafixService(
   scalafix: Scalafix,
   compilerOptions: Seq[String],
   classpath: Classpath,
   targetRootSemantic: AbsolutePath,
   toolClasspath: Classpath,
+  baseDirectory: AbsolutePath,
   logger: Logger
 ) {
   import ScalafixService._
@@ -32,18 +33,19 @@ final case class ScalafixService(
   def fixInPlace(eval: ScalafixEvaluation): Unit =
     if (eval.isSuccessful) {
       val filesEvaluated = eval.getFileEvaluations.toSeq
-      filesEvaluated.foreach { oneFile =>
-        val absPath = AbsolutePath.from(oneFile.getEvaluatedFile).get
-        if (oneFile.isSuccessful) {
-          oneFile.previewPatchesAsUnifiedDiff.toScala match {
+      filesEvaluated.foreach { evaluation =>
+        val file         = AbsolutePath.from(evaluation.getEvaluatedFile).get
+        val relativePath = file.relativize(baseDirectory).getOrElse(file)
+        if (evaluation.isSuccessful) {
+          evaluation.previewPatchesAsUnifiedDiff.toScala match {
             case None =>
             case Some(_) =>
-              oneFile.applyPatches()
-              logger.info(s"Applied ${Format.plural(oneFile.getPatches.size, "patch", "patches")} in $absPath")
+              evaluation.applyPatches()
+              logger.info(s"Applied ${Format.plural(evaluation.getPatches.size, "patch", "patches")} in $relativePath")
           }
         } else {
-          val errorMsg = oneFile.getErrorMessage.toScala.getOrElse("unknown error")
-          logger.error(s"Failed to fix syntax in ${absPath} because: $errorMsg.")
+          val errorMsg = evaluation.getErrorMessage.toScala.getOrElse("unknown error")
+          logger.error(s"Failed to fix syntax in $relativePath because: $errorMsg.")
         }
       }
     } else {
@@ -83,17 +85,19 @@ object ScalafixService {
     compilerOptions: Seq[String],
     classpath: Classpath,
     targetRootSemantic: AbsolutePath,
+    baseDirectory: AbsolutePath,
     logger: Logger): Try[ScalafixService] =
     for {
       scalafix      <- scalafix
       internalRules <- internalRules
       externalRules <- externalRules
-    } yield ScalafixService(
+    } yield new ScalafixService(
       scalafix,
       compilerOptions,
       classpath,
       targetRootSemantic,
       internalRules ++ externalRules,
+      baseDirectory,
       logger)
 
   private def getClassPathforRewriteRules(): Try[Classpath] =

@@ -25,6 +25,7 @@ private[migrate] object SyntaxMigration {
       val log             = streams.value.log
       val _               = configs.map(_ / compile).join.value
       val allScala2Inputs = configs.map(_ / scala2Inputs).join.value
+      val baseDirectory   = Keys.baseDirectory.value
 
       val migrateAPI = ScalaMigratePlugin.getMigrateInstance(log)
       for {
@@ -35,7 +36,8 @@ private[migrate] object SyntaxMigration {
           scala2Inputs.unmanagedSources.asJava,
           scala2Inputs.semanticdbTarget,
           scala2Inputs.classpath.asJava,
-          scala2Inputs.scalacOptions.asJava
+          scala2Inputs.scalacOptions.asJava,
+          baseDirectory.toPath
         )
       } match {
         case scala.util.Success(_) =>

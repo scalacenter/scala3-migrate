@@ -68,7 +68,8 @@ lazy val migrate = project
       fromScalacOptions("scala2CompilerOptions", input / Compile / scalacOptions),
       fromClasspath("scala3Classpath", output / Compile / fullClasspath),
       fromScalacOptions("scala3CompilerOptions", output / Compile / scalacOptions),
-      "scala3ClassDirectory" -> (output / Compile / compile / classDirectory).value
+      "scala3ClassDirectory" -> (output / Compile / compile / classDirectory).value,
+      "baseDirectory"        -> (input / baseDirectory).value
     ),
     buildInfoPackage        := "migrate.buildinfo",
     Compile / buildInfoKeys := Seq("version" -> version.value, "scala3Version" -> V.scala3)

@@ -41,6 +41,7 @@ private[migrate] object TypeInferenceMigration {
       val scala3Inputs = (config / Keys.scala3Inputs).value
       val scope        = (projectRef / config / Keys.scala2Inputs).scope
       val scala2Inputs = inputsStore.getOrElse(scope, sys.error("no input found"))
+      val baseDir      = baseDirectory.value
 
       if (scala2Inputs.unmanagedSources.nonEmpty) {
         if (!Files.exists(scala3Inputs.classDirectory)) Files.createDirectory(scala3Inputs.classDirectory)
@@ -54,7 +55,8 @@ private[migrate] object TypeInferenceMigration {
             scala2Inputs.scalacOptions.asJava,
             scala3Inputs.classpath.asJava,
             scala3Inputs.scalacOptions.asJava,
-            scala3Inputs.classDirectory
+            scala3Inputs.classDirectory,
+            baseDir.toPath
           )
         } match {
           case Success(_) =>

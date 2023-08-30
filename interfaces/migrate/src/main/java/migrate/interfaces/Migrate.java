@@ -24,7 +24,8 @@ public interface Migrate {
                  List<String> scala2CompilerOptions,
                  List<Path> scala3Classpath,
                  List<String> scala3CompilerOptions,
-                 Path scala3ClassDirectory);
+                 Path scala3ClassDirectory,
+                 Path baseDirectory);
     
     MigratedScalacOptions migrateScalacOption(List<String> scala3CompilerOptions);
     MigratedLibs migrateLibs(List<Lib> libs);
@@ -32,7 +33,8 @@ public interface Migrate {
     void migrateSyntax(List<Path> unmanagedSources,
                        Path targetRoot,
                        List<Path> scala2Classpath,
-                       List<String> scala2CompilerOptions);
+                       List<String> scala2CompilerOptions,
+                       Path baseDirectory);
 
 
     // Todo: Maybe using ServiceLoader could simplify this code a bit:
