@@ -26,7 +26,7 @@ public class Scala3Compiler {
 
   private Function1<CompilationUnit, SourceFile> toSourceFile = new AbstractFunction1<CompilationUnit, SourceFile>() {
     public SourceFile apply(CompilationUnit unit) {
-      return SourceFile$.MODULE$.virtual(unit.name, unit.content, false);
+      return new MigrationSourceFile(unit.content, unit.name, unit.path);
     }
   };
 

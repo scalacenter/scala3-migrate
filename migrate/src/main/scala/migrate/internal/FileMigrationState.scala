@@ -20,7 +20,7 @@ sealed trait FileMigrationState {
     evaluation
       .previewPatches()
       .map { content =>
-        new CompilationUnit(source.value, content)
+        new CompilationUnit(source.value, content, source.toNio)
       }
       .toScala
       .toTry {
@@ -35,7 +35,7 @@ sealed trait FileMigrationState {
     evaluation
       .previewPatches(patches.toArray)
       .map { content =>
-        new CompilationUnit(source.value, content)
+        new CompilationUnit(source.value, content, source.toNio)
       }
       .toScala
       .toTry {

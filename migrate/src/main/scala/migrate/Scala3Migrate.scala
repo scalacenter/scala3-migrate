@@ -115,7 +115,7 @@ class Scala3Migrate(scalafixSrv: ScalafixService, logger: Logger) {
   ): Try[Unit] =
     for {
       cuUnmanagedSources <- migrationFiles.map(_.previewAllPatches()).sequence
-      cuManagedSources    = managedSources.map(path => new CompilationUnit(path.value, FileUtils.read(path)))
+      cuManagedSources    = managedSources.map(path => new CompilationUnit(path.value, FileUtils.read(path), path.toNio))
       _ <- timeAndLog(Try(compiler.compileAndReport((cuUnmanagedSources ++ cuManagedSources).toList, logger))) {
              case (finiteDuration, Success(_)) =>
                logger.info(s"Scala 3 compilation succeeded after $finiteDuration")
@@ -128,7 +128,7 @@ class Scala3Migrate(scalafixSrv: ScalafixService, logger: Logger) {
     files: Seq[AbsolutePath],
     compiler: Scala3Compiler
   ): Seq[AbsolutePath] = {
-    val compilationUnits = files.map(path => new CompilationUnit(path.value, FileUtils.read(path)))
+    val compilationUnits = files.map(path => new CompilationUnit(path.value, FileUtils.read(path), path.toNio))
     val res              = compiler.compileAndReportFilesWithErrors(compilationUnits.toList).toSeq
     res.map(AbsolutePath.from(_)).sequence.getOrElse(Nil)
   }
