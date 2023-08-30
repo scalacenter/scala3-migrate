@@ -1,5 +1,4 @@
 > migrateSyntax syntax-migration
 
-# check scalaVersion is Scala 3 and compilation succeeds
-> set `syntax-migration` / scalaVersion := "3.0.2"
+> ++3.3.0!
 > syntax-migration / Test / compile

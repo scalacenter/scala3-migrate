@@ -44,7 +44,7 @@ object ScalaMigratePlugin extends AutoPlugin {
 
   private[migrate] val inputsStore: mutable.Map[Scope, Scala2Inputs] = mutable.Map()
 
-  private[migrate] object Keys {
+  object Keys {
     val scala2Version = AttributeKey[String]("scala2Version")
 
     val migrationConfigs =
@@ -93,7 +93,14 @@ object ScalaMigratePlugin extends AutoPlugin {
     internalMigrateTypes / aggregate         := false,
     internalMigrateDependencies              := LibsMigration.internalImpl.value,
     internalMigrateDependencies / aggregate  := false,
-    commands ++= Seq(migrateSyntax, migrateScalacOptions, migrateLibDependencies, migrateTypes, fallback),
+    commands ++= Seq(
+      migrateSyntax,
+      migrateScalacOptions,
+      migrateLibDependencies,
+      migrateTypes,
+      fallback,
+      fallbackAndFail,
+      migrateFail),
     inConfig(Compile)(configSettings),
     inConfig(Test)(configSettings)
   )
@@ -203,22 +210,36 @@ object ScalaMigratePlugin extends AutoPlugin {
 
   lazy val migrateTypes: Command =
     Command(migrateCommand, migrateBrief, migrateDetailed)(idParser) { (state, projectId) =>
+      val preparedState = state.copy(attributes = state.attributes.remove(Keys.scala2Version))
       val commands = List(
+        StashOnFailure, // stash shell from onFailure
+        s"$OnFailure migrateFallbackAndFail $projectId",
         s"$projectId / storeScala2Inputs",
-        setScalaVersion(projectId, BuildInfo.scala3Version),
-        StashOnFailure,                            // prepare onFailure
-        s"$OnFailure $migrateFallback $projectId", // go back to Scala 2.13 in case of failure
+        setScalaVersion(projectId, BuildInfo.scala3Version), // set Scala 3
         s"$projectId / internalMigrateTypes",
-        FailureWall, // resume here in case of failure
-        PopOnFailure // remove onFailure
+        PopOnFailure,                  // pop shell to onFailure in case the fallback fails
+        s"$migrateFallback $projectId" // set Scala 2.13
       )
-      commands ::: state
+      commands ::: preparedState
     }
 
   lazy val fallback: Command =
     Command(migrateFallback)(idParser) { (state, projectId) =>
-      val scala2Version = state.attributes(Keys.scala2Version)
-      setScalaVersion(projectId, scala2Version) :: state
+      state.attributes.get(Keys.scala2Version) match {
+        case Some(scala2Version) => setScalaVersion(projectId, scala2Version) :: state
+        case None                => state
+      }
+    }
+
+  lazy val fallbackAndFail: Command =
+    Command("migrateFallbackAndFail")(idParser) { (state, projectId) =>
+      PopOnFailure :: s"migrateFallback $projectId" :: s"migrateFail $projectId" :: Nil ::: state
+    }
+
+  lazy val migrateFail: Command =
+    Command("migrateFail")(idParser) { (state, projectId) =>
+      state.log.error(s"Migration of $projectId failed.")
+      state.fail
     }
 
   private def setScalaVersion(projectId: String, scalaVersion: String): String =

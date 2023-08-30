@@ -1,4 +1,4 @@
 > migrateTypes type-inference-migration
 
-# check scalaVersion is Scala 3 and compilation succeeds
-> type-inference-migration / checkMigration
+> ++3.3.0!
+> type-inference-migration / Test / compile
