@@ -33,29 +33,32 @@ case class Scala2Inputs(
 )
 
 object ScalaMigratePlugin extends AutoPlugin {
-  private[migrate] val syntheticsOn            = "-P:semanticdb:synthetics:on"
-  private[migrate] val migrationOn             = "-source:3.0-migration"
-  private[migrate] val scalaBinaryVersion      = BuildInfo.scalaBinaryVersion
-  private[migrate] val migrateVersion          = BuildInfo.version
-  private[migrate] val scala3Version           = BuildInfo.scala3Version
-  private[migrate] val migrateScalametaVersion = BuildInfo.scalametaVersion
-  private[migrate] val migrateAPI              = Migrate.fetchAndClassloadInstance(migrateVersion, scalaBinaryVersion)
+  private[migrate] val syntheticsOn = "-P:semanticdb:synthetics:on"
+  private[migrate] val migrationOn  = "-source:3.0-migration"
+
+  private[migrate] def getMigrateInstance(logger: Logger) = {
+    val migrateLogger = new ScalaMigrateLogger(logger)
+    Migrate.fetchAndClassloadInstance(BuildInfo.version, BuildInfo.scalaBinaryVersion, migrateLogger)
+  }
 
   private[migrate] val inputsStore: mutable.Map[Scope, Scala2Inputs] = mutable.Map()
 
   private[migrate] object Keys {
     val scala2Version = AttributeKey[String]("scala2Version")
 
-    val migrationConfigs = settingKey[List[Configuration]]("the ordered list of configuration to migrate")
+    val migrationConfigs =
+      settingKey[List[Configuration]]("the ordered list of configurations to migrate").withRank(KeyRanks.Invisible)
 
-    val scala2Inputs = taskKey[Scala2Inputs]("return Scala 2 inputs")
-    val scala3Inputs = taskKey[Scala3Inputs]("return Scala 3 inputs")
+    val scala2Inputs = taskKey[Scala2Inputs]("return Scala 2 inputs").withRank(KeyRanks.Invisible)
+    val scala3Inputs = taskKey[Scala3Inputs]("return Scala 3 inputs").withRank(KeyRanks.Invisible)
+    val storeScala2Inputs =
+      taskKey[StateTransform]("store Scala 2 inputs from all migration configurations").withRank(KeyRanks.Invisible)
 
-    val storeScala2Inputs            = taskKey[StateTransform]("store Scala 2 inputs from all migration configurations")
-    val internalMigrateSyntax        = taskKey[Unit]("fix some syntax incompatibilities with scala 3")
-    val internalMigrateScalacOptions = taskKey[Unit]("log information about migratin of the scalacOptions")
-    val internalMigrateLibs          = taskKey[Unit]("log information to migrate libDependencies")
-    val internalMigrate              = taskKey[Unit]("migrate a specific project to scala 3")
+    val internalMigrateSyntax =
+      taskKey[Unit]("fix some syntax incompatibilities with scala 3").withRank(KeyRanks.Invisible)
+    val internalMigrateScalacOptions = taskKey[Unit]("migrate of the scalacOptions").withRank(KeyRanks.Invisible)
+    val internalMigrateDependencies  = taskKey[Unit]("migrate dependencies").withRank(KeyRanks.Invisible)
+    val internalMigrateTypes         = taskKey[Unit]("migrate types to scala 3").withRank(KeyRanks.Invisible)
   }
 
   import Keys._
@@ -74,7 +77,7 @@ object ScalaMigratePlugin extends AutoPlugin {
       val sv = scalaVersion.value
       if (sv.startsWith("2.13.")) {
         val actual = semanticdbVersion.value
-        if (actual > migrateScalametaVersion) actual else migrateScalametaVersion
+        if (actual > BuildInfo.scalametaVersion) actual else BuildInfo.scalametaVersion
       } else semanticdbVersion.value
     },
     migrationConfigs                         := migrationConfigsImpl.value,
@@ -85,11 +88,11 @@ object ScalaMigratePlugin extends AutoPlugin {
     internalMigrateScalacOptions / aggregate := false,
     internalMigrateSyntax                    := SyntaxMigration.internalImpl.value,
     internalMigrateSyntax / aggregate        := false,
-    internalMigrate                          := TypeInferenceMigration.internalImpl.value,
-    internalMigrate / aggregate              := false,
-    internalMigrateLibs                      := LibsMigration.internalImpl.value,
-    internalMigrateLibs / aggregate          := false,
-    commands ++= Seq(migrateSyntax, migrateScalacOptions, migrateLibDependencies, migrate, fallback),
+    internalMigrateTypes                     := TypeInferenceMigration.internalImpl.value,
+    internalMigrateTypes / aggregate         := false,
+    internalMigrateDependencies              := LibsMigration.internalImpl.value,
+    internalMigrateDependencies / aggregate  := false,
+    commands ++= Seq(migrateSyntax, migrateScalacOptions, migrateLibDependencies, migrateTypes, fallback),
     inConfig(Compile)(configSettings),
     inConfig(Test)(configSettings)
   )
@@ -194,17 +197,17 @@ object ScalaMigratePlugin extends AutoPlugin {
 
   lazy val migrateLibDependencies: Command =
     Command(migrateLibs, migrateLibsBrief, migrateLibsDetailed)(idParser) { (state, projectId) =>
-      s"$projectId / internalMigrateLibs" :: state
+      s"$projectId / internalMigrateDependencies" :: state
     }
 
-  lazy val migrate: Command =
+  lazy val migrateTypes: Command =
     Command(migrateCommand, migrateBrief, migrateDetailed)(idParser) { (state, projectId) =>
       val commands = List(
         s"$projectId / storeScala2Inputs",
-        setScalaVersion(projectId, scala3Version),
+        setScalaVersion(projectId, BuildInfo.scala3Version),
         StashOnFailure,                            // prepare onFailure
         s"$OnFailure $migrateFallback $projectId", // go back to Scala 2.13 in case of failure
-        s"$projectId / internalMigrate",
+        s"$projectId / internalMigrateTypes",
         FailureWall, // resume here in case of failure
         PopOnFailure // remove onFailure
       )

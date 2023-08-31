@@ -1,6 +1,6 @@
 package migrate
 
-import compiler.interfaces.Scala3Compiler
+import migrate.interfaces.Scala3Compiler
 import migrate.internal.AbsolutePath
 import migrate.internal.Classpath
 import migrate.test.BuildInfo
@@ -18,10 +18,11 @@ object Values {
   val scala3Classpath: Classpath         = Classpath.from(BuildInfo.scala3Classpath).get
   val scala3CompilerOptions              = BuildInfo.scala3CompilerOptions
   val scala3ClassDirectory: AbsolutePath = AbsolutePath.from(BuildInfo.scala3ClassDirectory)
+  val baseDirecotry: AbsolutePath        = AbsolutePath.from(BuildInfo.baseDirectory)
 
   lazy val scalafixSrv: ScalafixService =
-    ScalafixService.from(scala2CompilerOptions, scala2Classpath, semanticdbTargetRoot).get
-  val scalaMigrat = new Scala3Migrate(scalafixSrv)
+    ScalafixService.from(scala2CompilerOptions, scala2Classpath, semanticdbTargetRoot, baseDirecotry, PrintLogger).get
+  val scalaMigrat = new Scala3Migrate(scalafixSrv, PrintLogger)
   val scala3Compiler: Scala3Compiler =
     scalaMigrat.setupScala3Compiler(scala3Classpath, scala3ClassDirectory, scala3CompilerOptions).get
 }

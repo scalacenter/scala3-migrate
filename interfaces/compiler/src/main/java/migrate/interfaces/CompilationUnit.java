@@ -1,4 +1,4 @@
-package compiler.interfaces;
+package migrate.interfaces;
 
 public class CompilationUnit {
   public String content;

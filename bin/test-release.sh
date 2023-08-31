@@ -4,10 +4,10 @@ set -eux
 version=$1
 
 cs resolve \
-  ch.epfl.scala:migrate-compiler-interfaces:$version  \
-  ch.epfl.scala:migrate-core-interfaces:$version  \
-  ch.epfl.scala:migrate-rules_2.13:$version  \
-  ch.epfl.scala:migrate-core_2.13:$version  \
+  ch.epfl.scala:scala3-migrate-compiler-interface:$version  \
+  ch.epfl.scala:scala3-migrate-interface:$version  \
+  ch.epfl.scala:scala3-migrate-rules_2.13:$version  \
+  ch.epfl.scala:scala3-migrate-core_2.13:$version  \
   -r sonatype:publics
 
 cs resolve \

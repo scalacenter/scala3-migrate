@@ -1,7 +1,7 @@
-> migrate-scalacOptions library-dependencies
-> migrate-libs library-dependencies
-> migrate-syntax library-dependencies
-> migrate library-dependencies
+> migrateScalacOptions library-dependencies
+> migrateDependencies library-dependencies
+> migrateSyntax library-dependencies
+> migrateTypes library-dependencies
 
 # check scalaVersion is Scala 3 and compilation succeeds
 > library-dependencies / checkMigration

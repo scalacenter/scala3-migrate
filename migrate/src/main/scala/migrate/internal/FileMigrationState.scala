@@ -3,8 +3,9 @@ package migrate.internal
 import scala.jdk.OptionConverters._
 import scala.util.Try
 
-import compiler.interfaces.CompilationUnit
-import compiler.interfaces.Scala3Compiler
+import migrate.interfaces.CompilationUnit
+import migrate.interfaces.Logger
+import migrate.interfaces.Scala3Compiler
 import migrate.utils.ScalaExtensions._
 import scalafix.interfaces._
 
@@ -48,8 +49,8 @@ sealed trait FileMigrationState {
 
 object FileMigrationState {
   case class Initial(evaluation: ScalafixFileEvaluation) extends FileMigrationState {
-    def migrate(compiler: Scala3Compiler): Try[FileMigrationState.FinalState] =
-      new FileMigration(this, compiler).migrate()
+    def migrate(compiler: Scala3Compiler, logger: Logger): Try[FileMigrationState.FinalState] =
+      new FileMigration(this, compiler, logger).migrate()
 
     def success(necessaryPatches: Seq[ScalafixPatch]): FinalState = FinalState(evaluation, necessaryPatches)
 
