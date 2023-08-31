@@ -4,7 +4,5 @@
 > migrateTypes aggregate-project
 
 # check aggregate-project is migrated
-> aggregate-project / checkMigration
-
-# check subproject is not migrated
-> subproject / checkNotMigrated
+> ++3.3.0!
+> aggregate-project / compile

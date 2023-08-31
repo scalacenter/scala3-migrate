@@ -1,8 +1,8 @@
-package migrate.interfaces;
+package migrate.compiler.interfaces;
 
 import dotty.tools.dotc.reporting.*;
 import dotty.tools.dotc.core.Contexts.*;
-
+import migrate.interfaces.Logger;
 
 // a copy of DelegatingReporter
 // https://github.com/lampepfl/dotty/blob/b9b1f2a083c4b3ef130fbb70c7da1956b144e2a1/sbt-bridge/src/xsbt/DelegatingReporter.java

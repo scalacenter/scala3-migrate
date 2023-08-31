@@ -1,6 +1,5 @@
-# The library dependencies of project foo have not been updated for Scala 3
-# Although migration fails, the command does not because of the fallback. It could be improved.
-> migrateTypes unresolved-dependencies
+# Cannot migrate types because of unresolved dependencies
+-> migrateTypes unresolved-dependencies
 
 # check fallback to Scala 2.13
 > unresolved-dependencies / checkFallback

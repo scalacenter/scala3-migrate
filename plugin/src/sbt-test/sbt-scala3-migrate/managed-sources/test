@@ -3,5 +3,5 @@
 > migrateSyntax managed-sources
 > migrateTypes managed-sources
 
-# check scalaVersion is Scala 3 and compilation succeeds
-> managed-sources / checkMigration
+> ++3.3.0!
+> managed-sources / compile

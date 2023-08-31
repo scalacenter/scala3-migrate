@@ -44,7 +44,7 @@ final class MigrateImpl(logger: Logger) extends Migrate {
           targetRootAbs,
           baseDirectory,
           logger)
-      scalaMigrate = new Scala3Migrate(configuredScalafixSrv, logger)
+      scalaMigrate = new Scala3Migrate(configuredScalafixSrv, baseDirectory, logger)
       _ <- scalaMigrate
              .migrate(
                unmanagedSources = unmanagedSourcesAbs,
@@ -83,7 +83,7 @@ final class MigrateImpl(logger: Logger) extends Migrate {
           targetRootAbs,
           baseDirectory,
           logger)
-      scalaMigrate = new Scala3Migrate(configuredScalafixSrv, logger)
+      scalaMigrate = new Scala3Migrate(configuredScalafixSrv, baseDirectory, logger)
       _           <- scalaMigrate.migrateSyntax(unmanagedSourcesAbs)
     } yield ()).get
 }
