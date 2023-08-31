@@ -74,9 +74,9 @@ private[migrate] object TypeInferenceMigration {
   private def welcomeMessage(projectId: String, configs: Seq[String]): String =
     s"""|
         |${BOLD}We are going to migrate $projectId / ${configs.mkString(
-      "[",
-      ", ",
-      "]")} to ${BuildInfo.scala3Version}${RESET}
+         "[",
+         ", ",
+         "]")} to ${BuildInfo.scala3Version}${RESET}
         |
         |""".stripMargin
 
