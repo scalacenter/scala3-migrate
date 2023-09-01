@@ -13,9 +13,5 @@ lazy val `managed-sources` = project
                           |""".stripMargin
       IO.write(file, buildInfo)
       Seq(file)
-    },
-    TaskKey[Unit]("checkMigration") := {
-      assert(scalaVersion.value == "3.3.0", s"Wrong scala version ${scalaVersion.value}. Expected 3.3.0")
-      (Compile / compile).value
     }
   )

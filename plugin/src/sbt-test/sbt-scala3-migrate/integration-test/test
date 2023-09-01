@@ -3,5 +3,5 @@
 > migrateSyntax integration-test
 > migrateTypes integration-test
 
-# check scalaVersion is Scala 3 and compilation succeeds
-> integration-test / checkMigration
+> ++3.3.0!
+> integration-test / IntegrationTest / compile

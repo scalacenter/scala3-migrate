@@ -16,7 +16,7 @@ object Simple {
     import Person._
     implicit val crazy1: Int = implicitly[Int](age)
 
-    val minute: FiniteDuration = DurationInt(1).minute
+    val minute: FiniteDuration = scala.concurrent.duration.DurationInt(1).minute
   }
 
   object Person {

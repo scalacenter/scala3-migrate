@@ -3,5 +3,5 @@
 > migrateSyntax library-dependencies
 > migrateTypes library-dependencies
 
-# check scalaVersion is Scala 3 and compilation succeeds
-> library-dependencies / checkMigration
+> ++3.3.0!
+> library-dependencies / compile

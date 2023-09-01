@@ -36,19 +36,16 @@ public interface Migrate {
                        List<String> scala2CompilerOptions,
                        Path baseDirectory);
 
+    static ClassLoader getClassLoader(String migrateVersion, String scalaVersion)  throws Exception {
+        List<URL> jars = getJars(migrateVersion, scalaVersion);
+        ClassLoader parent = new MigrateClassloader(Migrate.class.getClassLoader());
+        URLClassLoader classLoader = new URLClassLoader(jars.stream().toArray(URL[]::new), parent);
+        return classLoader;
+    }
 
     // Todo: Maybe using ServiceLoader could simplify this code a bit:
     // https://www.baeldung.com/java-spi
-    static Migrate fetchAndClassloadInstance(String migrateVersion, String scalaVersion, Logger logger) throws Exception {
-        List<URL> jars = getJars(migrateVersion, scalaVersion);
-
-        ClassLoader parent = new MigrateClassloader(Migrate.class.getClassLoader());
-        URLClassLoader classLoader = new URLClassLoader(jars.stream().toArray(URL[]::new), parent);
-
-        return classloadInstance(classLoader, logger);
-    }
-
-    static Migrate classloadInstance(URLClassLoader classLoader, Logger logger) throws Exception {
+    static Migrate getInstance(ClassLoader classLoader, Logger logger) throws Exception {
         Class<?> cls = classLoader.loadClass("migrate.interfaces.MigrateImpl");
         Constructor<?> ctor = cls.getDeclaredConstructor(Logger.class);
         ctor.setAccessible(true);
@@ -59,7 +56,8 @@ public interface Migrate {
     static List<URL> getJars(String migrateVersion, String scalaVersion) throws Exception {
         ScalaVersion scalaV = ScalaVersion.of(scalaVersion);
         Dependency migrate = Dependency.parse("ch.epfl.scala::scala3-migrate-core:" + migrateVersion, scalaV);
-        return fetch(Collections.singletonList(migrate), ResolutionParams.create());
+        List<URL> jars = fetch(Collections.singletonList(migrate), ResolutionParams.create());
+        return jars;
     }
 
     static List<URL> fetch(List<Dependency> dependencies, ResolutionParams resolutionParams) throws Exception {
