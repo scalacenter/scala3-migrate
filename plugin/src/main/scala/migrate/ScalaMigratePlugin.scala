@@ -161,7 +161,7 @@ object ScalaMigratePlugin extends AutoPlugin {
       val classpath            = dependencyClasspath.value.map(_.data.toPath())
       val scala3Lib            = scalaInstance.value.libraryJars.toSeq.map(_.toPath)
       val scala3ClassDirectory = (compile / classDirectory).value.toPath
-      val scalac3Options       = sanitazeScala3Options(sOptions)
+      val scalac3Options       = sanitizeScala3Options(sOptions)
       val semanticdbTarget     = semanticdbTargetRoot.value.toPath
       Scala3Inputs(projectId, sv, scalac3Options, scala3Lib ++ classpath, scala3ClassDirectory, semanticdbTarget)
     },
@@ -281,7 +281,7 @@ object ScalaMigratePlugin extends AutoPlugin {
   private def setScalaVersion(projectId: String, scalaVersion: String): String =
     s"""set LocalProject("$projectId") / scalaVersion := "$scalaVersion""""
 
-  private def sanitazeScala3Options(options: Seq[String]) = {
+  private def sanitizeScala3Options(options: Seq[String]) = {
     val nonWorkingOptions = Set(syntheticsOn)
     options.filterNot(nonWorkingOptions)
   }
