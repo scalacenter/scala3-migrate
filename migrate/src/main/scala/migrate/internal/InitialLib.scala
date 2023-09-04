@@ -64,7 +64,6 @@ object InitialLib {
       ("org.scala-js", "scalajs-compiler"),
       ("org.scala-js", "scalajs-library"),
       ("org.scala-js", "scalajs-test-bridge"),
-      ("org.scala-lang", "scala-reflect"),
       ("org.scala-lang", "scala-library"),
       ("org.scoverage", "scalac-scoverage-plugin"),
       ("org.scalameta", "semanticdb-scalac")
