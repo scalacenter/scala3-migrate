@@ -9,6 +9,7 @@ import sbt.internal.util.complete.Parser
 import sbt.internal.util.complete.Parser.token
 import sbt.internal.util.complete.Parsers.Space
 import sbt.plugins.JvmPlugin
+import scala.Console._
 
 import java.nio.file.Path
 import scala.collection.mutable
@@ -67,6 +68,41 @@ object ScalaMigratePlugin extends AutoPlugin {
   override def requires: Plugins = JvmPlugin
 
   override def trigger = AllRequirements
+
+  override def globalSettings: Seq[Setting[_]] = Def.settings(
+    onLoad := {
+      val previousOnLoad = onLoad.value
+      state0 => {
+        val state1 = previousOnLoad(state0)
+        if (state1.currentCommand.exists(e => e.commandLine == "loadp")) {
+          state1.log.info(
+            s"""|
+                |$GREEN${BOLD}sbt-scala3-migrate ${BuildInfo.version} detected!$RESET
+                |It can assist you during the migration to Scala 3.
+                |Run the following commands, to start migrating to Scala 3:
+                |  - ${BOLD}migrateDependencies <project>$RESET
+                |  - ${BOLD}migrateScalacOptions <project>$RESET
+                |  - ${BOLD}migrateSyntax <project>$RESET
+                |  - ${BOLD}migrateTypes <project>$RESET
+                |Learn more about them on https://docs.scala-lang.org/scala3/guides/migration/scala3-migrate.html
+                |Remove sbt-scala3-migrate from your project/plugins.sbt to clear this message out.
+                |
+                |""".stripMargin
+          )
+        }
+        state1
+      }
+    },
+    commands ++= Seq(
+      migrateSyntax,
+      migrateScalacOptions,
+      migrateLibDependencies,
+      migrateTypes,
+      fallback,
+      fallbackAndFail,
+      migrateFail
+    )
+  )
 
   override def projectSettings: Seq[Setting[_]] = Def.settings(
     semanticdbEnabled := {
@@ -232,12 +268,12 @@ object ScalaMigratePlugin extends AutoPlugin {
     }
 
   lazy val fallbackAndFail: Command =
-    Command("migrateFallbackAndFail")(idParser) { (state, projectId) =>
+    Command("internalMigrateFallbackAndFail")(idParser) { (state, projectId) =>
       PopOnFailure :: s"migrateFallback $projectId" :: s"migrateFail $projectId" :: Nil ::: state
     }
 
   lazy val migrateFail: Command =
-    Command("migrateFail")(idParser) { (state, projectId) =>
+    Command("internalMigrateFail")(idParser) { (state, projectId) =>
       state.log.error(s"Migration of $projectId failed.")
       state.fail
     }

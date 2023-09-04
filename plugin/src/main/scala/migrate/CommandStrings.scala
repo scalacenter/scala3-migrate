@@ -54,5 +54,5 @@ object CommandStrings {
         |- Unclassified: sbt-scala3-migrate does not know how to migrate this dependency
         |""".stripMargin
 
-  val migrateFallback = "migrateFallback"
+  val migrateFallback = "internalMigrateFallback"
 }
