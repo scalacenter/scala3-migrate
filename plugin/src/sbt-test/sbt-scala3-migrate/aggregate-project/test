@@ -4,5 +4,5 @@
 > migrateTypes aggregate-project
 
 # check aggregate-project is migrated
-> ++3.3.0!
+> ++3.3.1!
 > aggregate-project / compile
