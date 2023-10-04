@@ -98,9 +98,9 @@ object ScalaMigratePlugin extends AutoPlugin {
       migrateScalacOptions,
       migrateLibDependencies,
       migrateTypes,
-      fallback,
-      fallbackAndFail,
-      migrateFail
+      internalMigrateFallback,
+      internalMigrateFallbackAndFail,
+      internalMigrateFail
     )
   )
 
@@ -134,9 +134,9 @@ object ScalaMigratePlugin extends AutoPlugin {
       migrateScalacOptions,
       migrateLibDependencies,
       migrateTypes,
-      fallback,
-      fallbackAndFail,
-      migrateFail),
+      internalMigrateFallback,
+      internalMigrateFallbackAndFail,
+      internalMigrateFail),
     inConfig(Compile)(configSettings),
     inConfig(Test)(configSettings)
   )
@@ -249,30 +249,30 @@ object ScalaMigratePlugin extends AutoPlugin {
       val preparedState = state.copy(attributes = state.attributes.remove(Keys.scala2Version))
       val commands = List(
         StashOnFailure, // stash shell from onFailure
-        s"$OnFailure migrateFallbackAndFail $projectId",
+        s"$OnFailure internalMigrateFallbackAndFail $projectId",
         s"$projectId / storeScala2Inputs",
         setScalaVersion(projectId, BuildInfo.scala3Version), // set Scala 3
         s"$projectId / internalMigrateTypes",
-        PopOnFailure,                  // pop shell to onFailure in case the fallback fails
-        s"$migrateFallback $projectId" // set Scala 2.13
+        PopOnFailure,                         // pop shell to onFailure in case the fallback fails
+        s"internalMigrateFallback $projectId" // set Scala 2.13
       )
       commands ::: preparedState
     }
 
-  lazy val fallback: Command =
-    Command(migrateFallback)(idParser) { (state, projectId) =>
+  lazy val internalMigrateFallback: Command =
+    Command("internalMigrateFallback")(idParser) { (state, projectId) =>
       state.attributes.get(Keys.scala2Version) match {
         case Some(scala2Version) => setScalaVersion(projectId, scala2Version) :: state
         case None                => state
       }
     }
 
-  lazy val fallbackAndFail: Command =
+  lazy val internalMigrateFallbackAndFail: Command =
     Command("internalMigrateFallbackAndFail")(idParser) { (state, projectId) =>
-      PopOnFailure :: s"migrateFallback $projectId" :: s"migrateFail $projectId" :: Nil ::: state
+      PopOnFailure :: s"internalMigrateFallback $projectId" :: s"internalMigrateFail $projectId" :: Nil ::: state
     }
 
-  lazy val migrateFail: Command =
+  lazy val internalMigrateFail: Command =
     Command("internalMigrateFail")(idParser) { (state, projectId) =>
       state.log.error(s"Migration of $projectId failed.")
       state.fail
