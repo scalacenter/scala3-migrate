@@ -213,7 +213,6 @@ lazy val V = new {
   val scalatest             = "3.2.17"
   val scala3                = "3.3.1"
   val scalafix              = "0.11.0"
-  val organizeImports       = "0.4.3"
   val catsCore              = "2.10.0"
   val kindProjector         = "0.13.2"
   val coursierApi           = "2.0.16"
