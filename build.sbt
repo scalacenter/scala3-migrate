@@ -218,6 +218,6 @@ lazy val V = new {
   val coursierApi           = "2.0.16"
   val coursierInterface     = "1.0.19"
   val scalameta             = "4.8.8"
-  val localSnapshotVersion  = "0.6.0-SNAPSHOT"
+  val localSnapshotVersion  = "0.7.0-SNAPSHOT"
   val zio                   = "1.0.14"
 }

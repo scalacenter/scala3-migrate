@@ -16,7 +16,7 @@ object MigrateSyntaxTest {
   // migrate.ParensAroundParam
   val f1 = { x: Int => x * x }
   val f2 = { (x: Int) => x * x }
-  val f3  = (x: Int) => x * x
+  val f3 = (x: Int) => x * x
 
   // fix.scala213.ExplicitNonNullaryApply
   trait Chunk {
