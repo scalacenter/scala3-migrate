@@ -74,7 +74,7 @@ object ScalafixService {
   val fixSyntaxRules: Seq[String] = Seq(
     "ProcedureSyntax",
     "fix.scala213.ExplicitNullaryEtaExpansion",
-    "fix.scala213.ParensAroundLambda",
+    "migrate.ParensAroundParam",
     "fix.scala213.ExplicitNonNullaryApply",
     "fix.scala213.Any2StringAdd",
     "ExplicitResultTypes"
@@ -102,9 +102,8 @@ object ScalafixService {
 
   private def getClassPathforRewriteRules(): Try[Classpath] =
     Try {
-      val paths1 = downloadDependecies(dep"org.scala-lang:scala-rewrites_2.13:0.1.5")
-      val paths2 = downloadDependecies(dep"com.sandinh:scala-rewrites_2.13:1.1.0-M1")
-      Classpath((paths1 ++ paths2): _*)
+      val jars = downloadDependecies(dep"org.scala-lang:scala-rewrites_2.13:0.1.5")
+      Classpath(jars: _*)
     }
 
   private def getClassPathforMigrateRules(): Try[Classpath] = {
