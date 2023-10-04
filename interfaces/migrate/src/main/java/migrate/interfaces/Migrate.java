@@ -24,40 +24,40 @@ public interface Migrate {
                  List<String> scala2CompilerOptions,
                  List<Path> scala3Classpath,
                  List<String> scala3CompilerOptions,
-                 Path scala3ClassDirectory);
+                 Path scala3ClassDirectory,
+                 Path baseDirectory);
     
-    ScalacOptions migrateScalacOption(List<String> scala3CompilerOptions);
+    MigratedScalacOptions migrateScalacOption(List<String> scala3CompilerOptions);
     MigratedLibs migrateLibs(List<Lib> libs);
 
     void migrateSyntax(List<Path> unmanagedSources,
                        Path targetRoot,
                        List<Path> scala2Classpath,
-                       List<String> scala2CompilerOptions);
+                       List<String> scala2CompilerOptions,
+                       Path baseDirectory);
 
+    static ClassLoader getClassLoader(String migrateVersion, String scalaVersion)  throws Exception {
+        List<URL> jars = getJars(migrateVersion, scalaVersion);
+        ClassLoader parent = new MigrateClassloader(Migrate.class.getClassLoader());
+        URLClassLoader classLoader = new URLClassLoader(jars.stream().toArray(URL[]::new), parent);
+        return classLoader;
+    }
 
     // Todo: Maybe using ServiceLoader could simplify this code a bit:
     // https://www.baeldung.com/java-spi
-    static Migrate fetchAndClassloadInstance(String migrateVersion, String scalaVersion) throws Exception {
-        List<URL> jars = getJars(migrateVersion, scalaVersion);
-
-        ClassLoader parent = new MigrateClassloader(Migrate.class.getClassLoader());
-        URLClassLoader classLoader = new URLClassLoader(jars.stream().toArray(URL[]::new), parent);
-
-        return classloadInstance(classLoader);
-    }
-
-    static Migrate classloadInstance(URLClassLoader classLoader) throws Exception {
+    static Migrate getInstance(ClassLoader classLoader, Logger logger) throws Exception {
         Class<?> cls = classLoader.loadClass("migrate.interfaces.MigrateImpl");
-        Constructor<?> ctor = cls.getDeclaredConstructor();
+        Constructor<?> ctor = cls.getDeclaredConstructor(Logger.class);
         ctor.setAccessible(true);
-        return (Migrate) ctor.newInstance();
+        return (Migrate) ctor.newInstance(logger);
     }
 
     // put all needed dependecies here.
     static List<URL> getJars(String migrateVersion, String scalaVersion) throws Exception {
         ScalaVersion scalaV = ScalaVersion.of(scalaVersion);
-        Dependency migrate = Dependency.parse("ch.epfl.scala:::migrate-core:" + migrateVersion, scalaV);
-        return fetch(Collections.singletonList(migrate), ResolutionParams.create());
+        Dependency migrate = Dependency.parse("ch.epfl.scala::scala3-migrate-core:" + migrateVersion, scalaV);
+        List<URL> jars = fetch(Collections.singletonList(migrate), ResolutionParams.create());
+        return jars;
     }
 
     static List<URL> fetch(List<Dependency> dependencies, ResolutionParams resolutionParams) throws Exception {

@@ -1,1 +1,1 @@
-> migrate-scalacOptions scalac-options-migration
+> migrateScalacOptions scalac-options-migration

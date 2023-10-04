@@ -1,22 +1,25 @@
 package migrate.utils
 
 import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
 import scala.util.Try
 
-import buildinfo.BuildInfo
 import coursier._
+import migrate.buildinfo.BuildInfo
+import migrate.interfaces.Logger
 import migrate.internal.AbsolutePath
 import migrate.internal.Classpath
-import migrate.utils.ScalaExtensions.OptionalExtension
 import scalafix.interfaces.Scalafix
 import scalafix.interfaces.ScalafixEvaluation
 
-final case class ScalafixService(
+final class ScalafixService(
   scalafix: Scalafix,
   compilerOptions: Seq[String],
   classpath: Classpath,
   targetRootSemantic: AbsolutePath,
-  toolClasspath: Classpath
+  toolClasspath: Classpath,
+  baseDirectory: AbsolutePath,
+  logger: Logger
 ) {
   import ScalafixService._
   lazy val scalafixClassLoader: ClassLoader = scalafix.getClass().getClassLoader()
@@ -30,24 +33,24 @@ final case class ScalafixService(
   def fixInPlace(eval: ScalafixEvaluation): Unit =
     if (eval.isSuccessful) {
       val filesEvaluated = eval.getFileEvaluations.toSeq
-      filesEvaluated.foreach { oneFile =>
-        val absPath = AbsolutePath.from(oneFile.getEvaluatedFile).get
-        if (oneFile.isSuccessful) {
-          oneFile.previewPatchesAsUnifiedDiff().asScala match {
-            case None => scribe.debug(s"Nothing to fix in $absPath)")
+      filesEvaluated.foreach { evaluation =>
+        val file         = AbsolutePath.from(evaluation.getEvaluatedFile).get
+        val relativePath = file.relativize(baseDirectory).getOrElse(file)
+        if (evaluation.isSuccessful) {
+          evaluation.previewPatchesAsUnifiedDiff.toScala match {
+            case None =>
             case Some(_) =>
-              oneFile.applyPatches()
-              scribe.info(s"Syntax fixed for $absPath)")
+              evaluation.applyPatches()
+              logger.info(s"Applied ${Format.plural(evaluation.getPatches.size, "patch", "patches")} in $relativePath")
           }
         } else {
-          val errorMsg = oneFile.getErrorMessage.asScala.getOrElse("Unknown Error")
-          scribe.info(s"Failed to run scalafix with ${fixSyntaxRules.mkString(", ")} on $absPath because $errorMsg")
+          val errorMsg = evaluation.getErrorMessage.toScala.getOrElse("unknown error")
+          logger.error(s"Failed to fix syntax in $relativePath because: $errorMsg.")
         }
       }
     } else {
-      val errorMsg = eval.getErrorMessage.asScala.getOrElse("Unknown Error")
-      scribe.info(s"Failed to run scalafix with ${fixSyntaxRules.mkString(", ")} because $errorMsg")
-
+      val errorMsg = eval.getErrorMessage.toScala.getOrElse("unknown error")
+      logger.error(s"Failed to fix syntax because of $errorMsg")
     }
 
   private def evaluate(rules: Seq[String], sources: Seq[AbsolutePath]): Try[ScalafixEvaluation] = Try {
@@ -61,7 +64,6 @@ final case class ScalafixService(
       .withToolClasspath(toolClasspath.toUrlClassLoader(scalafixClassLoader))
     args.evaluate()
   }
-
 }
 
 object ScalafixService {
@@ -69,26 +71,45 @@ object ScalafixService {
   private lazy val internalRules = getClassPathforMigrateRules()
   private lazy val externalRules = getClassPathforRewriteRules()
 
-  val fixSyntaxRules: Seq[String]                     = Seq("ProcedureSyntax", "fix.scala213.Any2StringAdd", "ExplicitResultTypes")
+  val fixSyntaxRules: Seq[String] = Seq(
+    "ProcedureSyntax",
+    "fix.scala213.ExplicitNullaryEtaExpansion",
+    "fix.scala213.ParensAroundLambda",
+    "fix.scala213.ExplicitNonNullaryApply",
+    "fix.scala213.Any2StringAdd",
+    "ExplicitResultTypes"
+  )
   val addExplicitResultTypesAndImplicits: Seq[String] = Seq("MigrationRule")
 
-  def from(compilerOptions: Seq[String], classpath: Classpath, targetRootSemantic: AbsolutePath): Try[ScalafixService] =
+  def from(
+    compilerOptions: Seq[String],
+    classpath: Classpath,
+    targetRootSemantic: AbsolutePath,
+    baseDirectory: AbsolutePath,
+    logger: Logger): Try[ScalafixService] =
     for {
       scalafix      <- scalafix
       internalRules <- internalRules
       externalRules <- externalRules
-    } yield ScalafixService(scalafix, compilerOptions, classpath, targetRootSemantic, internalRules ++ externalRules)
+    } yield new ScalafixService(
+      scalafix,
+      compilerOptions,
+      classpath,
+      targetRootSemantic,
+      internalRules ++ externalRules,
+      baseDirectory,
+      logger)
 
   private def getClassPathforRewriteRules(): Try[Classpath] =
     Try {
-      val paths1 = downloadDependecies(dep"org.scala-lang:scala-rewrites_2.13:0.1.2")
-      val paths2 = downloadDependecies(dep"com.sandinh:scala-rewrites_2.13:0.1.10-sd")
+      val paths1 = downloadDependecies(dep"org.scala-lang:scala-rewrites_2.13:0.1.5")
+      val paths2 = downloadDependecies(dep"com.sandinh:scala-rewrites_2.13:1.1.0-M1")
       Classpath((paths1 ++ paths2): _*)
     }
 
   private def getClassPathforMigrateRules(): Try[Classpath] = {
     val dependency =
-      Dependency(Module(Organization("ch.epfl.scala"), ModuleName(s"migrate-rules_2.13")), BuildInfo.version)
+      Dependency(Module(Organization("ch.epfl.scala"), ModuleName(s"scala3-migrate-rules_2.13")), BuildInfo.version)
 
     Try {
       val paths1 = downloadDependecies(dependency)

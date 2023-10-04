@@ -1,123 +1,93 @@
 package migrate
 
-import sbt.Keys._
 import sbt._
 import sbt.internal.util.ManagedLogger
 
-import migrate.interfaces.ScalacOptions
 import ScalaMigratePlugin.Keys._
-import ScalaMigratePlugin.migrateAPI
 import Messages._
 
 import scala.collection.JavaConverters._
-import scala.io.AnsiColor._
+import scala.Console._
 
 private[migrate] object ScalacOptionsMigration {
-  val internalImpl = Def.taskDyn {
-    val logger        = streams.value.log
-    val configs       = migrationConfigs.value
-    val projectId     = thisProject.value.id
-    val commonOptions = scalacOptions.value
-    val sv            = scalaVersion.value
 
-    if (!sv.startsWith("2.13."))
+  lazy val internalImpl: Def.Initialize[Task[Unit]] = Def.task {
+    val logger           = Keys.streams.value.log
+    val projectId        = Keys.thisProject.value.id
+    val allScalacOptions = allScalacOptionsTask.value
+    val sv               = Keys.scalaVersion.value
+
+    if (!sv.startsWith("2.13.") && !sv.startsWith("3."))
       throw new MessageOnlyException(Messages.notScala213(sv, projectId))
 
-    logger.info(starting(projectId, configs.map(_.id)))
-    logger.info(warning)
-    logger.info(help)
+    logger.info(startingMessage(projectId))
 
-    if (commonOptions.nonEmpty) {
-      val migrationStatus = migrateAPI.migrateScalacOption(commonOptions.asJava)
-      reportStatus(logger, migrationStatus)
+    val migrateAPI = ScalaMigratePlugin.getMigrateInstance(logger)
+    val migrated   = migrateAPI.migrateScalacOption(allScalacOptions.asJava)
+
+    if (migrated.getValid.nonEmpty) {
+      logger.info(validMessage(migrated.getValid))
     }
 
+    val renamed = migrated.getRenamed.asScala.toMap
+    if (renamed.nonEmpty) {
+      logger.warn(renamedMessage(renamed))
+    }
+
+    if (migrated.getRemoved.nonEmpty) {
+      logger.warn(removedMessage(migrated.getRemoved))
+    }
+
+    if (migrated.getUnknown.nonEmpty) {
+      logger.warn(unknownMessage(migrated.getUnknown))
+    }
+  }
+
+  private val allScalacOptionsTask: Def.Initialize[Task[Seq[String]]] = Def.taskDyn {
+    val configs = migrationConfigs.value
     Def.task {
-      val logger        = streams.value.log
-      val configOptions = configs.map(_ / scalacOptions).join.value
-      for {
-        (options, config) <- configOptions.zip(configs)
-        filteredOptions    = options.filterNot(opt => commonOptions.contains(opt))
-        if filteredOptions.nonEmpty
-      } {
-        logger.info(s"${BOLD}In configuration ${config.id}:${RESET}")
-        val migrationStatus = migrateAPI.migrateScalacOption(filteredOptions.asJava)
-        reportStatus(logger, migrationStatus)
-      }
+      configs
+        .map(c => (c / Keys.scalacOptions).result)
+        .join(_.join)
+        .value
+        .collect { case Value(scalacOptions) => scalacOptions }
+        .flatten
     }
   }
 
-  private def reportStatus(logger: ManagedLogger, status: ScalacOptions): Unit = {
-    val notParsed = status.getNotParsed.toSeq
-    if (notParsed.nonEmpty) {
-      logger.warn(s"""|
-                      |We were not able to parse the following ScalacOptions:
-                      |${formatScalacOptions(notParsed)}
-                      |
-                      |""".stripMargin)
-    }
-
-    val specific2 = status.getSpecificScala2.toSeq
-    val scala3    = status.getScala3cOptions.toSeq
-    val renamed   = status.getRenamed.asScala.toMap
-    val plugins   = status.getPluginsOptions.toSeq
-    logger.info(message(specific2, renamed, scala3, plugins))
-  }
-
-  private def starting(projectId: String, configs: Seq[String]): String =
+  private def startingMessage(projectId: String): String =
     s"""|
-        |${BOLD}Starting to migrate the scalacOptions in $projectId / [${configs.mkString(",")}]${RESET}
+        |${BOLD}Starting migration of scalacOptions in $projectId${RESET}
         |""".stripMargin
 
-  private val warning: String =
-    s"""|${YELLOW}Some scalacOptions are set by sbt plugins and don't need to be modified, removed or added.${RESET}
-        |${YELLOW}The sbt plugin should adapt its own scalacOptions for Scala 3${RESET}""".stripMargin
+  private def validMessage(scalacOptions: Seq[String]): String =
+    s"""|
+        |${GREEN}${BOLD}Valid scalacOptions:$RESET
+        |${scalacOptions.mkString("\n")}
+        |""".stripMargin
 
-  private val removedSign = s"""${BOLD}${RED}X${RESET}"""
-  private val renamedSign = s"""${BOLD}${BLUE}Renamed${RESET}"""
-  private val sameSign    = s"""${BOLD}${GREEN}Valid${RESET}"""
-  private val pluginSign  = s"""${BOLD}${CYAN}Plugin${RESET}"""
-  private val spacesHelp  = computeLongestValue(Seq(removedSign, renamedSign, sameSign, pluginSign))
-
-  // format: off
-  private val help =
-    s"""
-       |${formatValueWithSpace(removedSign, spacesHelp)} $RED: the option is not available is Scala 3$RESET
-       |${formatValueWithSpace(renamedSign, spacesHelp)} $BLUE: the option has been renamed$RESET
-       |${formatValueWithSpace(sameSign, spacesHelp)} $GREEN: the option is still valid$RESET
-       |${formatValueWithSpace(pluginSign, spacesHelp)} $CYAN: the option is related to a plugin, previously handled by migrate-libs$RESET
-       |
-       |""".stripMargin
-  // format: on
-
-  private def message(
-    removed: Seq[String],
-    renamed: Map[String, String],
-    valid: Seq[String],
-    plugins: Seq[String]
-  ): String = {
-    val longest = computeLongestValue(removed ++ renamed.keys ++ valid)
-
-    val formattedRemoved =
-      removed.map(r => s"""${formatValueWithSpace(r, longest)} -> $removedSign""").mkString("\n")
-
-    val formattedRenamed: String = renamed.map { case (initial, renamed) =>
-      s"""${formatValueWithSpace(initial, longest)} -> ${BOLD}${BLUE}${renamed}${RESET}"""
-    }.mkString("\n")
-
-    val formattedValid: String =
-      valid.map(r => s"""${formatValueWithSpace(r, longest)} -> $sameSign""").mkString("\n")
-
-    val formattedPlugins: String = {
-      val longest = computeLongestValue(plugins)
-      plugins.map(r => s"""${formatValueWithSpace(r, longest)} -> $pluginSign""").mkString("\n")
+  private def renamedMessage(scalacOptions: Map[String, String]): String = {
+    val maxSize = scalacOptions.keys.map(_.size).max
+    def format(keyValue: (String, String)): String = {
+      val (key, value) = keyValue
+      val spaces       = " " * (maxSize - key.size)
+      s"$key$spaces -> $YELLOW$value$RESET"
     }
-
-    Seq(formattedRemoved, formattedRenamed, formattedValid, formattedPlugins)
-      .filterNot(_.isEmpty)
-      .mkString("", "\n", "\n\n")
+    s"""|
+        |${YELLOW}${BOLD}Renamed scalacOptions:${RESET}
+        |${scalacOptions.map(format).mkString("\n")}
+        |""".stripMargin
   }
 
-  private def formatScalacOptions(l: Seq[String]): String =
-    l.mkString("Seq(\n\"", "\",\n\"", "\"\n)")
+  private def removedMessage(scalacOptions: Seq[String]): String =
+    s"""|
+        |$YELLOW${BOLD}Removed scalacOptions:$RESET
+        |${scalacOptions.mkString("\n")}
+        |""".stripMargin
+
+  private def unknownMessage(scalacOptions: Seq[String]): String =
+    s"""|
+        |$YELLOW${BOLD}Unknonw scalacOptions:$RESET
+        |${scalacOptions.mkString("\n")}
+        |""".stripMargin
 }

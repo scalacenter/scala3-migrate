@@ -1,4 +1,4 @@
-package compiler.interfaces;
+package migrate.compiler.interfaces;
 
 import dotty.tools.dotc.Compiler;
 import dotty.tools.dotc.Run;
@@ -14,6 +14,7 @@ import scala.io.Codec;
 import scala.io.Codec$;
 import scala.runtime.AbstractFunction1;
 
+import migrate.interfaces.Logger;
 import migrate.interfaces.CompilationException;
 
 import java.util.HashSet;
@@ -25,7 +26,7 @@ public class Scala3Compiler {
 
   private Function1<CompilationUnit, SourceFile> toSourceFile = new AbstractFunction1<CompilationUnit, SourceFile>() {
     public SourceFile apply(CompilationUnit unit) {
-      return SourceFile$.MODULE$.virtual(unit.name, unit.content, false);
+      return new MigrationSourceFile(unit.content, unit.name, unit.path);
     }
   };
 
