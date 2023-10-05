@@ -207,12 +207,12 @@ addCommandAlias("compileScalafixOutputinScala3", s"""set `scalafix-output`/scala
 def isCI = System.getenv("CI") != null
 
 lazy val V = new {
-  val scala213              = "2.13.11"
+  val scala213              = "2.13.12"
   val scala213BinaryVersion = "2.13"
   val scala212              = "2.12.18"
   val scalatest             = "3.2.17"
   val scala3                = "3.3.1"
-  val scalafix              = "0.11.0"
+  val scalafix              = "0.11.1"
   val catsCore              = "2.10.0"
   val kindProjector         = "0.13.2"
   val coursierApi           = "2.1.7"
