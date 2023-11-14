@@ -61,7 +61,7 @@ private[migrate] object LibsMigration {
 
   private def startingMessage(projectId: String): String =
     s"""|
-        |${BOLD}Starting migration of libraries and compiler plugins in project `$projectId`$RESET
+        |${BOLD}Starting migration of libraries and compiler plugins in project '$projectId'$RESET
         |""".stripMargin
 
   private def validMessage(validLibs: Seq[MigratedLib]): String =

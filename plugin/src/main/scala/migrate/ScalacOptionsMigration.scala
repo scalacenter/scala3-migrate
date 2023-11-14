@@ -59,7 +59,7 @@ private[migrate] object ScalacOptionsMigration {
 
   private def startingMessage(projectId: String): String =
     s"""|
-        |${BOLD}Starting migration of scalacOptions in project `$projectId`$RESET
+        |${BOLD}Starting migration of scalacOptions in project '$projectId'$RESET
         |""".stripMargin
 
   private def validMessage(scalacOptions: Seq[String]): String =
