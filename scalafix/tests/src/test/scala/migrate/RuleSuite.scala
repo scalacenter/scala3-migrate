@@ -19,7 +19,7 @@ class RuleSuite extends AbstractSemanticRuleSuite with AnyFunSuiteLike {
 
 //  writeTestResult("implicits/")
 //  writeTestResult("types/")
-  //   for running only one test if using Intellij
+  //   for running only one test if using IntelliJ
   def runSpecificTests(name: String): Unit =
     filterRuleTest(name).map(runOn)
 

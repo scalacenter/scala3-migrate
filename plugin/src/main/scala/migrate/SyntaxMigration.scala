@@ -19,7 +19,7 @@ private[migrate] object SyntaxMigration {
     if (!sv.startsWith("2.13."))
       throw new MessageOnlyException(Messages.notScala213(sv, projectId))
 
-    log.info(s"${BOLD}Starting migration of syntax in $projectId$RESET")
+    log.info(s"${BOLD}Starting migration of syntax in project `$projectId`$RESET")
 
     Def.task {
       val log             = streams.value.log
