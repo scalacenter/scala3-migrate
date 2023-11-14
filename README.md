@@ -19,16 +19,16 @@ The complete documentation of `sbt-scala3-migrate` can be found in [docs.scala-l
 ### Installation
 ```
 // project/plugins.sbt
-addSbtPlugin("ch.epfl.scala" % "sbt-scala3-migrate" % "0.4.6")
+addSbtPlugin("ch.epfl.scala" % "sbt-scala3-migrate" % "0.6.2")
 ```
 
 ### Porting the build
 
 To port a build to Scala 3, run the following commands in order, in each project of the build: 
-- `migrateDepedendencies <project>` helps you update the list of `libraryDependencies`
-- `migrateScalacOptions <project>` helps you update the list of `scalacOptions`
-- `migrateSyntax <project>` fixes a number of syntax incompatibilities between Scala 2.13 and Scala 3 
-- `migrateTypes <project>` tries to make your code compile with Scala 3 by inferring a few types and resolving a few implicits.
+1. `migrateDepedendencies <project>` helps you update the list of `libraryDependencies`
+2. `migrateScalacOptions <project>` helps you update the list of `scalacOptions`
+3. `migrateSyntax <project>` fixes a number of syntax incompatibilities between Scala 2.13 and Scala 3 
+4. `migrateTypes <project>` tries to make your code compile with Scala 3 by inferring a few types and resolving a few implicits.
 
 ## Contributions and feedbacks are welcome
 The tool is still under development, and **we would love to hear from you.**
