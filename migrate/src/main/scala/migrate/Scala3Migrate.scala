@@ -85,9 +85,7 @@ class Scala3Migrate(scalafixSrv: ScalafixService, baseDirectory: AbsolutePath, l
     // It's easier no to deal with semanticdb option, since we don't need semanticdb files
     val modified           = scala3CompilerOptions.filterNot(elm => elm == "-Xsemanticdb" || elm == "-Ysemanticdb")
     val scala3CompilerArgs = modified.toArray ++ Array("-classpath", classpath.value, "-d", classDirectory.value)
-    Try {
-      Scala3Compiler.setup(scala3CompilerArgs)
-    }
+    Try(Scala3Compiler.setup(scala3CompilerArgs))
   }
 
   private def compileWithRewrite(

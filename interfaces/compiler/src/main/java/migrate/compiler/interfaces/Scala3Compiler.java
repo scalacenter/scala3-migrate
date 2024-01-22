@@ -42,7 +42,7 @@ public class Scala3Compiler {
     this.context = context;
   }
 
-  public static Scala3Compiler setup(String[] args) {
+  public static Scala3Compiler setup(String[] args) throws Scala3SetupException {
     return Scala3Driver.setupCompiler(args);
   }
 
