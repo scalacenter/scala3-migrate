@@ -41,7 +41,10 @@ public class Scala3Driver extends Driver {
           return diag.level() == Diagnostic.ERROR;
         }
         public String apply(Diagnostic diag) {
-          return diag.message();
+          if (isDefinedAt(diag))
+            return diag.message();
+          else
+            throw new scala.MatchError(diag);
         }
       };
       String message = reporter.removeBufferedMessages(ctx2).collect(errorMessages).head();
