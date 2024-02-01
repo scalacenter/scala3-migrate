@@ -87,7 +87,7 @@ private[migrate] object ScalacOptionsMigration {
 
   private def unknownMessage(scalacOptions: Seq[String]): String =
     s"""|
-        |$YELLOW${BOLD}Unknonw scalacOptions:$RESET
+        |$YELLOW${BOLD}Unknown scalacOptions:$RESET
         |${scalacOptions.mkString("\n")}
         |""".stripMargin
 }
