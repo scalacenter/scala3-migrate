@@ -8,7 +8,7 @@ Make sure to run `sbt scalafixAll` to apply those rules before opening a pull re
 ## Scalafmt
 
 Be sure to run scalafmt (available in `bin/` folder) to ensure code formatting. 
-`bin/scalafmt --diff` formats only the files that have changed from the main branch.
+`bin/scalafmt --diff-branch main` formats only the files that have changed from the `main` branch.
 
 ## Release
 

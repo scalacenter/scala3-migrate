@@ -76,7 +76,7 @@ private[migrate] object TypeInferenceMigration {
     val message =
       s"""|
           |You can safely upgrade $projectId to Scala 3:
-          |${YELLOW}scalaVersion := "${BuildInfo.scala3Version}"${RESET}
+          |${YELLOW}scalaVersion := "${BuildInfo.scala3Version}"$RESET
           |""".stripMargin
     logger.info(message)
   }

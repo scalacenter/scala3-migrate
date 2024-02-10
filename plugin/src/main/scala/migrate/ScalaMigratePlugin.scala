@@ -79,11 +79,11 @@ object ScalaMigratePlugin extends AutoPlugin {
             s"""|
                 |$GREEN${BOLD}sbt-scala3-migrate ${BuildInfo.version} detected!$RESET
                 |It can assist you during the migration to Scala 3.
-                |Run the following commands, to start migrating to Scala 3:
-                |  - ${BOLD}migrateDependencies <project>$RESET
-                |  - ${BOLD}migrateScalacOptions <project>$RESET
-                |  - ${BOLD}migrateSyntax <project>$RESET
-                |  - ${BOLD}migrateTypes <project>$RESET
+                |Run the following commands in order, to start migrating to Scala 3:
+                |  1. ${BOLD}migrateDependencies <project>$RESET
+                |  2. ${BOLD}migrateScalacOptions <project>$RESET
+                |  3. ${BOLD}migrateSyntax <project>$RESET
+                |  4. ${BOLD}migrateTypes <project>$RESET
                 |Learn more about them on https://docs.scala-lang.org/scala3/guides/migration/scala3-migrate.html
                 |Remove sbt-scala3-migrate from your project/plugins.sbt to clear this message out.
                 |
