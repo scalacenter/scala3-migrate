@@ -25,7 +25,7 @@ addSbtPlugin("ch.epfl.scala" % "sbt-scala3-migrate" % "0.4.6")
 ### Porting the build
 
 To port a build to Scala 3, run the following commands in order, in each project of the build: 
-- `migrateDepedendencies <project>` helps you update the list of `libraryDependencies`
+- `migrateDependencies <project>` helps you update the list of `libraryDependencies`
 - `migrateScalacOptions <project>` helps you update the list of `scalacOptions`
 - `migrateSyntax <project>` fixes a number of syntax incompatibilities between Scala 2.13 and Scala 3 
 - `migrateTypes <project>` tries to make your code compile with Scala 3 by inferring a few types and resolving a few implicits.
