@@ -18,7 +18,8 @@ inThisBuild(
   )
 )
 
-lazy val root = project.in(file("."))
+lazy val root = project
+  .in(file("."))
   .settings(
     publish / skip := true,
     // for scala-steward
@@ -236,10 +237,9 @@ lazy val V = new {
   val kindProjector         = "0.13.3"
   val coursierApi           = "2.1.9"
   val coursierInterface     = "1.0.19"
-  val scalameta             = "4.9.1"
+  val scalameta             = "4.9.3"
   val localSnapshotVersion  = "0.7.0-SNAPSHOT"
   // scala-steward:off
   val zio = "1.0.18"
   // scala-steward:on
 }
-
