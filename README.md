@@ -19,7 +19,7 @@ The complete documentation of `sbt-scala3-migrate` can be found in [docs.scala-l
 ### Installation
 ```
 // project/plugins.sbt
-addSbtPlugin("ch.epfl.scala" % "sbt-scala3-migrate" % "0.6.1")
+addSbtPlugin("ch.epfl.scala" % "sbt-scala3-migrate" % "0.6.2")
 ```
 
 ### Porting the build
