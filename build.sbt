@@ -18,6 +18,26 @@ inThisBuild(
   )
 )
 
+lazy val root = project
+  .in(file("."))
+  .settings(
+    publish / skip := true,
+    // for scala-steward
+    libraryDependencies += "org.scalameta" %% "scalameta" % V.scalameta
+  )
+  .aggregate(
+    `migrate-interface`,
+    `compiler-interface`,
+    migrate,
+    input,
+    output,
+    `sbt-plugin`,
+    `scalafix-input`,
+    `scalafix-output`,
+    `scalafix-rules`,
+    `scalafix-tests`
+  )
+
 lazy val `migrate-interface` = project
   .in(file("interfaces/migrate"))
   .settings(
@@ -210,16 +230,16 @@ lazy val V = new {
   val scala213              = "2.13.12"
   val scala213BinaryVersion = "2.13"
   val scala212              = "2.12.18"
-  val scalatest             = "3.2.17"
-  val scala3                = "3.3.1"
+  val scalatest             = "3.2.18"
+  val scala3                = "3.3.3"
   val scalafix              = "0.11.1"
   val catsCore              = "2.10.0"
-  val kindProjector         = "0.13.2"
-  val coursierApi           = "2.1.7"
+  val kindProjector         = "0.13.3"
+  val coursierApi           = "2.1.9"
   val coursierInterface     = "1.0.19"
-  val scalameta             = "4.8.8"
+  val scalameta             = "4.9.3"
   val localSnapshotVersion  = "0.7.0-SNAPSHOT"
   // scala-steward:off
-  val zio                   = "1.0.18"
+  val zio = "1.0.18"
   // scala-steward:on
 }

@@ -30,6 +30,7 @@ To port a build to Scala 3, run the following commands in order, in each project
 3. `migrateSyntax <project>` fixes a number of syntax incompatibilities between Scala 2.13 and Scala 3 
 4. `migrateTypes <project>` tries to make your code compile with Scala 3 by inferring a few types and resolving a few implicits.
 
+
 ## Contributions and feedbacks are welcome
 The tool is still under development, and **we would love to hear from you**.
 Every feedback will help us build a better tool: typos, clearer log messages, better documentation, bug reports, ideas of features,
