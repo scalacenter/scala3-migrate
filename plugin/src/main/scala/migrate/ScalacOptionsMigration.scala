@@ -41,6 +41,8 @@ private[migrate] object ScalacOptionsMigration {
     if (migrated.getUnknown.nonEmpty) {
       logger.warn(unknownMessage(migrated.getUnknown))
     }
+
+    logger.info(closingMessage)
   }
 
   private val allScalacOptionsTask: Def.Initialize[Task[Seq[String]]] = Def.taskDyn {
@@ -57,24 +59,24 @@ private[migrate] object ScalacOptionsMigration {
 
   private def startingMessage(projectId: String): String =
     s"""|
-        |${BOLD}Starting migration of scalacOptions in $projectId${RESET}
+        |${BOLD}Starting migration of scalacOptions in project '$projectId'$RESET
         |""".stripMargin
 
   private def validMessage(scalacOptions: Seq[String]): String =
     s"""|
-        |${GREEN}${BOLD}Valid scalacOptions:$RESET
+        |$GREEN${BOLD}Valid scalacOptions:$RESET
         |${scalacOptions.mkString("\n")}
         |""".stripMargin
 
   private def renamedMessage(scalacOptions: Map[String, String]): String = {
-    val maxSize = scalacOptions.keys.map(_.size).max
+    val maxSize = scalacOptions.keys.map(_.length).max
     def format(keyValue: (String, String)): String = {
       val (key, value) = keyValue
-      val spaces       = " " * (maxSize - key.size)
+      val spaces       = " " * (maxSize - key.length)
       s"$key$spaces -> $YELLOW$value$RESET"
     }
     s"""|
-        |${YELLOW}${BOLD}Renamed scalacOptions:${RESET}
+        |$YELLOW${BOLD}Renamed scalacOptions:$RESET
         |${scalacOptions.map(format).mkString("\n")}
         |""".stripMargin
   }
@@ -90,4 +92,11 @@ private[migrate] object ScalacOptionsMigration {
         |$YELLOW${BOLD}Unknown scalacOptions:$RESET
         |${scalacOptions.mkString("\n")}
         |""".stripMargin
+
+  private val closingMessage: String =
+    s"""|
+        |For a full list of options check the Compiler Options Lookup Table at
+        |https://docs.scala-lang.org/scala3/guides/migration/options-lookup.html
+        |""".stripMargin
+
 }

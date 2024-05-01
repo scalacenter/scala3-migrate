@@ -61,42 +61,42 @@ private[migrate] object LibsMigration {
 
   private def startingMessage(projectId: String): String =
     s"""|
-        |${BOLD}Starting migration of libraries and compiler plugins of project $projectId${RESET}
+        |${BOLD}Starting migration of libraries and compiler plugins in project '$projectId'$RESET
         |""".stripMargin
 
   private def validMessage(validLibs: Seq[MigratedLib]): String =
     s"""|
-        |$GREEN${BOLD}Valid dependencies:${RESET}
+        |$GREEN${BOLD}Valid dependencies:$RESET
         |${validLibs.map(_.formatted).mkString("\n")}
         |""".stripMargin
 
   private def updatedVersionsMessage(updatedVersions: Seq[MigratedLib]): String =
     s"""|
-        |$YELLOW${BOLD}Versions to update:${RESET}
+        |$YELLOW${BOLD}Versions to update:$RESET
         |${updatedVersions.map(_.formatted).mkString("\n")}
         |""".stripMargin
 
   private def crossCompatibleMessage(crossCompatible: Seq[MigratedLib]): String =
     s"""|
-        |$YELLOW${BOLD}For Scala 3 use 2.13:${RESET}
+        |$YELLOW${BOLD}For Scala 3 use 2.13:$RESET
         |${crossCompatible.map(_.formatted).mkString("\n")}
         |""".stripMargin
 
   private def integratedPluginMessage(compilerPlugins: Seq[MigratedLib]): String =
     s"""|
-        |$YELLOW${BOLD}Integrated compiler plugins:${RESET}
+        |$YELLOW${BOLD}Integrated compiler plugins:$RESET
         |${compilerPlugins.map(_.formatted).mkString("\n")}
         |""".stripMargin
 
   private def unclassifiedMessage(unclassifiedLibraries: Seq[MigratedLib]): String =
     s"""|
-        |$YELLOW${BOLD}Unclassified Libraries:${RESET}
+        |$YELLOW${BOLD}Unclassified Libraries:$RESET
         |${unclassifiedLibraries.map(_.formatted).mkString("\n")}
         |""".stripMargin
 
   private def incompatibleMessage(incompatibleLibraries: Seq[MigratedLib]): String =
     s"""|
-        |$RED${BOLD}Incompatible Libraries:${RESET}
+        |$RED${BOLD}Incompatible Libraries:$RESET
         |${incompatibleLibraries.map(_.formatted).mkString("\n")}
         |""".stripMargin
 }

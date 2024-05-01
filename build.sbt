@@ -9,7 +9,7 @@ inThisBuild(
     scalafixScalaBinaryVersion := V.scala213BinaryVersion,
     organization               := "ch.epfl.scala",
     homepage                   := Some(url("https://github.com/scalacenter/scala3-migrate")),
-    licenses                   := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+    licenses                   := List("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
     developers                 := Developers.list,
     version ~= { dynVer =>
       if (isCI) dynVer
