@@ -14,7 +14,7 @@ The complete documentation of `sbt-scala3-migrate` can be found in [docs.scala-l
 ### Requirements 
 - sbt 1.5 or higher
 - java 8 or 11
-- scala 2.13, preferred 2.13.11
+- scala 2.13, preferred 2.13.14
 
 ### Installation
 ```
