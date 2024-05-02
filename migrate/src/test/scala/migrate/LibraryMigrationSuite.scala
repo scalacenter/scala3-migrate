@@ -93,7 +93,7 @@ class LibraryMigrationSuite extends AnyFunSuiteLike {
   }
 
   test("Filtered out libs") {
-    val scalaLib     = InitialLib("org.scala-lang:scala-library:2.13.13", CrossVersion.Disabled)
+    val scalaLib     = InitialLib("org.scala-lang:scala-library:2.13.14", CrossVersion.Disabled)
     val scalajs      = InitialLib("org.scala-js:scalajs-compiler:1.5.0", CrossVersion.Disabled)
     val migratedLibs = LibraryMigration.migrateLibs(Seq(scalaLib, scalajs))
     assert(migratedLibs.getValidLibraries.isEmpty)
