@@ -104,7 +104,7 @@ lazy val input = project
     publish / skip := true,
     scalacOptions ++= List("-P:semanticdb:synthetics:on"),
     libraryDependencies ++= List(
-      "org.typelevel"                 %% "cats-core"      % V.catsCore,
+      "org.typelevel" %% "cats-core" % V.catsCore,
       compilerPlugin(("org.typelevel" %% "kind-projector" % V.kindProjector).cross(CrossVersion.full))
     )
   )
@@ -168,8 +168,8 @@ lazy val `scalafix-input` = project
     scalacOptions ++= List("-P:semanticdb:synthetics:on"),
     publish / skip := true,
     libraryDependencies ++= Seq(
-      "org.typelevel"                 %% "cats-core"      % V.catsCore,
-      "dev.zio"                       %% "zio"            % V.zio,
+      "org.typelevel" %% "cats-core" % V.catsCore,
+      "dev.zio"       %% "zio"       % V.zio,
       compilerPlugin(("org.typelevel" %% "kind-projector" % V.kindProjector).cross(CrossVersion.full))
     ),
     buildInfoKeys := Seq[BuildInfoKey](name)
