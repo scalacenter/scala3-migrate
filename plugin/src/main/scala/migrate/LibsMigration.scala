@@ -6,6 +6,7 @@ import migrate.interfaces.{Lib, MigratedLib, MigratedLibs}
 import sbt.Keys
 import sbt.Def
 import sbt.MessageOnlyException
+import sbt.librarymanagement.MavenRepository
 
 import scala.io.AnsiColor._
 import scala.util.{Failure, Success, Try}
@@ -17,14 +18,16 @@ private[migrate] object LibsMigration {
     val projectId           = Keys.thisProject.value.id
     val scalaVersion        = Keys.scalaVersion.value
     val libraryDependencies = Keys.libraryDependencies.value
+    val resolvers           = Keys.resolvers.value
 
     if (!scalaVersion.startsWith("2.13.") && !scalaVersion.startsWith("3."))
       throw new MessageOnlyException(notScala213(scalaVersion, projectId))
 
     log.info(startingMessage(projectId))
 
-    val migrateAPI = ScalaMigratePlugin.getMigrateInstance(log)
-    val migrated   = migrateAPI.migrateLibs(libraryDependencies.map(LibImpl.apply).asJava)
+    val migrateAPI        = ScalaMigratePlugin.getMigrateInstance(log)
+    val mavenRepositories = resolvers.collect { case mvnRepo: MavenRepository => mvnRepo.root }
+    val migrated          = migrateAPI.migrateLibs(libraryDependencies.map(LibImpl.apply).asJava, mavenRepositories.asJava)
 
     val validLibs = migrated.getValidLibraries
     if (validLibs.nonEmpty) {

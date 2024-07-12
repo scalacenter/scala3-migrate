@@ -2,32 +2,33 @@ package migrate.utils
 
 import scala.concurrent.ExecutionContext
 
-import coursier.Repositories
+import coursier.MavenRepository
 import migrate.internal.InitialLib
+import migrate.internal.Repository
 
 object CoursierHelper {
 
-  def findNewerVersions(lib: InitialLib, scalaVersion: String): Seq[String] = {
-    val versions = findAllVersions(lib, scalaVersion)
+  def findNewerVersions(lib: InitialLib, scalaVersion: String, repositories: Seq[Repository]): Seq[String] = {
+    val versions = findAllVersions(lib, scalaVersion, repositories)
     dropOlderVersions(lib.version, versions)
   }
 
-  def isCompatible(lib: InitialLib, scalaVersion: String): Boolean = {
+  def isCompatible(lib: InitialLib, scalaVersion: String, repositories: Seq[Repository]): Boolean = {
     val binaryVersion = lib.crossVersion.prefix + scalaVersion + lib.crossVersion.suffix
     val libString     = s"${lib.organization}:${lib.name}_$binaryVersion:${lib.version}"
-    coursierComplete(libString).nonEmpty
+    coursierComplete(libString, repositories).nonEmpty
   }
 
-  private def findAllVersions(lib: InitialLib, scalaVersion: String): Seq[String] = {
+  private def findAllVersions(lib: InitialLib, scalaVersion: String, repositories: Seq[Repository]): Seq[String] = {
     val binaryVersion = lib.crossVersion.prefix + scalaVersion + lib.crossVersion.suffix
     val libString     = s"${lib.organization}:${lib.name}_${binaryVersion}:"
-    coursierComplete(libString)
+    coursierComplete(libString, repositories)
   }
 
-  private def coursierComplete(input: String): Seq[String] = {
+  private def coursierComplete(input: String, repositories: Seq[Repository]): Seq[String] = {
     val res = coursier.complete
       .Complete()
-      .withRepositories(Seq(Repositories.central))
+      .withRepositories(repositories.map(r => MavenRepository(r.url)))
       .withInput(input)
       .result()
       .unsafeRun()(ExecutionContext.global)

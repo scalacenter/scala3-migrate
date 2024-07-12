@@ -11,6 +11,7 @@ import migrate.ScalacOptionsMigration
 import migrate.internal.AbsolutePath
 import migrate.internal.Classpath
 import migrate.internal.InitialLib
+import migrate.internal.Repository
 import migrate.utils.ScalaExtensions._
 import migrate.utils.ScalafixService
 
@@ -58,9 +59,10 @@ final class MigrateImpl(logger: Logger) extends Migrate {
   override def migrateScalacOption(scalacOptions: jutil.List[String]): MigratedScalacOptions =
     ScalacOptionsMigration.migrate(scalacOptions.asScala.toSeq)
 
-  override def migrateLibs(libs: jutil.List[Lib]): MigratedLibs = {
-    val initialLibs = libs.asScala.map(InitialLib.apply).toSeq
-    LibraryMigration.migrateLibs(initialLibs)
+  override def migrateLibs(libs: jutil.List[Lib], repositories: jutil.List[String]): MigratedLibs = {
+    val initialLibs  = libs.asScala.map(InitialLib.apply).toSeq
+    val initialRepos = repositories.asScala.map(Repository).toSeq
+    LibraryMigration.migrateLibs(initialLibs, initialRepos)
   }
 
   override def migrateSyntax(

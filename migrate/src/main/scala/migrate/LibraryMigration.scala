@@ -8,15 +8,16 @@ import migrate.internal.CrossVersion
 import migrate.internal.IncompatibleLibrary
 import migrate.internal.InitialLib
 import migrate.internal.IntegratedPlugin
+import migrate.internal.Repository
 import migrate.internal.UnclassifiedLibrary
 import migrate.internal.UpdatedVersion
 import migrate.internal.ValidLibrary
 import migrate.utils.CoursierHelper
 
 object LibraryMigration {
-  def migrateLibs(libs: Seq[InitialLib]): MigratedLibs = {
+  def migrateLibs(libs: Seq[InitialLib], repositories: Seq[Repository]): MigratedLibs = {
     val filteredLibs = libs.filterNot(l => InitialLib.migrationFilter.contains((l.organization, l.name)))
-    val migratedLibs = filteredLibs.map(migrateLib)
+    val migratedLibs = filteredLibs.map(migrateLib(_, repositories))
 
     val validLibs                = migratedLibs.collect { case l: ValidLibrary => l }.toArray[MigratedLib]
     val updatedVersions          = migratedLibs.collect { case l: UpdatedVersion => l }.toArray[MigratedLib]
@@ -34,44 +35,44 @@ object LibraryMigration {
       incompatibleLibraries)
   }
 
-  def migrateLib(lib: InitialLib): MigratedLib =
-    if (lib.isCompilerPlugin) migrateCompilerPlugin(lib)
-    else migrateRegularLib(lib)
+  def migrateLib(lib: InitialLib, repositories: Seq[Repository]): MigratedLib =
+    if (lib.isCompilerPlugin) migrateCompilerPlugin(lib, repositories)
+    else migrateRegularLib(lib, repositories)
 
-  def migrateRegularLib(lib: InitialLib): MigratedLib =
+  def migrateRegularLib(lib: InitialLib, repositories: Seq[Repository]): MigratedLib =
     lib.crossVersion match {
-      case CrossVersion.Disabled       => tryParseBinaryVersionAndMigrate(lib)
+      case CrossVersion.Disabled       => tryParseBinaryVersionAndMigrate(lib, repositories)
       case _: CrossVersion.For2_13Use3 => ValidLibrary(lib)
       case _: CrossVersion.For3Use2_13 => ValidLibrary(lib)
-      case _: CrossVersion.Binary      => migrateBinaryVersion(lib)
-      case _: CrossVersion.Full        => migrateFullCrossVersion(lib)
-      case CrossVersion.Patch          => migrateFullCrossVersion(lib)
+      case _: CrossVersion.Binary      => migrateBinaryVersion(lib, repositories)
+      case _: CrossVersion.Full        => migrateFullCrossVersion(lib, repositories)
+      case CrossVersion.Patch          => migrateFullCrossVersion(lib, repositories)
       case CrossVersion.Constant("2.13") =>
-        migrateBinaryVersion(lib.copy(crossVersion = CrossVersion.Binary("", "")))
+        migrateBinaryVersion(lib.copy(crossVersion = CrossVersion.Binary("", "")), repositories)
       case CrossVersion.Constant(s"2.13.$_") =>
-        migrateFullCrossVersion(lib.copy(crossVersion = CrossVersion.Binary("", "")))
+        migrateFullCrossVersion(lib.copy(crossVersion = CrossVersion.Binary("", "")), repositories)
       case cv: CrossVersion.Constant => UnclassifiedLibrary(lib, s"Unsupported CrossVersion.$cv")
     }
 
-  private def tryParseBinaryVersionAndMigrate(lib: InitialLib): MigratedLib =
+  private def tryParseBinaryVersionAndMigrate(lib: InitialLib, repositories: Seq[Repository]): MigratedLib =
     lib.name.split("_").toList match {
       case name :: suffix :: Nil =>
         suffix match {
           case "2.13" =>
             val newLib = lib.copy(name = name, crossVersion = CrossVersion.Binary("", ""))
-            migrateBinaryVersion(newLib)
+            migrateBinaryVersion(newLib, repositories)
           case s"2.13.$_" =>
             val newLib = lib.copy(name = name, crossVersion = CrossVersion.Full("", ""))
-            migrateFullCrossVersion(newLib)
+            migrateFullCrossVersion(newLib, repositories)
           case _ => ValidLibrary(lib)
         }
       case _ => ValidLibrary(lib)
     }
 
-  private def migrateBinaryVersion(lib: InitialLib): MigratedLib =
-    if (CoursierHelper.isCompatible(lib, "3")) ValidLibrary(lib)
+  private def migrateBinaryVersion(lib: InitialLib, repositories: Seq[Repository]): MigratedLib =
+    if (CoursierHelper.isCompatible(lib, "3", repositories)) ValidLibrary(lib)
     else {
-      CoursierHelper.findNewerVersions(lib, "3").toList match {
+      CoursierHelper.findNewerVersions(lib, "3", repositories).toList match {
         case Nil =>
           if (lib.isCompilerPlugin) IncompatibleLibrary(lib, "Compiler Plugin")
           else if (InitialLib.macroLibraries.contains(lib.organization, lib.name))
@@ -81,8 +82,8 @@ object LibraryMigration {
       }
     }
 
-  private def migrateFullCrossVersion(lib: InitialLib): MigratedLib =
-    CoursierHelper.findNewerVersions(lib, BuildInfo.scala3Version) match {
+  private def migrateFullCrossVersion(lib: InitialLib, repositories: Seq[Repository]): MigratedLib =
+    CoursierHelper.findNewerVersions(lib, BuildInfo.scala3Version, repositories) match {
       case Nil =>
         val reason =
           if (lib.isCompilerPlugin) "Compiler plugin"
@@ -91,9 +92,9 @@ object LibraryMigration {
       case newerVersions => UpdatedVersion(lib, newerVersions)
     }
 
-  private def migrateCompilerPlugin(lib: InitialLib): MigratedLib =
+  private def migrateCompilerPlugin(lib: InitialLib, repositories: Seq[Repository]): MigratedLib =
     (lib.organization, lib.name) match {
       case ("org.typelevel", "kind-projector") => IntegratedPlugin(lib, "-Ykind-projector")
-      case (_, _)                              => migrateRegularLib(lib)
+      case (_, _)                              => migrateRegularLib(lib, repositories)
     }
 }
