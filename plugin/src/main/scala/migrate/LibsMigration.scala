@@ -1,12 +1,17 @@
 package migrate
 
+import coursier.core.Repository
 import ScalaMigratePlugin.Keys._
+import lmcoursier.CoursierConfiguration
+import lmcoursier.definitions.ToCoursier
+import lmcoursier.internal.ResolutionParams
+import lmcoursier.internal.Resolvers
 import Messages._
-import migrate.interfaces.{Lib, MigratedLib, MigratedLibs}
+import migrate.internal.*
 import sbt.Keys
 import sbt.Def
 import sbt.MessageOnlyException
-import sbt.librarymanagement.MavenRepository
+import sbt.util.Logger
 
 import scala.io.AnsiColor._
 import scala.util.{Failure, Success, Try}
@@ -18,43 +23,43 @@ private[migrate] object LibsMigration {
     val projectId           = Keys.thisProject.value.id
     val scalaVersion        = Keys.scalaVersion.value
     val libraryDependencies = Keys.libraryDependencies.value
-    val resolvers           = Keys.resolvers.value
+    val csrConfig           = (Keys.updateClassifiers / Keys.csrConfiguration).value
 
     if (!scalaVersion.startsWith("2.13.") && !scalaVersion.startsWith("3."))
       throw new MessageOnlyException(notScala213(scalaVersion, projectId))
 
     log.info(startingMessage(projectId))
 
-    val migrateAPI        = ScalaMigratePlugin.getMigrateInstance(log)
-    val mavenRepositories = resolvers.collect { case mvnRepo: MavenRepository => mvnRepo.root }
-    val migrated          = migrateAPI.migrateLibs(libraryDependencies.map(LibImpl.apply).asJava, mavenRepositories.asJava)
+    val repositories = getCoursierRepositories(csrConfig, log)
+    val migrateAPI   = ScalaMigratePlugin.getMigrateInstance(log)
+    val migrated     = LibraryMigration.migrateLibs(libraryDependencies.map(InitialLib.apply), repositories)
 
-    val validLibs = migrated.getValidLibraries
+    val validLibs = migrated.collect { case l: ValidLibrary => l }
     if (validLibs.nonEmpty) {
       log.info(validMessage(validLibs))
     }
 
-    val updatedVersions = migrated.getUpdatedVersions
+    val updatedVersions = migrated.collect { case l: UpdatedVersion => l }
     if (updatedVersions.nonEmpty) {
       log.warn(updatedVersionsMessage(updatedVersions))
     }
 
-    val crossCompatibleLibs = migrated.getCrossCompatibleLibraries
+    val crossCompatibleLibs = migrated.collect { case l: CrossCompatibleLibrary => l }
     if (crossCompatibleLibs.nonEmpty) {
       log.warn(crossCompatibleMessage(crossCompatibleLibs))
     }
 
-    val integratedPlugins = migrated.getIntegratedPlugins
+    val integratedPlugins = migrated.collect { case l: IntegratedPlugin => l }
     if (integratedPlugins.nonEmpty) {
       log.warn(integratedPluginMessage(integratedPlugins))
     }
 
-    val unclassifiedLibraries = migrated.getUnclassifiedLibraries
+    val unclassifiedLibraries = migrated.collect { case l: UnclassifiedLibrary => l }
     if (unclassifiedLibraries.nonEmpty) {
       log.warn(unclassifiedMessage(unclassifiedLibraries))
     }
 
-    val incompatibleLibraries = migrated.getIncompatibleLibraries
+    val incompatibleLibraries = migrated.collect { case l: IncompatibleLibrary => l }
     if (incompatibleLibraries.nonEmpty) {
       log.error(incompatibleMessage(incompatibleLibraries))
     }
@@ -102,4 +107,19 @@ private[migrate] object LibsMigration {
         |$RED${BOLD}Incompatible Libraries:$RESET
         |${incompatibleLibraries.map(_.formatted).mkString("\n")}
         |""".stripMargin
+
+  // Copied from https://github.com/coursier/sbt-coursier/blob/5610ce56d6fcd9d716d817310be3ef4a2dfc9334/modules/lm-coursier/src/main/scala/lmcoursier/CoursierDependencyResolution.scala#L173-L193
+  private def getCoursierRepositories(conf: CoursierConfiguration, log: Logger): Seq[Repository] = {
+    val ivyProperties                = ResolutionParams.defaultIvyProperties(conf.ivyHome)
+    val authenticationByRepositoryId = conf.authenticationByRepositoryId.toMap
+    conf.resolvers.flatMap { resolver =>
+      Resolvers.repository(
+        resolver,
+        ivyProperties,
+        log,
+        authenticationByRepositoryId.get(resolver.name).map(ToCoursier.authentication),
+        Seq.empty
+      )
+    }
+  }
 }

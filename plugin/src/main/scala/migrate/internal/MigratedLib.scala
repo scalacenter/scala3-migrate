@@ -1,9 +1,11 @@
 package migrate.internal
 
 import scala.Console._
+import sbt.librarymanagement._
 
-import migrate.interfaces.MigratedLib
-import migrate.internal.InitialLib
+trait MigratedLib {
+  def formatted: String
+}
 
 case class ValidLibrary(
   lib: InitialLib
@@ -37,9 +39,9 @@ case class CrossCompatibleLibrary(lib: InitialLib) extends MigratedLib {
   override def formatted: String = {
     val formattedConfigs = lib.configurations.map(c => " % " + MigratedLibFormatting.formatConfigs(c)).getOrElse("")
     lib.crossVersion match {
-      case CrossVersion.Binary("", "") =>
+      case v: Binary if v.prefix == "" && v.suffix == "" =>
         s"""("${lib.organization}" %% "${lib.name}" % "${lib.version}"$formattedConfigs)$YELLOW.cross(CrossVersion.for3Use2_13)$RESET"""
-      case CrossVersion.Binary(_, _) =>
+      case _: Binary =>
         s"""("${lib.organization}" %%% "${lib.name}" % "${lib.version}"$formattedConfigs)$YELLOW.cross(CrossVersion.for3Use2_13)$RESET"""
       case _ =>
         s"""("${lib.organization}" %% "${lib.name}" % "${lib.version}"$formattedConfigs)$YELLOW.cross(CrossVersion.for3Use2_13)$RESET"""
@@ -84,15 +86,15 @@ object MigratedLibFormatting {
     configs: Option[String]): String = {
     val formattedConfigs = configs.map(c => " % " + formatConfigs(c)).getOrElse("")
     crossVersion match {
-      case CrossVersion.Binary("", "") => s""""$org" %% "$name" % "$version"$formattedConfigs"""
-      case CrossVersion.Binary(_, _)   => s""""$org" %%% "$name" % "$version"$formattedConfigs"""
-      case CrossVersion.Disabled       => s""""$org" % "$name" % "$version"$formattedConfigs"""
+      case v: Binary if v.prefix == "" && v.suffix == "" => s""""$org" %% "$name" % "$version"$formattedConfigs"""
+      case _: Binary                                     => s""""$org" %%% "$name" % "$version"$formattedConfigs"""
+      case Disabled                                      => s""""$org" % "$name" % "$version"$formattedConfigs"""
       case crossVersion =>
         val crossVersionFmt = crossVersion match {
-          case _: CrossVersion.Full        => "full"
-          case _: CrossVersion.For3Use2_13 => "for3Use2_13"
-          case _: CrossVersion.For2_13Use3 => "for2_13Use3"
-          case other                       => other.toString
+          case _: Full        => "full"
+          case _: For3Use2_13 => "for3Use2_13"
+          case _: For2_13Use3 => "for2_13Use3"
+          case other          => other.toString
         }
         s"""("$org" %% "$name" % "$version"$formattedConfigs).cross(CrossVersion.$crossVersionFmt)"""
     }
@@ -103,6 +105,6 @@ object MigratedLibFormatting {
       case "test"    => "Test"
       case "it"      => "IntegrationTest"
       case "compile" => "Compile"
-      case configs   => s"\"$configs\""
+      case configs   => s""""$configs""""
     }
 }

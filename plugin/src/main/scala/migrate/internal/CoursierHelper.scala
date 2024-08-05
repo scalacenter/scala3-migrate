@@ -1,10 +1,9 @@
-package migrate.utils
+package migrate.internal
 
 import scala.concurrent.ExecutionContext
 
-import coursier.MavenRepository
-import migrate.internal.InitialLib
-import migrate.internal.Repository
+import coursier.core.Repository
+import sbt.librarymanagement._
 
 object CoursierHelper {
 
@@ -14,13 +13,13 @@ object CoursierHelper {
   }
 
   def isCompatible(lib: InitialLib, scalaVersion: String, repositories: Seq[Repository]): Boolean = {
-    val binaryVersion = lib.crossVersion.prefix + scalaVersion + lib.crossVersion.suffix
+    val binaryVersion = prefix(lib.crossVersion) + scalaVersion + suffix(lib.crossVersion)
     val libString     = s"${lib.organization}:${lib.name}_$binaryVersion:${lib.version}"
     coursierComplete(libString, repositories).nonEmpty
   }
 
   private def findAllVersions(lib: InitialLib, scalaVersion: String, repositories: Seq[Repository]): Seq[String] = {
-    val binaryVersion = lib.crossVersion.prefix + scalaVersion + lib.crossVersion.suffix
+    val binaryVersion = prefix(lib.crossVersion) + scalaVersion + suffix(lib.crossVersion)
     val libString     = s"${lib.organization}:${lib.name}_${binaryVersion}:"
     coursierComplete(libString, repositories)
   }
@@ -28,7 +27,7 @@ object CoursierHelper {
   private def coursierComplete(input: String, repositories: Seq[Repository]): Seq[String] = {
     val res = coursier.complete
       .Complete()
-      .withRepositories(repositories.map(r => MavenRepository(r.url)))
+      .withRepositories(repositories)
       .withInput(input)
       .result()
       .unsafeRun()(ExecutionContext.global)
@@ -48,4 +47,19 @@ object CoursierHelper {
     }
   }
 
+  private def prefix(crossVersion: CrossVersion): String = crossVersion match {
+    case v: Binary      => v.prefix
+    case v: Full        => v.prefix
+    case v: For3Use2_13 => v.prefix
+    case v: For2_13Use3 => v.prefix
+    case _              => ""
+  }
+
+  private def suffix(crossVersion: CrossVersion): String = crossVersion match {
+    case v: Binary      => v.suffix
+    case v: Full        => v.suffix
+    case v: For3Use2_13 => v.suffix
+    case v: For2_13Use3 => v.suffix
+    case _              => ""
+  }
 }

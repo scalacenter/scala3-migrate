@@ -1,16 +1,12 @@
-package migrate
+package migrate.internal
 
 import scala.Console._
 
 import coursier.Repositories
-import migrate.internal.CrossCompatibleLibrary
-import migrate.internal.CrossVersion
-import migrate.internal.IncompatibleLibrary
-import migrate.internal.InitialLib
-import migrate.internal.Repository
-import migrate.internal.UpdatedVersion
-import migrate.internal.ValidLibrary
 import org.scalatest.funsuite.AnyFunSuiteLike
+import sbt.librarymanagement.CrossVersion
+import coursier.core.Repository
+import coursier.maven.MavenRepository
 
 class LibraryMigrationSuite extends AnyFunSuiteLike {
   val binaryJvm: CrossVersion.Binary = CrossVersion.Binary("", "")
@@ -34,7 +30,7 @@ class LibraryMigrationSuite extends AnyFunSuiteLike {
   val domtypes: InitialLib    = InitialLib("com.raquo:domtypes:0.14.3", binaryJs)
   val domutils: InitialLib    = InitialLib("com.raquo:domtestutils:0.14.7", binaryJs)
 
-  val defaultRepositories: Seq[Repository] = Seq(Repository(Repositories.central.root))
+  val defaultRepositories: Seq[Repository] = Seq(Repositories.central)
 
   test("Integrated compiler plugin: kind projector") {
     val migrated  = LibraryMigration.migrateLib(kindProjector, defaultRepositories)
@@ -80,7 +76,7 @@ class LibraryMigrationSuite extends AnyFunSuiteLike {
   }
 
   test("available in scala 3 in another repository") {
-    val repositories = defaultRepositories :+ Repository("https://repo.akka.io/maven")
+    val repositories = defaultRepositories :+ MavenRepository("https://repo.akka.io/maven")
     val migrated     = LibraryMigration.migrateLib(akka, repositories)
     assert(migrated.isInstanceOf[ValidLibrary])
   }
@@ -114,11 +110,7 @@ class LibraryMigrationSuite extends AnyFunSuiteLike {
     val scalaLib     = InitialLib("org.scala-lang:scala-library:2.13.13", CrossVersion.Disabled)
     val scalajs      = InitialLib("org.scala-js:scalajs-compiler:1.5.0", CrossVersion.Disabled)
     val migratedLibs = LibraryMigration.migrateLibs(Seq(scalaLib, scalajs), defaultRepositories)
-    assert(migratedLibs.getValidLibraries.isEmpty)
-    assert(migratedLibs.getUpdatedVersions.isEmpty)
-    assert(migratedLibs.getCrossCompatibleLibraries.isEmpty)
-    assert(migratedLibs.getIntegratedPlugins.isEmpty)
-    assert(migratedLibs.getIncompatibleLibraries.isEmpty)
+    assert(migratedLibs.isEmpty)
   }
 
   test("Formatting of updated versions") {
