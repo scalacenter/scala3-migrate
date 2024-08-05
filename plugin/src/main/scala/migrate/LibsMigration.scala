@@ -5,7 +5,6 @@ import ScalaMigratePlugin.Keys._
 import lmcoursier.CoursierConfiguration
 import lmcoursier.definitions.ToCoursier
 import lmcoursier.internal.ResolutionParams
-import lmcoursier.internal.Resolvers
 import Messages._
 import migrate.internal.*
 import sbt.Keys
@@ -117,9 +116,18 @@ private[migrate] object LibsMigration {
         resolver,
         ivyProperties,
         log,
-        authenticationByRepositoryId.get(resolver.name).map(ToCoursier.authentication),
+        authenticationByRepositoryId.get(resolver.name).map(toCoursier),
         Seq.empty
       )
     }
   }
+
+  private def toCoursier(authentication: lmcoursier.definitions.Authentication): coursier.core.Authentication =
+    coursier.core
+      .Authentication(authentication.user, authentication.password)
+      .withOptional(authentication.optional)
+      .withRealmOpt(authentication.realmOpt)
+      .withHttpHeaders(authentication.headers)
+      .withHttpsOnly(authentication.httpsOnly)
+      .withPassOnRedirect(authentication.passOnRedirect)
 }

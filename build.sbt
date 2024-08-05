@@ -117,8 +117,9 @@ lazy val `sbt-plugin` = project
     scalaVersion := V.scala212,
     name         := "sbt-scala3-migrate",
     libraryDependencies ++= Seq(
-      "io.get-coursier" %% "coursier"  % V.coursierApi,
-      "org.scalatest"   %% "scalatest" % V.scalatest % Test
+      "io.get-coursier" %% "coursier"                      % V.coursierApi,
+      "io.get-coursier" %% "coursier-sbt-maven-repository" % V.coursierApi,
+      "org.scalatest"   %% "scalatest"                     % V.scalatest % Test
     ),
     scriptedLaunchOpts ++= Seq(s"-Dplugin.version=${version.value}"),
     scriptedDependencies := scriptedDependencies
