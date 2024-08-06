@@ -1,14 +1,12 @@
-package migrate
+package migrate.internal
 
 import scala.Console._
 
-import migrate.internal.CrossCompatibleLibrary
-import migrate.internal.CrossVersion
-import migrate.internal.IncompatibleLibrary
-import migrate.internal.InitialLib
-import migrate.internal.UpdatedVersion
-import migrate.internal.ValidLibrary
+import coursier.Repositories
 import org.scalatest.funsuite.AnyFunSuiteLike
+import sbt.librarymanagement.CrossVersion
+import coursier.core.Repository
+import coursier.maven.MavenRepository
 
 class LibraryMigrationSuite extends AnyFunSuiteLike {
   val binaryJvm: CrossVersion.Binary = CrossVersion.Binary("", "")
@@ -16,6 +14,7 @@ class LibraryMigrationSuite extends AnyFunSuiteLike {
   val fullJvm: CrossVersion.Full     = CrossVersion.Full("", "")
   val pluginConfig: Some[String]     = Some("plugin->default(compile)")
 
+  val akka: InitialLib             = InitialLib("com.typesafe.akka:akka-actor:2.9.4", binaryJvm)
   val cats: InitialLib             = InitialLib("org.typelevel:cats-core:2.4.0", binaryJvm)
   val cats213: InitialLib          = InitialLib("org.typelevel:cats-core_2.13:2.4.0", CrossVersion.Disabled)
   val opentelemetry: InitialLib    = InitialLib("io.opentelemetry:opentelemetry-api:0.7.1", CrossVersion.Disabled)
@@ -31,8 +30,10 @@ class LibraryMigrationSuite extends AnyFunSuiteLike {
   val domtypes: InitialLib    = InitialLib("com.raquo:domtypes:0.14.3", binaryJs)
   val domutils: InitialLib    = InitialLib("com.raquo:domtestutils:0.14.7", binaryJs)
 
+  val defaultRepositories: Seq[Repository] = Seq(Repositories.central)
+
   test("Integrated compiler plugin: kind projector") {
-    val migrated  = LibraryMigration.migrateLib(kindProjector)
+    val migrated  = LibraryMigration.migrateLib(kindProjector, defaultRepositories)
     val formatted = migrated.formatted
     val expected =
       s"""addCompilerPlugin(("org.typelevel" %% "kind-projector" % "0.12.0").cross(CrossVersion.full))""" +
@@ -42,52 +43,65 @@ class LibraryMigrationSuite extends AnyFunSuiteLike {
   }
 
   test("Incompatible compiler plugin: better monadic for") {
-    val migrated  = LibraryMigration.migrateLib(betterMonadicFor)
+    val migrated  = LibraryMigration.migrateLib(betterMonadicFor, defaultRepositories)
     val formatted = migrated.formatted
     val expected  = s"""addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1") $RED(Compiler Plugin)$RESET"""
     assert(formatted == expected)
   }
 
   test("Java lib") {
-    val migrated = LibraryMigration.migrateLib(opentelemetry)
+    val migrated = LibraryMigration.migrateLib(opentelemetry, defaultRepositories)
     val expected = ValidLibrary(opentelemetry)
     assert(migrated == expected)
   }
 
   test("Java lib 2") {
-    val migrated = LibraryMigration.migrateLib(javaLib2)
+    val migrated = LibraryMigration.migrateLib(javaLib2, defaultRepositories)
     val expected = ValidLibrary(javaLib2)
     assert(migrated == expected)
   }
 
   test("Available in scala 3") {
-    val migrated = LibraryMigration.migrateLib(cats)
+    val migrated = LibraryMigration.migrateLib(cats, defaultRepositories)
     assert(migrated.isInstanceOf[UpdatedVersion])
     val version = migrated.asInstanceOf[UpdatedVersion].versions
     assert(version.head.toString == "2.6.1")
   }
 
+  test("only available in an earlier version in maven central repository") {
+    val migrated = LibraryMigration.migrateLib(akka, defaultRepositories)
+    assert(migrated.isInstanceOf[UpdatedVersion])
+    val versions = migrated.asInstanceOf[UpdatedVersion].versions
+    assert(versions.last == "2.9.0-M2", "The last version published to Maven Central was 2.9.0-M2")
+  }
+
+  test("available in scala 3 in another repository") {
+    val repositories = defaultRepositories :+ MavenRepository("https://repo.akka.io/maven")
+    val migrated     = LibraryMigration.migrateLib(akka, repositories)
+    assert(migrated.isInstanceOf[ValidLibrary])
+  }
+
   test("CrossVersion.Disabled to CrossVersion.Binary") {
-    val migrated = LibraryMigration.migrateLib(cats213)
+    val migrated = LibraryMigration.migrateLib(cats213, defaultRepositories)
     assert(migrated.isInstanceOf[UpdatedVersion])
     val updatedVersion = migrated.asInstanceOf[UpdatedVersion]
     assert(updatedVersion.versions.head.toString == "2.6.1")
     assert(updatedVersion.lib == cats)
   }
   test("Don't show older version") {
-    val migrated = LibraryMigration.migrateLib(collectionCompat)
+    val migrated = LibraryMigration.migrateLib(collectionCompat, defaultRepositories)
     assert(migrated.isInstanceOf[UpdatedVersion])
     val updatedVersions = migrated.asInstanceOf[UpdatedVersion].versions
     assert(!updatedVersions.contains("2.3.2"))
   }
   test("Cross compatible lib") {
-    val migrated = LibraryMigration.migrateLib(scalafix)
+    val migrated = LibraryMigration.migrateLib(scalafix, defaultRepositories)
     val expected = CrossCompatibleLibrary(scalafix)
     assert(migrated == expected)
   }
   // Warning: this test may change if the lib is ported to scala 3
   test("Incompatible because macro lib") {
-    val migrated = LibraryMigration.migrateLib(macroLib)
+    val migrated = LibraryMigration.migrateLib(macroLib, defaultRepositories)
     val expected = IncompatibleLibrary(macroLib, "Macro Library")
     assert(migrated == expected)
   }
@@ -95,12 +109,8 @@ class LibraryMigrationSuite extends AnyFunSuiteLike {
   test("Filtered out libs") {
     val scalaLib     = InitialLib("org.scala-lang:scala-library:2.13.13", CrossVersion.Disabled)
     val scalajs      = InitialLib("org.scala-js:scalajs-compiler:1.5.0", CrossVersion.Disabled)
-    val migratedLibs = LibraryMigration.migrateLibs(Seq(scalaLib, scalajs))
-    assert(migratedLibs.getValidLibraries.isEmpty)
-    assert(migratedLibs.getUpdatedVersions.isEmpty)
-    assert(migratedLibs.getCrossCompatibleLibraries.isEmpty)
-    assert(migratedLibs.getIntegratedPlugins.isEmpty)
-    assert(migratedLibs.getIncompatibleLibraries.isEmpty)
+    val migratedLibs = LibraryMigration.migrateLibs(Seq(scalaLib, scalajs), defaultRepositories)
+    assert(migratedLibs.isEmpty)
   }
 
   test("Formatting of updated versions") {
@@ -112,7 +122,7 @@ class LibraryMigrationSuite extends AnyFunSuiteLike {
   }
 
   test("Formatting of valid Scala.js library") {
-    val migratedLib = LibraryMigration.migrateLib(domtypes)
+    val migratedLib = LibraryMigration.migrateLib(domtypes, defaultRepositories)
     val formatted   = migratedLib.formatted
     val expected    = s""""com.raquo" %%% "domtypes" % "0.14.3""""
     assert(formatted == expected)

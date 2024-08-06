@@ -116,17 +116,20 @@ lazy val `sbt-plugin` = project
   .settings(
     scalaVersion := V.scala212,
     name         := "sbt-scala3-migrate",
+    libraryDependencies ++= Seq(
+      "io.get-coursier" %% "coursier"                      % V.coursierApi,
+      "io.get-coursier" %% "coursier-sbt-maven-repository" % V.coursierApi,
+      "org.scalatest"   %% "scalatest"                     % V.scalatest % Test
+    ),
     scriptedLaunchOpts ++= Seq(s"-Dplugin.version=${version.value}"),
-    scriptedDependencies := {
-      scriptedDependencies
-        .dependsOn(
-          `migrate-interface` / publishLocal,
-          `compiler-interface` / publishLocal,
-          migrate / publishLocal,
-          `scalafix-rules` / publishLocal
-        )
-        .value
-    },
+    scriptedDependencies := scriptedDependencies
+      .dependsOn(
+        `migrate-interface` / publishLocal,
+        `compiler-interface` / publishLocal,
+        migrate / publishLocal,
+        `scalafix-rules` / publishLocal
+      )
+      .value,
     buildInfoPackage  := "migrate",
     scriptedBufferLog := false,
     buildInfoKeys := Seq[BuildInfoKey](

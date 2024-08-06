@@ -1,8 +1,8 @@
 package migrate.internal
 
 import scala.jdk.OptionConverters._
-
-import migrate.interfaces.Lib
+import sbt.librarymanagement.ModuleID
+import sbt.librarymanagement.CrossVersion
 
 case class InitialLib(
   organization: String,
@@ -15,10 +15,8 @@ case class InitialLib(
 }
 
 object InitialLib {
-  def apply(lib: Lib): InitialLib = {
-    val crossVersion = CrossVersion(lib.getCrossVersion)
-    InitialLib(lib.getOrganization, lib.getName, lib.getVersion, crossVersion, lib.getConfigurations.toScala)
-  }
+  def apply(lib: ModuleID): InitialLib =
+    InitialLib(lib.organization, lib.name, lib.revision, lib.crossVersion, lib.configurations)
 
   def apply(module: String, crossVersion: CrossVersion, configurations: Option[String] = None): InitialLib = {
     val splited = module.split(":").toList
