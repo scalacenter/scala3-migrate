@@ -161,7 +161,7 @@ lazy val `scalafix-rules` = project
     moduleName := "scala3-migrate-rules",
     libraryDependencies ++= Seq(
       "ch.epfl.scala" %% "scalafix-core"  % V.scalafix,
-      ("ch.epfl.scala" %% "scalafix-rules" % V.scalafix).cross(CrossVersion.fullBinaryVersion)
+      ("ch.epfl.scala" %% "scalafix-rules" % V.scalafix).cross(CrossVersion.full)
     )
   )
 
