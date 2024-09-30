@@ -160,8 +160,8 @@ lazy val `scalafix-rules` = project
     scalacOptions ++= List("-Wunused", "-P:semanticdb:synthetics:on"),
     moduleName := "scala3-migrate-rules",
     libraryDependencies ++= Seq(
-      "ch.epfl.scala" %% "scalafix-core"  % V.scalafix,
-      "ch.epfl.scala" %% "scalafix-rules" % V.scalafix
+      "ch.epfl.scala"  %% "scalafix-core"  % V.scalafix,
+      ("ch.epfl.scala" %% "scalafix-rules" % V.scalafix).cross(CrossVersion.full)
     )
   )
 
@@ -230,12 +230,12 @@ addCommandAlias("compileScalafixOutputinScala3", s"""set `scalafix-output`/scala
 def isCI = System.getenv("CI") != null
 
 lazy val V = new {
-  val scala213              = "2.13.14"
+  val scala213              = "2.13.15"
   val scala213BinaryVersion = "2.13"
   val scala212              = "2.12.20"
   val scalatest             = "3.2.19"
   val scala3                = "3.3.4"
-  val scalafix              = "0.12.1"
+  val scalafix              = "0.13.0"
   val catsCore              = "2.10.0"
   val kindProjector         = "0.13.3"
   val coursierApi           = "2.1.13"
