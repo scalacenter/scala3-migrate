@@ -239,7 +239,7 @@ lazy val V = new {
   val catsCore              = "2.10.0"
   val kindProjector         = "0.13.3"
   val coursierApi           = "2.1.14"
-  val coursierInterface     = "1.0.21"
+  val coursierInterface     = "1.0.22"
   val scalameta             = "4.10.2"
   val localSnapshotVersion  = "0.7.0-SNAPSHOT"
   // scala-steward:off
