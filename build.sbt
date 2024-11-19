@@ -240,7 +240,7 @@ lazy val V = new {
   val kindProjector         = "0.13.3"
   val coursierApi           = "2.1.17"
   val coursierInterface     = "1.0.23"
-  val scalameta             = "4.11.1"
+  val scalameta             = "4.11.2"
   val localSnapshotVersion  = "0.7.0-SNAPSHOT"
   // scala-steward:off
   val zio = "1.0.18"
