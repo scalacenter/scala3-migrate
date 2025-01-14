@@ -186,15 +186,14 @@ lazy val `scalafix-output` = project
     publish / skip     := true,
     crossScalaVersions := List(V.scala213, V.scala3),
     scalacOptions ++= (if (scalaVersion.value.startsWith("3")) Seq("-Ykind-projector") else Seq()),
-    libraryDependencies ++= {
+    libraryDependencies ++=
       Seq("org.typelevel" %% "cats-core" % V.catsCore, "dev.zio" %% "zio" % V.zio) ++
         (CrossVersion.partialVersion(scalaVersion.value) match {
           case Some((2, 13)) =>
             Seq(compilerPlugin(("org.typelevel" %% "kind-projector" % V.kindProjector).cross(CrossVersion.full)))
           case Some((3, _)) => Seq()
           case _            => Seq()
-        })
-    },
+        }),
     buildInfoKeys := Seq[BuildInfoKey](name)
   )
   .enablePlugins(BuildInfoPlugin)

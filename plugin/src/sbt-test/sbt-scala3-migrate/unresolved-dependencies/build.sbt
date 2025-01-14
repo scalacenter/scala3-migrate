@@ -6,9 +6,8 @@ lazy val `unresolved-dependencies` = project
       "org.typelevel" %% "cats-core" % V.catsCore,
       compilerPlugin("org.typelevel" % "kind-projector" % V.kindProjector cross CrossVersion.full)
     ),
-    TaskKey[Unit]("checkFallback") := {
+    TaskKey[Unit]("checkFallback") :=
       assert(scalaVersion.value == V.scala213, s"Wrong scala version ${scalaVersion.value}. Expected ${V.scala213}")
-    }
   )
 
 lazy val V = new {
