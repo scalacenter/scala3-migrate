@@ -27,7 +27,7 @@ case class UpdatedVersion(
       lib.configurations) + otherVersions
 
   private def otherVersions: String =
-    versions.tail match {
+    versions.tail.toList match {
       case Nil                 => ""
       case head :: Nil         => s" $YELLOW(Other version: $head)$RESET"
       case head :: last :: Nil => s" $YELLOW(Other versions: $head, $last)$RESET"
