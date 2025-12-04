@@ -69,7 +69,7 @@ private[migrate] object ScalacOptionsMigration {
         |""".stripMargin
 
   private def renamedMessage(scalacOptions: Map[String, String]): String = {
-    val maxSize = scalacOptions.keys.map(_.length).max
+    val maxSize                                    = scalacOptions.keys.map(_.length).max
     def format(keyValue: (String, String)): String = {
       val (key, value) = keyValue
       val spaces       = " " * (maxSize - key.length)

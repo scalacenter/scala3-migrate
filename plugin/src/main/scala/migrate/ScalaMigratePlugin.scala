@@ -51,8 +51,8 @@ object ScalaMigratePlugin extends AutoPlugin {
     val migrationConfigs =
       settingKey[List[Configuration]]("the ordered list of configurations to migrate").withRank(KeyRanks.Invisible)
 
-    val scala2Inputs = taskKey[Scala2Inputs]("return Scala 2 inputs").withRank(KeyRanks.Invisible)
-    val scala3Inputs = taskKey[Scala3Inputs]("return Scala 3 inputs").withRank(KeyRanks.Invisible)
+    val scala2Inputs      = taskKey[Scala2Inputs]("return Scala 2 inputs").withRank(KeyRanks.Invisible)
+    val scala3Inputs      = taskKey[Scala3Inputs]("return Scala 3 inputs").withRank(KeyRanks.Invisible)
     val storeScala2Inputs =
       taskKey[StateTransform]("store Scala 2 inputs from all migration configurations").withRank(KeyRanks.Invisible)
 
@@ -166,7 +166,7 @@ object ScalaMigratePlugin extends AutoPlugin {
       Scala3Inputs(projectId, sv, scalac3Options, scala3Lib ++ classpath, scala3ClassDirectory, semanticdbTarget)
     },
     scala3Inputs / aggregate := false,
-    scala2Inputs := {
+    scala2Inputs             := {
       val projectId        = thisProject.value.id
       val sv               = scalaVersion.value
       val sOptions         = scalacOptions.value
@@ -205,7 +205,7 @@ object ScalaMigratePlugin extends AutoPlugin {
    * List(Compile, Test) because Test extends Runtime which extends Compile
    */
   private def migrationConfigsImpl = Def.setting {
-    val project = thisProject.value
+    val project                       = thisProject.value
     val migrationConfigs: Set[String] = (
       for {
         setting   <- project.settings if setting.key.key.label == scala3Inputs.key.label
@@ -247,7 +247,7 @@ object ScalaMigratePlugin extends AutoPlugin {
   lazy val migrateTypes: Command =
     Command(migrateCommand, migrateBrief, migrateDetailed)(idParser) { (state, projectId) =>
       val preparedState = state.copy(attributes = state.attributes.remove(Keys.scala2Version))
-      val commands = List(
+      val commands      = List(
         StashOnFailure, // stash shell from onFailure
         s"$OnFailure internalMigrateFallbackAndFail $projectId",
         s"$projectId / storeScala2Inputs",

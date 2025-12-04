@@ -2,7 +2,7 @@ package migrate
 
 object CommandStrings {
   val migrateSyntaxCommand = "migrateSyntax"
-  val migrateSyntaxBrief =
+  val migrateSyntaxBrief   =
     (s"$migrateSyntaxCommand <projectId>", "Fix the syntax incompatibilities for Scala 3 in a projectId")
   val migrateSyntaxDetailed =
     s"""|Usage : $migrateSyntaxCommand <projectId>
@@ -12,7 +12,7 @@ object CommandStrings {
         |""".stripMargin
 
   val migrateCommand = "migrateTypes"
-  val migrateBrief =
+  val migrateBrief   =
     (
       s"$migrateCommand <projectId>",
       "Migrate the project to Scala 3 by inferring necessary types and implicits"
@@ -25,7 +25,7 @@ object CommandStrings {
         |""".stripMargin
 
   val migrateScalacOptionsCommand = "migrateScalacOptions"
-  val migrateScalacOptionsBrief =
+  val migrateScalacOptionsBrief   =
     (s"$migrateScalacOptionsCommand <projectId>", "Report the migration status of each scalac option of a project.")
   val migrateScalacOptionsDetailed =
     s"""|Usage : $migrateScalacOptionsCommand <projectId>
@@ -38,7 +38,7 @@ object CommandStrings {
         |- Unknown: sbt-scala3-migrate does not know this option
         |""".stripMargin
 
-  val migrateLibs = "migrateDependencies"
+  val migrateLibs      = "migrateDependencies"
   val migrateLibsBrief = (
     s"$migrateLibs <projectId>",
     "Report the migration status of the library dependencies and compiler plugins of a project")

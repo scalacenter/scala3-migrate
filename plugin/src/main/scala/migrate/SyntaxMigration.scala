@@ -41,7 +41,7 @@ private[migrate] object SyntaxMigration {
         )
       } match {
         case scala.util.Success(_) =>
-        case Failure(cause) =>
+        case Failure(cause)        =>
           log.error(s"Failed migration of syntax in $projectId / $config")
           throw cause
       }

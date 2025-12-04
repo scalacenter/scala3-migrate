@@ -77,7 +77,7 @@ lazy val migrate = project
     Test / test             := (Test / test).dependsOn(`scalafix-rules` / publishLocal).value,
     Test / testOnly         := (Test / testOnly).dependsOn(`scalafix-rules` / publishLocal).evaluated,
     Test / buildInfoPackage := "migrate.test",
-    Test / buildInfoKeys := Seq(
+    Test / buildInfoKeys    := Seq(
       "version" -> version.value,
       "input"   -> (input / Compile / sourceDirectory).value,
       fromSources("unmanagedSources", input / Compile / unmanagedSources),
@@ -132,7 +132,7 @@ lazy val `sbt-plugin` = project
       .value,
     buildInfoPackage  := "migrate",
     scriptedBufferLog := false,
-    buildInfoKeys := Seq[BuildInfoKey](
+    buildInfoKeys     := Seq[BuildInfoKey](
       name,
       "scala3Version"      -> V.scala3,
       "scalaBinaryVersion" -> V.scala213BinaryVersion,
@@ -205,9 +205,9 @@ lazy val `scalafix-tests` = project
     publish / skip := true,
     scalacOptions ++= Seq("-Wunused", "-P:semanticdb:synthetics:on", "-deprecation"),
     libraryDependencies +=
-      "ch.epfl.scala" %
+      "ch.epfl.scala"      %
         "scalafix-testkit" %
-        V.scalafix %
+        V.scalafix         %
         Test cross CrossVersion.full,
     scalafixTestkitOutputSourceDirectories :=
       (`scalafix-output` / Compile / unmanagedSourceDirectories).value,

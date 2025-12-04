@@ -101,7 +101,7 @@ class InferTypes[G <: Global](g: G) {
       end      <- body.tokens.headOption
       lhsTokens = slice(start, end)
       replace  <- lhsTokens.reverseIterator.find(x => !x.is[Token.Equals] && !x.is[Trivia])
-      space = {
+      space     = {
         if (TokenOps.needsLeadingSpaceBeforeColon(replace)) " "
         else ""
       }

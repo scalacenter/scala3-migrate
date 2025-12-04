@@ -35,7 +35,7 @@ final class MigrateImpl(logger: Logger) extends Migrate {
       scala3Classpath          = Classpath(scala3CpAbs: _*)
       baseDirectory           <- AbsolutePath.from(baseDirectory)
       scala3ClassDirectoryAbs <- AbsolutePath.from(scala3ClassDirectory)
-      configuredScalafixSrv <-
+      configuredScalafixSrv   <-
         ScalafixService.from(
           scala2CompilerOptions.asScala.toList,
           scala2Classpath,
@@ -43,7 +43,7 @@ final class MigrateImpl(logger: Logger) extends Migrate {
           baseDirectory,
           logger)
       scalaMigrate = new Scala3Migrate(configuredScalafixSrv, baseDirectory, logger)
-      _ <- scalaMigrate
+      _           <- scalaMigrate
              .migrate(
                unmanagedSources = unmanagedSourcesAbs,
                managedSources = managedSourcesAbs,
@@ -64,11 +64,11 @@ final class MigrateImpl(logger: Logger) extends Migrate {
     baseDirectory: Path
   ): Unit =
     (for {
-      unmanagedSourcesAbs <- unmanagedSources.asScala.toSeq.map(AbsolutePath.from).sequence
-      targetRootAbs       <- AbsolutePath.from(targetRoot)
-      scala2CpAbs         <- scala2Cp.asScala.toList.map(AbsolutePath.from).sequence
-      scala2Classpath      = Classpath(scala2CpAbs: _*)
-      baseDirectory       <- AbsolutePath.from(baseDirectory)
+      unmanagedSourcesAbs   <- unmanagedSources.asScala.toSeq.map(AbsolutePath.from).sequence
+      targetRootAbs         <- AbsolutePath.from(targetRoot)
+      scala2CpAbs           <- scala2Cp.asScala.toList.map(AbsolutePath.from).sequence
+      scala2Classpath        = Classpath(scala2CpAbs: _*)
+      baseDirectory         <- AbsolutePath.from(baseDirectory)
       configuredScalafixSrv <-
         ScalafixService.from(
           scala2CompilerOptions.asScala.toList,

@@ -20,7 +20,7 @@ class LibraryMigrationSuite extends AnyFunSuiteLike {
   val opentelemetry: InitialLib    = InitialLib("io.opentelemetry:opentelemetry-api:0.7.1", CrossVersion.Disabled)
   val collectionCompat: InitialLib = InitialLib("org.scala-lang.modules:scala-collection-compat:2.4.0", binaryJvm)
   val scalafix: InitialLib         = InitialLib("ch.epfl.scala:scalafix-core:0.9.24", binaryJvm)
-  val javaLib2: InitialLib =
+  val javaLib2: InitialLib         =
     InitialLib("org.eclipse.platform:org.eclipse.swt.win32.x86_64:3.116.0", CrossVersion.Disabled)
   val macroLib: InitialLib         = InitialLib("com.softwaremill.scalamacrodebug:macros:0.4.1", binaryJvm)
   val kindProjector: InitialLib    = InitialLib("org.typelevel:kind-projector:0.12.0", fullJvm, pluginConfig)
@@ -35,7 +35,7 @@ class LibraryMigrationSuite extends AnyFunSuiteLike {
   test("Integrated compiler plugin: kind projector") {
     val migrated  = LibraryMigration.migrateLib(kindProjector, defaultRepositories)
     val formatted = migrated.formatted
-    val expected =
+    val expected  =
       s"""addCompilerPlugin(("org.typelevel" %% "kind-projector" % "0.12.0").cross(CrossVersion.full))""" +
         "\n" +
         s"""replaced by ${YELLOW}scalacOptions += "-Ykind-projector"$RESET"""
@@ -117,7 +117,7 @@ class LibraryMigrationSuite extends AnyFunSuiteLike {
   test("Formatting of updated versions") {
     val updatedVersions = UpdatedVersion(collectionCompat, Seq("2.4.4", "2.5.0", "2.6.0"))
     val formatted       = updatedVersions.formatted
-    val expected =
+    val expected        =
       s""""org.scala-lang.modules" %% "scala-collection-compat" % "${YELLOW}2.4.4$RESET" $YELLOW(Other versions: 2.5.0, 2.6.0)$RESET"""
     assert(formatted == expected)
   }
@@ -132,7 +132,7 @@ class LibraryMigrationSuite extends AnyFunSuiteLike {
   test("Formatting of Scala.js updated version 1") {
     val updatedVersions = UpdatedVersion(scalatestJS, Seq("3.2.9", "3.2.10"))
     val formatted       = updatedVersions.formatted
-    val expected =
+    val expected        =
       s""""org.scalatest" %%% "scalatest" % "${YELLOW}3.2.9$RESET" ${YELLOW}(Other version: 3.2.10)$RESET"""
     assert(formatted == expected)
   }

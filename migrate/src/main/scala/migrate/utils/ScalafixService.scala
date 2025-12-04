@@ -38,7 +38,7 @@ final class ScalafixService(
         val relativePath = file.relativize(baseDirectory).getOrElse(file)
         if (evaluation.isSuccessful) {
           evaluation.previewPatchesAsUnifiedDiff.toScala match {
-            case None =>
+            case None    =>
             case Some(_) =>
               evaluation.applyPatches()
               logger.info(s"Applied ${Format.plural(evaluation.getPatches.size, "patch", "patches")} in $relativePath")
@@ -55,7 +55,7 @@ final class ScalafixService(
 
   private def evaluate(rules: Seq[String], sources: Seq[AbsolutePath]): Try[ScalafixEvaluation] = Try {
     val classpathWithTargetSemantic = classpath :+ targetRootSemantic
-    val args = scalafix
+    val args                        = scalafix
       .newArguments()
       .withRules(rules.asJava)
       .withPaths(sources.map(_.toNio).asJava)

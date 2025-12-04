@@ -17,12 +17,12 @@ private[migrate] object LibraryMigration {
   def migrateRegularLib(lib: InitialLib, repositories: Seq[Repository]): MigratedLib = {
     val FullBinaryVersion = "2\\.13\\..*"
     lib.crossVersion match {
-      case Disabled       => tryParseBinaryVersionAndMigrate(lib, repositories)
-      case _: For2_13Use3 => ValidLibrary(lib)
-      case _: For3Use2_13 => ValidLibrary(lib)
-      case _: Binary      => migrateBinaryVersion(lib, repositories)
-      case _: Full        => migrateFullCrossVersion(lib, repositories)
-      case _: Patch       => migrateFullCrossVersion(lib, repositories)
+      case Disabled                         => tryParseBinaryVersionAndMigrate(lib, repositories)
+      case _: For2_13Use3                   => ValidLibrary(lib)
+      case _: For3Use2_13                   => ValidLibrary(lib)
+      case _: Binary                        => migrateBinaryVersion(lib, repositories)
+      case _: Full                          => migrateFullCrossVersion(lib, repositories)
+      case _: Patch                         => migrateFullCrossVersion(lib, repositories)
       case v: Constant if v.value == "2.13" =>
         migrateBinaryVersion(lib.copy(crossVersion = Binary("", "")), repositories)
       case v: Constant if v.value.matches("2\\.13\\..*") =>

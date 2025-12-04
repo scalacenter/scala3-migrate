@@ -9,8 +9,8 @@ import scala.util.Try
 case class AbsolutePath private (value: String) {
   require(toNio.isAbsolute, s"$toNio is not absolute!")
 
-  def toNio: Path  = Paths.get(value)
-  def toFile: File = new File(value)
+  def toNio: Path                                         = Paths.get(value)
+  def toFile: File                                        = new File(value)
   def relativize(parent: AbsolutePath): Try[RelativePath] =
     Try(parent.toNio.relativize(toNio)).flatMap(RelativePath.from)
 

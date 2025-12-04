@@ -25,7 +25,7 @@ object ScalacOptionsMigration {
     @tailrec
     def loop(args: List[String], res: List[String]): List[String] =
       args match {
-        case Nil => res.reverse
+        case Nil                                                                         => res.reverse
         case first :: second :: tail if first.startsWith("-") && !second.startsWith("-") =>
           loop(tail, (s"$first $second") :: res)
 

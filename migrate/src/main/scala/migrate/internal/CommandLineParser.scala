@@ -44,7 +44,7 @@ private[migrate] object CommandLineParser {
     def done     = pos >= in.length
 
     def skipToQuote(q: Int) = {
-      var escaped = false
+      var escaped  = false
       def terminal = in.charAt(pos) match {
         case _ if escaped => escaped = false; false
         case '\\'         => escaped = true; false
@@ -63,7 +63,7 @@ private[migrate] object CommandLineParser {
         case _                    => bump(); skipToDelim()
       }
     def skipWhitespace() = while (isWhitespace(cur)) pos += 1
-    def copyText() = {
+    def copyText()       = {
       val buf = new Builder
       var p   = start
       var i   = 0
