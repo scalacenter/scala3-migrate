@@ -50,7 +50,7 @@ class ScalacOpionsMigrationSuite extends AnyFunSuiteLike with DiffAssertions {
     )
     val res             = ScalacOptionsMigration.migrate(input)
     val expectedRemoved = Seq("-Yrangepos", "-Xlint:_,-type-parameter-shadow", "-Xsource:2.13")
-    val expectedValid = Seq(
+    val expectedValid   = Seq(
       "-encoding UTF-8",
       "-feature",
       "-language:higherKinds",

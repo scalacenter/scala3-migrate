@@ -31,7 +31,7 @@ class Scala3Migrate(scalafixSrv: ScalafixService, baseDirectory: AbsolutePath, l
       for {
         initialFileToMigrate <- buildMigrationFiles(filesWithErr)
         _                    <- compileInScala3(initialFileToMigrate, filesWithoutErrors ++ javaFiles ++ managedSources, compiler)
-        migratedFiles <- initialFileToMigrate
+        migratedFiles        <- initialFileToMigrate
                            .map(f => f.migrate(compiler, logger).map(success => (f.source, success)))
                            .sequence
       } yield migratedFiles.toMap
@@ -48,7 +48,7 @@ class Scala3Migrate(scalafixSrv: ScalafixService, baseDirectory: AbsolutePath, l
     for {
       compiler      <- setupScala3Compiler(scala3Classpath, scala3ClassDirectory, scala3CompilerOptions)
       migratedFiles <- previewMigration(unmanagedSources, managedSources, compiler)
-      _ <- migratedFiles.map { case (file, migrated) =>
+      _             <- migratedFiles.map { case (file, migrated) =>
              migrated.newFileContent.flatMap(FileUtils.writeFile(file, _))
            }.sequence
       _ <- compileWithRewrite(
@@ -110,11 +110,11 @@ class Scala3Migrate(scalafixSrv: ScalafixService, baseDirectory: AbsolutePath, l
     for {
       cuUnmanagedSources <- migrationFiles.map(_.previewAllPatches()).sequence
       cuManagedSources    = managedSources.map(path => new CompilationUnit(path.value, FileUtils.read(path), path.toNio))
-      _ <- timeAndLog(Try(compiler.compileAndReport((cuUnmanagedSources ++ cuManagedSources).toList, logger))) {
+      _                  <- timeAndLog(Try(compiler.compileAndReport((cuUnmanagedSources ++ cuManagedSources).toList, logger))) {
              case (_, Failure(_)) =>
                logger.error("Failed inferring meaningful types because: Scala 3 compilation error")
              case _ =>
-               val count = migrationFiles.map(_.patches.size).sum
+               val count   = migrationFiles.map(_.patches.size).sum
                val message =
                  s"Found ${plural(count, "patch", "patches")} in ${plural(migrationFiles.size, "Scala source")}"
                logger.info(message)

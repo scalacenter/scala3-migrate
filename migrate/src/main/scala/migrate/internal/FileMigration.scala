@@ -68,7 +68,7 @@ private[migrate] class FileMigration(
       step match {
         case Success(step) =>
           step.doesCompile() match {
-            case Success(true) => Success(step)
+            case Success(true)  => Success(step)
             case Success(false) =>
               if (step.removed.size == 1) {
                 // the last patch is necessary

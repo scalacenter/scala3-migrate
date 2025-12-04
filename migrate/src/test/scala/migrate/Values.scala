@@ -22,7 +22,7 @@ object Values {
 
   lazy val scalafixSrv: ScalafixService =
     ScalafixService.from(scala2CompilerOptions, scala2Classpath, semanticdbTargetRoot, baseDirectory, PrintLogger).get
-  val scalaMigrat = new Scala3Migrate(scalafixSrv, baseDirectory, PrintLogger)
+  val scalaMigrat                    = new Scala3Migrate(scalafixSrv, baseDirectory, PrintLogger)
   val scala3Compiler: Scala3Compiler =
     scalaMigrat.setupScala3Compiler(scala3Classpath, scala3ClassDirectory, scala3CompilerOptions).get
 }

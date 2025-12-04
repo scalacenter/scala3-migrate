@@ -51,7 +51,7 @@ private[migrate] object TypeInferenceMigration {
             baseDir.toPath
           )
         } match {
-          case Success(_) =>
+          case Success(_)                       =>
           case Failure(_: CompilationException) =>
             val message =
               s"""|Migration of $projectId / $config failed because of a compilation error.
@@ -72,7 +72,7 @@ private[migrate] object TypeInferenceMigration {
         |""".stripMargin
 
   private def success(projectId: String) = Def.task {
-    val logger = streams.value.log
+    val logger  = streams.value.log
     val message =
       s"""|
           |You can safely upgrade $projectId to Scala 3:

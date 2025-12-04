@@ -19,8 +19,8 @@ object SyntheticHelper {
 
   def getOriginalTree(semanticTree: SemanticTree): Option[Tree] =
     semanticTree match {
-      case IdTree(_)                => None
-      case SelectTree(qualifier, _) => getOriginalTree(qualifier)
+      case IdTree(_)                      => None
+      case SelectTree(qualifier, _)       => getOriginalTree(qualifier)
       case ApplyTree(function, arguments) =>
         getOriginalTree(function)
           .orElse(arguments.map(getOriginalTree).head)

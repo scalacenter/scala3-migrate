@@ -35,10 +35,10 @@ class PrettyPrinter[G <: Global](val g: G) {
           case ConstantType(Constant(_: TermSymbol)) => Some(t)
           case ConstantType(Constant(_: Type))       => Some(t)
           case SuperType(_, _)                       => Some(t)
-          case RefinedType(parents, decls) =>
+          case RefinedType(parents, decls)           =>
             val parentOp = parents.map(loop).sequence
             parentOp.map(p => RefinedType(p, decls))
-          case AnnotatedType(_, _) => Some(t)
+          case AnnotatedType(_, _)                     => Some(t)
           case ExistentialType(quantified, underlying) =>
             scala.util
               .Try(ExistentialType(quantified.map(sym => sym.setInfo(loop(sym.info).get)), loop(underlying).get))
@@ -84,7 +84,7 @@ class PrettyPrinter[G <: Global](val g: G) {
 
   private def lookUpName(sym: g.Symbol, context: g.Context): String = {
     // first get all owners
-    val owners = getOwnersFor(sym)
+    val owners          = getOwnersFor(sym)
     val necessaryOwners = owners.iterator.takeWhile { case sym =>
       val lookUp = context.lookupSymbol(sym.name.toTermName, _ => true)
       !isTheSameSymbol(sym, lookUp)
@@ -92,16 +92,16 @@ class PrettyPrinter[G <: Global](val g: G) {
 
     val size = necessaryOwners.size
     necessaryOwners match {
-      case Nil => sym.name.toTermName.toString
+      case Nil                         => sym.name.toTermName.toString
       case _ if size < owners.size - 1 =>
         val names = owners.take(size + 1).reverse.map(s => m.Term.Name(s.nameSyntax))
-        val ref = names.tail.foldLeft(names.head: m.Term.Ref) { case (qual, name) =>
+        val ref   = names.tail.foldLeft(names.head: m.Term.Ref) { case (qual, name) =>
           m.Term.Select(qual, name)
         }
         ref.syntax
       case _ if size >= owners.size - 1 =>
-        val top = owners.last
-        val to  = context.lookupSymbol(top.name.toTermName, _ => true)
+        val top     = owners.last
+        val to      = context.lookupSymbol(top.name.toTermName, _ => true)
         val inScope = to match {
           case LookupSucceeded(qual, _) => !qual.isEmpty
           case _                        => false
@@ -128,7 +128,7 @@ class PrettyPrinter[G <: Global](val g: G) {
     gsymbol.isPrivate || (gsymbol.hasAccessBoundary && !gsymbol.isProtected)
   private def filterType(finalType: g.Type): Boolean =
     finalType match {
-      case g.ErrorType => true
+      case g.ErrorType       => true
       case g.ConstantType(_) =>
         true // don't annotate ConstantTypes
       case f if f.toString().contains(".super.") =>

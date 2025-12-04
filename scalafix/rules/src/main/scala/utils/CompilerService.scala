@@ -32,7 +32,7 @@ object CompilerService {
 
     val (isSuccess, unprocessed) = settings.processArguments(options, processAll = true)
     (isSuccess, unprocessed) match {
-      case (true, Nil) => Success(settings)
+      case (true, Nil)              => Success(settings)
       case (isSuccess, unprocessed) =>
         Failure(
           new Exception(

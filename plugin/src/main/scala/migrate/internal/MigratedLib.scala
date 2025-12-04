@@ -89,7 +89,7 @@ object MigratedLibFormatting {
       case v: Binary if v.prefix == "" && v.suffix == "" => s""""$org" %% "$name" % "$version"$formattedConfigs"""
       case _: Binary                                     => s""""$org" %%% "$name" % "$version"$formattedConfigs"""
       case Disabled                                      => s""""$org" % "$name" % "$version"$formattedConfigs"""
-      case crossVersion =>
+      case crossVersion                                  =>
         val crossVersionFmt = crossVersion match {
           case _: Full        => "full"
           case _: For3Use2_13 => "for3Use2_13"
