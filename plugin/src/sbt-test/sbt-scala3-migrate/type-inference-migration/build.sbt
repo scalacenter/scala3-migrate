@@ -1,5 +1,6 @@
 lazy val `type-inference-migration` = project
   .in(file("."))
   .settings(
-    scalaVersion := "2.13.11"
+    scalaVersion      := "2.13.18",
+    semanticdbVersion := "4.14.2"
   )

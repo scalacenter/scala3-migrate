@@ -1,7 +1,8 @@
 lazy val `managed-sources` = project
   .in(file("."))
   .settings(
-    scalaVersion := "2.13.11",
+    scalaVersion      := "2.13.18",
+    semanticdbVersion := "4.14.2",
     Compile / sourceGenerators += Def.task {
       val file      = (Compile / sourceManaged).value / "buildinfo" / "BuildInfo.scala"
       val buildInfo = s"""|
