@@ -1,7 +1,8 @@
 lazy val `unresolved-dependencies` = project
   .in(file("."))
   .settings(
-    scalaVersion := V.scala213,
+    scalaVersion      := V.scala213,
+    semanticdbVersion := "4.14.2",
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-core" % V.catsCore,
       compilerPlugin("org.typelevel" % "kind-projector" % V.kindProjector cross CrossVersion.full)
@@ -11,7 +12,7 @@ lazy val `unresolved-dependencies` = project
   )
 
 lazy val V = new {
-  val scala213      = "2.13.11"
+  val scala213      = "2.13.18"
   val catsCore      = "2.10.0"
   val kindProjector = "0.13.3"
 }

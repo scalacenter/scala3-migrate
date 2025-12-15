@@ -1,7 +1,8 @@
 lazy val `library-dependencies` = project
   .in(file("."))
   .settings(
-    scalaVersion := V.scala213,
+    scalaVersion      := V.scala213,
+    semanticdbVersion := "4.14.2",
     libraryDependencies +=
       ("org.typelevel" %% "cats-core" % V.catsCore).cross(CrossVersion.for3Use2_13),
     scalacOptions ++= {
@@ -15,7 +16,7 @@ lazy val `library-dependencies` = project
   )
 
 lazy val V = new {
-  val scala213      = "2.13.11"
+  val scala213      = "2.13.18"
   val catsCore      = "2.10.0"
-  val kindProjector = "0.13.3"
+  val kindProjector = "0.13.4"
 }

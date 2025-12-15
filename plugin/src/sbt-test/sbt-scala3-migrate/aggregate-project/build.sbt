@@ -1,6 +1,8 @@
 import migrate.ScalaMigratePlugin.Keys._
 
-ThisBuild / scalaVersion := "2.13.11"
+ThisBuild / scalaVersion := "2.13.18"
+
+ThisBuild / semanticdbVersion := "4.14.2"
 
 lazy val subproject = project
   .in(file("subproject"))
