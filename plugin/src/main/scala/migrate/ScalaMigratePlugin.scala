@@ -114,7 +114,8 @@ object ScalaMigratePlugin extends AutoPlugin {
       val sv = scalaVersion.value
       if (sv.startsWith("2.13.")) {
         val actual = semanticdbVersion.value
-        if (actual > BuildInfo.scalametaVersion) actual else BuildInfo.scalametaVersion
+        if (SemanticSelector(s">=${BuildInfo.scalametaVersion}").matches(VersionNumber(actual))) actual
+        else BuildInfo.scalametaVersion
       } else semanticdbVersion.value
     },
     migrationConfigs                         := migrationConfigsImpl.value,
