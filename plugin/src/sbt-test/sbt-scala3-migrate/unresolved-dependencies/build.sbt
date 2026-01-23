@@ -12,7 +12,7 @@ lazy val `unresolved-dependencies` = project
   )
 
 lazy val V = new {
-  val scala213      = "2.13.18"
+  val scala213      = "3.8.1"
   val catsCore      = "2.10.0"
   val kindProjector = "0.13.3"
 }
