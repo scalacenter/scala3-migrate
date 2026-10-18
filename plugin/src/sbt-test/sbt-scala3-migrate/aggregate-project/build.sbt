@@ -1,6 +1,6 @@
 import migrate.ScalaMigratePlugin.Keys._
 
-ThisBuild / scalaVersion := "2.13.18"
+ThisBuild / scalaVersion := "3.10.0"
 
 ThisBuild / semanticdbVersion := "4.14.2"
 
